@@ -285,7 +285,7 @@ const listTasks = [
       console.error("Error updating user newBalance in Firestore: ", e);
     }
   };
-
+  console.log("In Earn.jsx, level.imgUrl:", level.imgUrl);
   return (
     <>
       {loading ? (
@@ -314,7 +314,9 @@ const listTasks = [
                 onClick={levelsAction}
                 className="w-full flex ml-[6px] space-x-1 items-center justify-center"
               >
+                
                 <img
+                
                   src={level.imgUrl}
                   className="w-[25px] relative"
                   alt="bronze"

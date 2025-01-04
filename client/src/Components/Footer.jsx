@@ -72,7 +72,7 @@ const Footer = () => {
 
       {/* Wallet NavLink */}
       <NavLink
-        to="/stats"
+        to="/user"
         end
         className={({ isActive }) => `
           w-[20%] h-[65px] pt-1 flex flex-col rounded-[10px] items-center justify-center text-[#fff] text-[15px]

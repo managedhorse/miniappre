@@ -52,12 +52,12 @@ const Leaderboard = () => {
           {/* Header Section */}
           <div className="flex flex-col w-full">
             <div className="flex items-center justify-center w-full pb-2">
-              <h2 className="text-[#9d99a9] text-[30px] font-medium">
-                Leaderboard
+              <h2 className="text-[#fffff] slackey-regular text-[30px] font-medium">
+                Mianus Rankings
               </h2>
             </div>
             <p className="text-center w-full pb-2 text-[26px]">
-              {formattedUsers} {" "} Holders
+              {formattedUsers} {" "} Players
             </p>
             {/* Current User Info */}
             <div className="flex flex-col w-full space-y-2 alltaskscontainer">
@@ -107,7 +107,7 @@ const Leaderboard = () => {
             {/* Divider */}
             <div className="bg-borders w-full px-5 h-[1px] !mt-3 !mb-5"></div>
             <div className="flex flex-col w-full pt-2">
-              <h3 className="text-[18px] font-semibold">Top 50 {" "} Holders</h3>
+              <h3 className="text-[18px] slackey-regular font-semibold">Top 100 {" "} Players</h3>
             </div>
           </div>
 

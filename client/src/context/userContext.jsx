@@ -531,7 +531,7 @@ export const UserProvider = ({ children }) => {
   const fetchLeaderboard = async () => {
     try {
       const userRef = collection(db, "telegramUsers");
-      const q = query(userRef, orderBy("balance", "desc"), limit(50));
+      const q = query(userRef, orderBy("balance", "desc"), limit(100));
       const querySnapshot = await getDocs(q);
   
       const leaderboardUsers = [];

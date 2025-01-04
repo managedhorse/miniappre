@@ -43,7 +43,7 @@ const fontWeight = "bold";
 const fontSize = 20;
 const fontStyle = "normal";
 const textDistance = 70;
-const spinDuration = 0.5;
+const spinDuration = 0.3;
 
 const LuckyWhile = () => {
   const { balance, setBalance, id, timeSpin, setTimeSpin } = useUser();
@@ -252,7 +252,7 @@ const LuckyWhile = () => {
             <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px] shadow-lg">
               <IoCheckmarkCircle size={24} className="" />
               <span className="font-medium slackey-regular">
-                Congratulations, You have received {Number(data[prizeNumber]?.option)} points.
+                Congratulations, You have won {Number(data[prizeNumber]?.option)} Mianuses.
               </span>
             </div>
           </div>

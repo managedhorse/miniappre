@@ -11,8 +11,8 @@ import flash from "../images/battery.webp";
 import coinsmallClosed from "../images/coinsmall.webp"; // Closed mouth image
 import coinsmallOpen from "../images/coinsmall-open.webp"; // Open mouth image
 import luckyWheel from "../images/lucky-wheel.png";
-import dailyReward from "../images/daily-reward.png";
-import dailyCombo from "../images/daily-cipher.png";
+import dailyReward from "../images/dailycheck.webp";
+import dailyCombo from "../images/rankings.webp";
 import tswap from "../images/tswap.png";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique IDs
 import { useNavigate } from 'react-router-dom';

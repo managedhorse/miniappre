@@ -4,7 +4,7 @@ import { useUser } from '../context/userContext.jsx';
 
 
 const userLevels = [
-    { name: 'Level 1', icon: '/lvl111.webp', tapBalanceRequired: 1000 },
+    { name: 'Level 1', icon: '/lvl1.webp', tapBalanceRequired: 1000 },
     { name: 'Level 2', icon: '/lvl2.webp', tapBalanceRequired: 50000 },
     { name: 'Level 3', icon: '/lvl3.webp', tapBalanceRequired: 500000 },
     { name: 'Level 4', icon: '/lvl4.webp', tapBalanceRequired: 1000000 },

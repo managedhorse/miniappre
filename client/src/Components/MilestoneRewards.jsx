@@ -7,9 +7,9 @@ import congratspic from "../images/celebrate.gif";
 import coinsmall from "../images/coinsmall.webp";
 
 const milestones = [
-  { name: 'Level 1', icon: 'src/images/lvl1.webp', tapBalanceRequired: 1000, reward: 50000 },
-  { name: 'Level 2', icon: 'src/images/lvl2.webp', tapBalanceRequired: 50000, reward: 100000 },
-  { name: 'Level 3', icon: 'src/images/lvl3.webp', tapBalanceRequired: 500000, reward: 250000 },
+  { name: 'Level 1', icon: '/lvl1.webp', tapBalanceRequired: 1000, reward: 50000 },
+  { name: 'Level 2', icon: '/lvl2.webp', tapBalanceRequired: 50000, reward: 100000 },
+  { name: 'Level 3', icon: '/lvl3.webp', tapBalanceRequired: 500000, reward: 250000 },
  ];
 
 const MilestoneRewards = () => {
@@ -67,7 +67,7 @@ const MilestoneRewards = () => {
 <div className='flex items-center flex-1 space-x-2 text-sm'>
 
     <div className=''>
-        <img src={milestone.icon} alt="bronze" className='w-[50px]'/>
+        <img src={milestone.icon} alt="level" className='w-[50px]'/>
     </div>
     <div className='flex flex-col space-y-1 text-sm'>
         <span className='font-semibold'>

@@ -10,7 +10,7 @@ import Levels from '../Components/Levels.jsx';
 import flash from "../images/battery.webp";
 import coinsmallClosed from "../images/coinsmall.webp"; // Closed mouth image
 import coinsmallOpen from "../images/coinsmall-open.webp"; // Open mouth image
-import luckyWheel from "../images/lucky-wheel.png";
+import luckyWheel from "../images/lucky-wheel.webp";
 import dailyReward from "../images/dailycheck.webp";
 import dailyCombo from "../images/rankings.webp";
 import tswap from "../images/tswap.png";

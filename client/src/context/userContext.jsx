@@ -323,7 +323,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const updateUserLevel = async (userId, newTapBalance) => {
-    let newLevel = { id: 1, name: "Level 1", imgUrl: "/lvl1111.webp" };
+    let newLevel = { id: 1, name: "Level 1", imgUrl: "/lvl1.webp" };
 
     if (newTapBalance >= 1000 && newTapBalance < 50000) {
       newLevel = { id: 2, name: "Level 2", imgUrl: "/lvl2.webp" };

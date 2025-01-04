@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
   const [balance, setBalance] = useState(0);
   // const [totalBalance, setTotalBalance] = useState(0);
   const [tapBalance, setTapBalance] = useState(0);
-  const [level, setLevel] = useState({ id: 1, name: "Level 1", imgUrl: 'src/images/lvl1.webp' }); // Initial level as an object with id and name
+  const [level, setLevel] = useState({ id: 1, name: "Level 1", imgUrl: '/lvl1.webp' }); // Initial level as an object with id and name
   const [tapValue, setTapValue] = useState({level: 1, value: 1});
   const [timeRefill, setTimeRefill] = useState({level: 1, duration: 10, step: 600});
   const [id, setId] = useState("");
@@ -196,7 +196,7 @@ export const UserProvider = ({ children }) => {
           dailyReward: 0,
           tapValue: {level: 1, value: 1},
           timeRefill: {level: 1, duration: 10, step: 600},
-          level: { id: 1, name: "Level 1", imgUrl: 'src/images/lvl1.webp' }, // Set the initial level with id and name
+          level: { id: 1, name: "Level 1", imgUrl: '/lvl1.webp' }, // Set the initial level with id and name
           energy: 500,
           battery: {level: 1, energy: 500},
           refereeId: referrerId || null,
@@ -223,7 +223,7 @@ export const UserProvider = ({ children }) => {
                 userId: userId.toString(),
                 username: finalUsername,
                 balance: 0,
-                level: { id: 1, name: "Level 1", imgUrl: 'src/images/lvl1.webp' }, // Include level with id and name
+                level: { id: 1, name: "Level 1", imgUrl: '/lvl1.webp' }, // Include level with id and name
               })
             });
             console.log('Referrer updated in Firestore');
@@ -323,18 +323,18 @@ export const UserProvider = ({ children }) => {
   };
 
   const updateUserLevel = async (userId, newTapBalance) => {
-    let newLevel = { id: 1, name: "Level 1", imgUrl: "src/images.webp" };
+    let newLevel = { id: 1, name: "Level 1", imgUrl: "/lvl1.webp" };
 
     if (newTapBalance >= 1000 && newTapBalance < 50000) {
-      newLevel = { id: 2, name: "Level 2", imgUrl: "src/images/lvl2.webp" };
+      newLevel = { id: 2, name: "Level 2", imgUrl: "/lvl2.webp" };
     } else if (newTapBalance >= 50000 && newTapBalance < 500000) {
-      newLevel = { id: 3, name: "Level 3", imgUrl: "src/images/lvl3.webp" };
+      newLevel = { id: 3, name: "Level 3", imgUrl: "/lvl3.webp" };
     } else if (newTapBalance >= 500000 && newTapBalance < 1000000) {
-      newLevel = { id: 4, name: "Level 4", imgUrl: "src/images/lvl4.webp" };
+      newLevel = { id: 4, name: "Level 4", imgUrl: "/lvl4.webp" };
     } else if (newTapBalance >= 1000000 && newTapBalance < 2500000) {
-      newLevel = { id: 5, name: "Level 5", imgUrl: "src/images/lvl5.webp" };
+      newLevel = { id: 5, name: "Level 5", imgUrl: "/lvl5.webp" };
     } else if (newTapBalance >= 2500000) {
-      newLevel = { id: 6, name: "Level 6", imgUrl: "src/images/lvl6.webp" };
+      newLevel = { id: 6, name: "Level 6", imgUrl: "/lvl6.webp" };
     }
 
     if (newLevel.id !== level.id) {

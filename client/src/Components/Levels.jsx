@@ -4,12 +4,12 @@ import { useUser } from '../context/userContext.jsx';
 
 
 const userLevels = [
-    { name: 'Level 1', icon: 'src/images/lvl1.webp', tapBalanceRequired: 1000 },
-    { name: 'Level 2', icon: 'src/images/lvl2.webp', tapBalanceRequired: 50000 },
-    { name: 'Level 3', icon: 'src/images/lvl3.webp', tapBalanceRequired: 500000 },
-    { name: 'Level 4', icon: 'src/images/lvl4.webp', tapBalanceRequired: 1000000 },
-    { name: 'Level 5', icon: 'src/images/lvl5.webp', tapBalanceRequired: 2500000 },
-    { name: 'Level 6', icon: 'src/images/lvl6.webp', tapBalanceRequired: 5000000 },
+    { name: 'Level 1', icon: '/lvl1.webp', tapBalanceRequired: 1000 },
+    { name: 'Level 2', icon: '/lvl2.webp', tapBalanceRequired: 50000 },
+    { name: 'Level 3', icon: '/lvl3.webp', tapBalanceRequired: 500000 },
+    { name: 'Level 4', icon: '/lvl4.webp', tapBalanceRequired: 1000000 },
+    { name: 'Level 5', icon: '/lvl5.webp', tapBalanceRequired: 2500000 },
+    { name: 'Level 6', icon: '/lvl6.webp', tapBalanceRequired: 5000000 },
   ];
   
   

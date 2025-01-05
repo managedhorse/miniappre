@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
             message_text: `Join Tap Mianus using my invite link: https://t.me/tap_mianus_bot?start=r${user_id}`,
           },
           description: 'Tap Mianus is awesome!',
-          thumb_url: 'https://shmexicans.vercel.app/images/coinsmall.webp', // Ensure this URL is valid
+          thumb_url: 'https://miniappre.vercel.app/coinsmall.webp', // Ensure this URL is valid
         },
         allow_user_chats: true,
         allow_bot_chats: false,

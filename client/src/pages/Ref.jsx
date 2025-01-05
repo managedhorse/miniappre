@@ -142,12 +142,14 @@ const Ref = () => {
                     >
                       {copied ? <span>Done</span> : <span>Copy</span>}
                     </span>
-                    <span
-                      onClick={handleShare}
-                      className="bg-activebg border-[1px] border-activeborder slackey-regular font-medium py-[6px] px-4 rounded-[12px] flex items-center justify-center text-[16px] cursor-pointer"
-                    >
-                      {sharing ? <span>Done</span> : <span>Share</span>}
-                    </span>
+                    <a
+          href={reflink}
+          className="bg-blue-600 text-white px-3 py-2 rounded"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Share 
+        </a>
                   </div>
                 </span>
                 {shareError && (

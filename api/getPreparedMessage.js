@@ -1,3 +1,7 @@
+// api/getPreparedMessage.js
+
+const axios = require('axios');
+
 module.exports = async (req, res) => {
   console.log("Incoming request to /getPreparedMessage");
   console.log("Request method:", req.method);
@@ -36,7 +40,20 @@ module.exports = async (req, res) => {
       `https://api.telegram.org/bot${BOT_TOKEN}/savePreparedInlineMessage`,
       {
         user_id: user_id,
-        // ...
+        result: {
+          type: 'article',
+          id: 'unique-id-' + Date.now(),
+          title: 'Join Tap Mianus!',
+          input_message_content: {
+            message_text: `Join Tap Mianus using my invite link: https://t.me/tap_mianus_bot?start=r${user_id}`,
+          },
+          description: 'Tap Mianus is awesome!',
+          thumb_url: 'https://miniappre.vercel.app/coinsmall.webp', // Ensure this URL is valid
+        },
+        allow_user_chats: true,
+        allow_bot_chats: false,
+        allow_group_chats: false,
+        allow_channel_chats: false,
       }
     );
 

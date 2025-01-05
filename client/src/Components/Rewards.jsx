@@ -45,7 +45,7 @@ const ReferralRewards = () => {
     }
   };
 
-    const formatNumberCliam = (num) => {
+    const formatNumberClaim = (num) => {
         if (num < 100000) {
           return new Intl.NumberFormat().format(num).replace(/,/g, " ");
         } else if (num < 1000000) {
@@ -112,7 +112,7 @@ const ReferralRewards = () => {
                           <img src={coinsmall} className="w-full" alt="coin" />
                         </span>
                         <span className="font-medium">
-                          {formatNumberCliam(reward.bonusAward)}
+                          {formatNumberClaim(reward.bonusAward)}
                         </span>
                       </div>
                     </div>

@@ -55,7 +55,7 @@ const Ref = () => {
 
     try {
       // Request prepared message ID from the server
-      const response = await fetch('https://miniappre-zov7.vercel.app/getPreparedMessage', {
+      const response = await fetch('https://function-ruby.vercel.app/api/getPreparedMessage', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

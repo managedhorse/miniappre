@@ -17,7 +17,7 @@ const Ref = () => {
   const [shareError, setShareError] = useState(null);
 
   const copyToClipboard = () => {
-    const reflink = `https://t.me/tap_mianus_bot?start=r${id}`;
+    const reflink = `https://t.me/TapMianusBot?start=r${id}`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(reflink).then(() => {
@@ -156,7 +156,7 @@ const Ref = () => {
                   </div>
                 )}
                 <div className="text-[#fffff] font-medium ">
-                  https://t.me/tap_mianus_bot?start=r{id}
+                  https://t.me/TapMianusBot?start=r{id}
                 </div>
               </div>
 </div>

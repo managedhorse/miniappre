@@ -15,7 +15,7 @@ const Ref = () => {
   const [activeIndex, setActiveIndex] = useState(1);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
-
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(reflink)}&text=${encodeURIComponent("Join me in Tap Mianus!")}`;
   const copyToClipboard = () => {
     const reflink = `https://t.me/tap_mianus_bot?start=r${id}`;
 
@@ -125,43 +125,50 @@ const Ref = () => {
            
               {/* Referral Link Section */}
               <div className="relative bg-activebg border-[1px] border-activeborder w-full rounded-[12px] px-3 py-3 flex flex-col overflow-hidden">
-  <div
-    className="absolute inset-0"
-    style={{
-      backgroundColor: 'rgba(139, 0, 0, 0.8)',
-      filter: 'blur(10px)',
-    }}
-  ></div>
-  <div className="relative">
-                <span className="flex items-center justify-between w-full pb-2">
-                  <h2 className="text-[18px] slackey-regular font-semibold">Invite Link:</h2>
-                  <div className="flex space-x-2">
-                    <span
-                      onClick={copyToClipboard}
-                      className="bg-activebg border-[1px] border-activeborder slackey-regular font-medium py-[6px] px-4 rounded-[12px] flex items-center justify-center text-[16px] cursor-pointer"
-                    >
-                      {copied ? <span>Done</span> : <span>Copy</span>}
-                    </span>
-                    <a
-          href={reflink}
-          className="bg-blue-600 text-white px-3 py-2 rounded"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Share 
-        </a>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: "rgba(139, 0, 0, 0.8)",
+                    filter: "blur(10px)",
+                  }}
+                ></div>
+                <div className="relative">
+                  <span className="flex items-center justify-between w-full pb-2">
+                    <h2 className="text-[18px] slackey-regular font-semibold">
+                      Invite Link:
+                    </h2>
+                    <div className="flex space-x-2">
+                      <span
+                        onClick={copyToClipboard}
+                        className="bg-activebg border-[1px] border-activeborder slackey-regular font-medium py-[6px] px-4 rounded-[12px] flex items-center justify-center text-[16px] cursor-pointer"
+                      >
+                        {copied ? <span>Done</span> : <span>Copy</span>}
+                      </span>
+
+                      {/* Replace the old handleShare logic with an <a> link to shareUrl */}
+                      <a
+                        href={shareUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-activebg border-[1px] border-activeborder slackey-regular font-medium py-[6px] px-4 rounded-[12px] flex items-center justify-center text-[16px]"
+                      >
+                        {sharing ? <span>Done</span> : <span>Share</span>}
+                      </a>
+                    </div>
+                  </span>
+
+                  {/* If there's an error state to show, you can keep it: */}
+                  {shareError && (
+                    <div className="text-red-500 text-sm mt-2">
+                      Error: {shareError}
+                    </div>
+                  )}
+                  <div className="text-[#fffff] font-medium ">
+                    {reflink}
                   </div>
-                </span>
-                {shareError && (
-                  <div className="text-red-500 text-sm mt-2">
-                    Error: {shareError}
-                  </div>
-                )}
-                <div className="text-[#fffff] font-medium ">
-                  https://t.me/tap_mianus_bot?start=r{id}
                 </div>
               </div>
-</div>
+
               <div className="bg-borders w-full px-5 h-[1px] !mt-6"></div>
 
               {/* Menu and Scrollable Content */}

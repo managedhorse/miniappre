@@ -4,7 +4,8 @@
   "main": "getPreparedMessage.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'Skipping build, deploying serverless functions...'"
+    "dev": "vite",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "dave",

@@ -16,6 +16,7 @@ const Ref = () => {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
 
+  
   const copyToClipboard = () => {
     const reflink = `https://t.me/TapMianusBot?start=r${id}`;
 

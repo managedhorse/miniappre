@@ -4,7 +4,7 @@ const axios = require('axios');
 
 module.exports = async (req, res) => {
   // For a serverless function on Vercel using CommonJS:
-  res.setHeader('Access-Control-Allow-Origin', 'https://myfront.vercel.app'); 
+  res.setHeader('Access-Control-Allow-Origin', 'https://miniappre.vercel.app'); 
   // or '*' if you really want to allow from anywhere
 
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS'); 

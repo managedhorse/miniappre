@@ -62,4 +62,4 @@ module.exports = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: 'Server error' });
   }
-};
+}; 

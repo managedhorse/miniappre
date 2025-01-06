@@ -37,6 +37,14 @@ const App = () => {
 
     window.Telegram.WebApp.setHeaderColor("#191b33"); // Set header color to red
 
+    // Disable vertical swipes if the method exists
+    if (typeof tele.disableVerticalSwipes === "function") {
+      tele.disableVerticalSwipes();
+      console.log("Vertical swipes disabled.");
+    } else {
+      console.warn("disableVerticalSwipes method is not available.");
+    }
+
     // Haptic feedback
     if (tele.HapticFeedback) {
       tele.HapticFeedback.impactOccurred("medium");

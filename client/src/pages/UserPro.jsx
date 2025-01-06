@@ -113,9 +113,9 @@ const formatNumber = (num) => {
 
                   {/* “Your part” on the same line, right side */}
                   <div className="flex items-end">
-                    <p className="text-md text-right">
-                      {/* e.g. "Your part: 0.15432%" */}
-                      Your part: {userShareDisplay}%
+                  <h3 className="text-lg">You have</h3>
+                    <p className="text-md">
+                       {userShareDisplay}%
                     </p>
                   </div>
                 </div>
@@ -132,12 +132,12 @@ const formatNumber = (num) => {
               ></div>
               {/* Description */}
               <div className="px-4 mt-4 text-sm leading-relaxed slackey-regular mb-20">
-                <h3 className="text-lg mb-2">About Lucky Rabbi</h3>
+                <h3 className="text-lg mb-2">The Lucky Rabbi</h3>
                 <h4 className="mb-2">
-                  The Jewish-themed gambling platform. 100% Certified Kosher
+                  A Jewish-themed gambling platform. 100% Certified Kosher
                 </h4>
                 <p className="mb-2">
-                  <strong>FJBJ- For Jews By Jews</strong>{" "}
+                  <strong>BYJFOJ - By Jews For Jews</strong>{" "}
                 </p>
                 <p className="mb-2">
                   The Lucky Rabbi is a <strong>provably fair iGaming platform</strong>{" "}

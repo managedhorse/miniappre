@@ -16,7 +16,7 @@ const Ref = () => {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
 
-  
+
   const copyToClipboard = () => {
     const reflink = `https://t.me/TapMianusBot?start=r${id}`;
 
@@ -122,6 +122,7 @@ const Ref = () => {
                 <h1 className="text-[#fff] slackey-regular -mb-2 text-[30px] font-semibold">
                   {referrals.length} Buddys
                 </h1>
+                <p classname="text-[#fff] slackey-regular">Invite your friends and get 10% of their taps!</p>
               </div>
            
               {/* Referral Link Section */}
@@ -156,7 +157,7 @@ const Ref = () => {
                     Error: {shareError}
                   </div>
                 )}
-                <div className="text-[#fffff] font-medium ">
+                <div className="text-[#fffff] font-small ">
                   https://t.me/TapMianusBot?start=r{id}
                 </div>
               </div>
@@ -201,7 +202,7 @@ const Ref = () => {
                             <p className='text-center w-full slackey-regular now pt-8 px-5 text-[14px] leading-[24px]'>
                               You don't have buddys yet 😭
 
-                              Invite your friends and get 10% upstream income from their taps!
+                              Invite your friends and get 10% of their taps!
                             </p>
                           ) : (
                             referrals.map((user, index) => (

@@ -11,35 +11,46 @@ import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 const tele = window.Telegram?.WebApp;
 
 const App = () => {
-  // State to determine if the app is running inside Telegram
+  // State to determine if the app is running inside Telegram on supported platforms
   const [isTelegram, setIsTelegram] = useState(null); // null = not yet determined
 
-  // Effect to detect Telegram WebApp environment
+  // Effect to detect Telegram WebApp environment and platform
   useEffect(() => {
     if (tele) {
-      setIsTelegram(true);
+      const platform = tele.platform; // "android", "ios", "web", etc.
 
-      // Initialize Telegram WebApp
-      tele.ready();
-      tele.expand();
+      // Allow only if platform is 'android' or 'ios'
+      if (platform === "android" || platform === "ios") {
+        setIsTelegram(true);
 
-      // Set the header color
-      tele.setHeaderColor("#191b33"); // Adjust as needed
+        // Initialize Telegram WebApp
+        tele.ready();
+        tele.expand();
 
-      // Disable vertical swipes if the method exists
-      if (typeof tele.disableVerticalSwipes === "function") {
-        tele.disableVerticalSwipes();
-        console.log("Vertical swipes disabled.");
+        // Set the header color
+        tele.setHeaderColor("#191b33"); // Adjust as needed
+
+        // Disable vertical swipes if the method exists
+        if (typeof tele.disableVerticalSwipes === "function") {
+          tele.disableVerticalSwipes();
+          console.log("Vertical swipes disabled.");
+        } else {
+          console.warn("disableVerticalSwipes method is not available.");
+        }
+
+        // Haptic feedback if supported
+        if (tele.HapticFeedback) {
+          tele.HapticFeedback.impactOccurred("medium");
+        }
       } else {
-        console.warn("disableVerticalSwipes method is not available.");
-      }
-
-      // Haptic feedback if supported
-      if (tele.HapticFeedback) {
-        tele.HapticFeedback.impactOccurred("medium");
+        // If platform is not supported (e.g., desktop)
+        setIsTelegram(false);
+        console.warn(`Unsupported platform: ${platform}`);
       }
     } else {
+      // Not running inside Telegram
       setIsTelegram(false);
+      console.warn("Telegram.WebApp is not available.");
     }
   }, [tele]);
 
@@ -70,7 +81,7 @@ const App = () => {
       <div>
         <h1 className="text-2xl font-bold mb-4">Access Restricted</h1>
         <p>
-          This application is exclusively available within Telegram. Please open it through the Telegram app to continue.
+          This application is exclusively available within the Telegram mobile app. Please open it through the Telegram app on your mobile device to continue.
         </p>
         <a
           href="https://t.me/YourBotUsername" // Replace with your bot's link
@@ -84,15 +95,19 @@ const App = () => {
 
   // While determining the environment, you can show a loader or nothing
   if (isTelegram === null) {
-    return null; // Or a loading spinner if preferred
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <p>Loading...</p> {/* You can replace this with a spinner */}
+      </div>
+    );
   }
 
-  // If not running inside Telegram, show the restricted access message
+  // If not running inside Telegram on supported platforms, show the restricted access message
   if (!isTelegram) {
     return renderTelegramOnlyMessage();
   }
 
-  // If inside Telegram, render the app normally
+  // If inside Telegram on supported platforms, render the app normally
   return (
     <>
       <div className="flex justify-center w-full">

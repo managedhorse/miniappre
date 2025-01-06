@@ -9,6 +9,17 @@ import tswap from "../images/tswap.png";
 import botr from "../images/bott.webp";
 import { IoClose } from "react-icons/io5";
 
+// 1. Our new helper function
+function formatUserShare(share) {
+  if (share >= 1) {
+    // If share >= 1%, keep 1 decimal
+    return parseFloat(share.toFixed(1)).toString();
+  } else {
+    // If share < 1%, keep up to 6 decimals
+    return parseFloat(share.toFixed(6)).toString();
+  }
+}
+
 const Profile = () => {
   // eslint-disable-next-line
 const { totalCount, dividedCount, users, dividedUsers, username, balance } = useUser();
@@ -31,12 +42,14 @@ const formatNumber = (num) => {
   }
 };
 
- // Calculate user share percentage to 6 decimals
- let userSharePercentage = 0;
+ // 2. Calculate the user’s share in % if totalCount is not zero
+ let userSharePercent = 0;
  if (totalCount && totalCount !== 0) {
-   userSharePercentage = (balance / totalCount) * 100;
+   userSharePercent = (balance / totalCount) * 100;
  }
- const formattedShare = userSharePercentage.toFixed(6);
+
+ // 3. Format the share using our new helper
+ const userShareDisplay = formatUserShare(userSharePercent);
 
   const formattedUsers = new Intl.NumberFormat()
     .format(users)
@@ -76,33 +89,34 @@ const formatNumber = (num) => {
                 </div>
 
                 
-                {/* 
-              SCROLLABLE SECTION
-              We'll give it a flex-1 (to fill remaining height),
-              overflow-y-auto, and the no-scrollbar class.
-            */}
+                {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
               <div className="flex slackey-regular justify-between gap-2 px-4 mt-4">
-                <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full">
-                <h3 className="text-lg">Total Airdrop</h3>
-                  <div className="flex items-center w-full pt-1 space-x-2">
-                    <div className="p-1">
-                      <img
-                        src={coinsmall}
-                        alt="Coin smail"
-                        className="w-6 h-6 mx-auto"
-                      />
-                    </div>
-                    <div>
+                {/* Airdrop box */}
+                <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg">Total Airdrop</h3>
+                    <div className="flex items-center w-full pt-1 space-x-2">
+                      <div className="p-1">
+                        <img
+                          src={coinsmall}
+                          alt="Coin smail"
+                          className="w-6 h-6 mx-auto"
+                        />
+                      </div>
                       <p className="text-md">
+                        {/* Show total */}
                         {formatNumber(totalCount)}
-                        <br />
-                        {/* Your part: X% */}
-                        <span className="text-[12px] text-gray-200">
-                          Your part: {formattedShare}%
-                        </span>
                       </p>
                     </div>
+                  </div>
+
+                  {/* “Your part” on the same line, right side */}
+                  <div className="flex items-end">
+                    <p className="text-md text-right">
+                      {/* e.g. "Your part: 0.15432%" */}
+                      Your part: {userShareDisplay}%
+                    </p>
                   </div>
                 </div>
               </div>

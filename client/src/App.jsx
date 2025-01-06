@@ -10,7 +10,7 @@ import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 const tele = window.Telegram.WebApp;
 const App = () => {
   useEffect(() => {
-    if (import.meta.env.PROD) { // Vite sets import.meta.env.PROD to true in production
+    
       const handleContextMenu = (event) => event.preventDefault();
       const handleKeyDown = (event) => {
         if (
@@ -28,7 +28,6 @@ const App = () => {
         document.removeEventListener("contextmenu", handleContextMenu);
         document.removeEventListener("keydown", handleKeyDown);
       };
-    }
   }, []);
   
 

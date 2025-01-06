@@ -11,7 +11,7 @@ import { IoClose } from "react-icons/io5";
 
 const Profile = () => {
   // eslint-disable-next-line
-const { totalCount, dividedCount, users, dividedUsers, username } = useUser();
+const { totalCount, dividedCount, users, dividedUsers, username, balance } = useUser();
 const [modalConvertVisibleEnc, setModalConvert] = useState(false);
 
 const formatNumber = (num) => {
@@ -30,6 +30,13 @@ const formatNumber = (num) => {
     return `${millions} M`;
   }
 };
+
+ // Calculate user share percentage to 6 decimals
+ let userSharePercentage = 0;
+ if (totalCount && totalCount !== 0) {
+   userSharePercentage = (balance / totalCount) * 100;
+ }
+ const formattedShare = userSharePercentage.toFixed(6);
 
   const formattedUsers = new Intl.NumberFormat()
     .format(users)
@@ -77,7 +84,7 @@ const formatNumber = (num) => {
             <div className="flex-1 overflow-y-auto no-scrollbar">
               <div className="flex slackey-regular justify-between gap-2 px-4 mt-4">
                 <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full">
-                  <h3 className="text-lg">Total Airdrop</h3>
+                <h3 className="text-lg">Total Airdrop</h3>
                   <div className="flex items-center w-full pt-1 space-x-2">
                     <div className="p-1">
                       <img
@@ -87,7 +94,14 @@ const formatNumber = (num) => {
                       />
                     </div>
                     <div>
-                      <p className="text-md">{formatNumber(totalCount)}</p>
+                      <p className="text-md">
+                        {formatNumber(totalCount)}
+                        <br />
+                        {/* Your part: X% */}
+                        <span className="text-[12px] text-gray-200">
+                          Your part: {formattedShare}%
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -106,10 +120,10 @@ const formatNumber = (num) => {
               <div className="px-4 mt-4 text-sm leading-relaxed slackey-regular mb-20">
                 <h3 className="text-lg mb-2">About Lucky Rabbi</h3>
                 <h4 className="mb-2">
-                  The most Jewish-themed gambling platform.
+                  The Jewish-themed gambling platform. 100% Certified Kosher
                 </h4>
                 <p className="mb-2">
-                  <strong>BJFJ- By Jews for Jews</strong>{" "}
+                  <strong>FJBJ- For Jews By Jews</strong>{" "}
                 </p>
                 <p className="mb-2">
                   The Lucky Rabbi is a <strong>provably fair iGaming platform</strong>{" "}

@@ -114,9 +114,11 @@ const formatNumber = (num) => {
                   {/* “Your part” on the same line, right side */}
                   <div className="flex items-end">
                   <h3 className="text-lg">You have</h3>
+                  <div className="flex items-center w-full pt-1 space-x-2">
                     <p className="text-md">
                        {userShareDisplay}%
                     </p>
+                    </div>
                   </div>
                 </div>
               </div>

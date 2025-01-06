@@ -84,7 +84,7 @@ const App = () => {
           This application is exclusively available within the Telegram mobile app. Please open it through the Telegram app on your mobile device to continue.
         </p>
         <a
-          href="https://t.me/YourBotUsername" // Replace with your bot's link
+          href="https://t.me/TapMianusBot" // Replace with your bot's link
           className="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
         >
           Open in Telegram

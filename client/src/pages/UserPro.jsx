@@ -117,7 +117,7 @@ const formatNumber = (num) => {
 
                 
                 {/* Scrollable content area */}
-            <div className="flex-1 overflow-y-auto no-scrollbar">
+            
               <div className="flex slackey-regular justify-between gap-2 px-4 mt-4">
                 {/* Airdrop box */}
                 <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full flex items-center justify-between">
@@ -149,7 +149,7 @@ const formatNumber = (num) => {
                   </div>
                 </div>
               </div>
-
+              <div className="flex-1 overflow-y-auto no-scrollbar">
               {/* Projects Section */}
               {projects.map((proj) => (
                 <div

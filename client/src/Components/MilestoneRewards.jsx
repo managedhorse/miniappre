@@ -10,6 +10,9 @@ const milestones = [
   { name: 'Level 1', icon: '/lvl1.webp', tapBalanceRequired: 1000, reward: 50000 },
   { name: 'Level 2', icon: '/lvl2.webp', tapBalanceRequired: 50000, reward: 100000 },
   { name: 'Level 3', icon: '/lvl3.webp', tapBalanceRequired: 500000, reward: 250000 },
+  { name: 'Level 4', icon: '/lvl4.webp', tapBalanceRequired: 1000000, reward: 500000 },
+  { name: 'Level 5', icon: '/lvl5.webp', tapBalanceRequired: 2500000, reward: 1000000 },
+  { name: 'Level 6', icon: '/lvl6.webp', tapBalanceRequired: 5000000, reward: 2500000 },
  ];
 
 const MilestoneRewards = () => {

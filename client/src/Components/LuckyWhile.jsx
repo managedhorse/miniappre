@@ -252,7 +252,7 @@ const LuckyWhile = () => {
             <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px] shadow-lg">
               <IoCheckmarkCircle size={24} className="" />
               <span className="font-medium slackey-regular">
-                Congratulations, You have won {Number(data[prizeNumber]?.option)} Mianuses.
+                Congratulations, You won {Number(data[prizeNumber]?.option)} Mianus!
               </span>
             </div>
           </div>

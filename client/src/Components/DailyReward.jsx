@@ -173,8 +173,8 @@ const DailyReward = () => {
         <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px]">
           <IoCheckmarkCircle size={24} />
           <span className="slackey-regular text-[14px] font-medium">
-            Congratulations! You received{" "}
-            {listDailyRewards[dailyReward - 1]?.bonusAward} points.
+            Congratulations! You won{" "}
+            {listDailyRewards[dailyReward - 1]?.bonusAward} Mianus!
           </span>
         </div>
       </div>

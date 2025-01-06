@@ -105,6 +105,12 @@ const formatNumber = (num) => {
               {/* Description */}
               <div className="px-4 mt-4 text-sm leading-relaxed slackey-regular mb-20">
                 <h3 className="text-lg mb-2">About Lucky Rabbi</h3>
+                <h4 className="mb-2">
+                  The most Jewish-themed gambling platform.
+                </h4>
+                <p className="mb-2">
+                  <strong>BJFJ- By Jews for Jews</strong>{" "}
+                </p>
                 <p className="mb-2">
                   The Lucky Rabbi is a <strong>provably fair iGaming platform</strong>{" "}
                   partnered with Boss88, Asia Gaming, and GFG Gaming. The Lucky Rabbi

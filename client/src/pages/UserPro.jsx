@@ -72,6 +72,18 @@ const formatNumber = (num) => {
         ],
         siteLink: "https://example.com", // Or your real link
       },
+      {
+        id: 2,
+        logo: tswap,
+        title: "The Lucky Rabbi",
+        subtitle: "A Jewish-themed gambling platform. 100% Certified Kosher",
+        aboutLines: [
+          "BYJFOJ - By Jews For Jews",
+          "The Lucky Rabbi is a provably fair iGaming platform partnered with Boss88, Asia Gaming, and GFG Gaming.",
+          "The Lucky Rabbi token is the platform token that will receive the total GGR (Gross Gaming Revenue) of all games played on the platform in the form of a dividend.",
+        ],
+        siteLink: "https://example.com", // Or your real link
+      },
     ];
 
   return (

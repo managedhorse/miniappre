@@ -59,6 +59,21 @@ const formatNumber = (num) => {
     .format(dividedUsers)
     .replace(/,/g, " ");
 
+    const projects = [
+      {
+        id: 1,
+        logo: tswap,
+        title: "The Lucky Rabbi",
+        subtitle: "A Jewish-themed gambling platform. 100% Certified Kosher",
+        aboutLines: [
+          "BYJFOJ - By Jews For Jews",
+          "The Lucky Rabbi is a provably fair iGaming platform partnered with Boss88, Asia Gaming, and GFG Gaming.",
+          "The Lucky Rabbi token is the platform token that will receive the total GGR (Gross Gaming Revenue) of all games played on the platform in the form of a dividend.",
+        ],
+        siteLink: "https://example.com", // Or your real link
+      },
+    ];
+
   return (
     <>
 
@@ -95,7 +110,7 @@ const formatNumber = (num) => {
                 {/* Airdrop box */}
                 <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg">Total Airdrop</h3>
+                    <h3 className="text-md">Total Mianus</h3>
                     <div className="flex items-center w-full pt-1 space-x-2">
                       <div className="p-1">
                         <img
@@ -104,7 +119,7 @@ const formatNumber = (num) => {
                           className="w-6 h-6 mx-auto"
                         />
                       </div>
-                      <p className="text-md">
+                      <p className="text-sm">
                         {/* Show total */}
                         {formatNumber(totalCount)}
                       </p>
@@ -113,9 +128,9 @@ const formatNumber = (num) => {
 
                   {/* “Your part” on the same line, right side */}
                   <div className="flex items-end">
-                  <h3 className="text-lg">You have</h3>
+                  <h3 className="text-md">You have: </h3>
                   <div className="flex items-center w-full pt-1 space-x-2">
-                    <p className="text-md">
+                    <p className="text-sm">
                        {userShareDisplay}%
                     </p>
                     </div>
@@ -123,104 +138,51 @@ const formatNumber = (num) => {
                 </div>
               </div>
 
-              <div
-                className="w-full min-h-[150px] px-4 mt-5"
-                style={{
-                  backgroundImage: `url(${tswap})`,
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "contain",
-                }}
-              ></div>
-              {/* Description */}
-              <div className="px-4 mt-4 text-sm leading-relaxed slackey-regular mb-20">
-                <h3 className="text-lg mb-2">The Lucky Rabbi</h3>
-                <h4 className="mb-2">
-                  A Jewish-themed gambling platform. 100% Certified Kosher
-                </h4>
-                <p className="mb-2">
-                  <strong>BYJFOJ - By Jews For Jews</strong>{" "}
-                </p>
-                <p className="mb-2">
-                  The Lucky Rabbi is a <strong>provably fair iGaming platform</strong>{" "}
-                  partnered with Boss88, Asia Gaming, and GFG Gaming. The Lucky Rabbi
-                  token is the platform token that will receive the total GGR (Gross
-                  Gaming Revenue) of all games played on the platform in the form of
-                  a dividend.
-                </p>
-              </div>
-            </div>
-
-            {/* FLOATING CONVERT BUTTON (always visible) */}
-            <div
-              onClick={() => setModalConvert(true)}
-              className="
-                bg-[#ffffff1a] 
-                rounded-full 
-                p-3 
-                w-fit 
-                flex 
-                flex-col 
-                items-center 
-                justify-center 
-                fixed 
-                bottom-[86px]
-                right-4 
-                shadow-lg 
-                cursor-pointer 
-                hover:bg-white/20 
-                transition
-              "
-            >
-              <img src={convertPic} alt="Convert" className="w-8 h-8" />
-              <p className="text-[10px] text-center slackey-regular text-white mt-1">
-                Convert
-              </p>
-            </div>
-
-            {/* MODAL */}
-            <div
-              className={`${
-                modalConvertVisibleEnc ? "visible" : "invisible"
-              } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
-              <div className="flex slackey-regular flex-col justify-between w-full py-8">
-                <button
-                  onClick={() => setModalConvert(false)}
-                  className="flex items-center justify-center absolute right-8 top-8 text-center rounded-[12px] font-medium text-[16px]"
+              {/* Projects Section */}
+              {projects.map((proj) => (
+                <div
+                  key={proj.id}
+                  className="bg-[#ffffff1a] rounded-lg p-4 mb-4"
                 >
-                  <IoClose size={24} className="text-[#9a96a6]" />
-                </button>
-
-                <div className="flex flex-col items-center justify-center w-full">
-                  <div className="w-[120px] h-[120px] rounded-[25px] bg-[#252e57] flex items-center justify-center">
-                    <img alt="claim" src={botr} className="w-[80px]" />
-                  </div>
-                  <h3 className="font-semibold text-center text-[20px] py-4">
-                    Convert to Rabbi-Shekels
-                  </h3>
-                  <p className="pb-6 text-[#9a96a6] text-[16px] text-center">
-                    Ratio : 1/1000
-                  </p>
-
-                  <div className="flex items-center flex-1 space-x-2">
+                  {/* Logo + Title */}
+                  <div className="flex items-center space-x-4 mb-3">
+                    <img
+                      src={proj.logo}
+                      alt={proj.title}
+                      className="w-[60px] h-[60px] object-contain"
+                    />
                     <div>
-                      <img src={coinsmall} className="w-[25px]" alt="Coin Icon" />
-                    </div>
-                    <div className="font-bold text-[26px] flex items-center">
-                      1000 = 1 coin
+                      <h2 className="text-lg font-bold">{proj.title}</h2>
+                      <p className="text-sm text-gray-300 slackey-regular">
+                        {proj.subtitle}
+                      </p>
                     </div>
                   </div>
+
+                  {/* About / Lines */}
+                  <div className="text-sm leading-relaxed text-gray-100 slackey-regular">
+                    {proj.aboutLines.map((line, idx) => (
+                      <p key={idx} className="mb-2">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+
+                  {/* Link to site */}
+                  {proj.siteLink && (
+                    <div className="mt-3">
+                      <a
+                        href={proj.siteLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#ffffff1a] hover:bg-[#ffffff33] text-white px-4 py-2 rounded"
+                      >
+                        Visit Site
+                      </a>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-center w-full pt-4 pb-6">
-                  <button
-                    disabled={true}
-                    className="bg-btn2 text-[#979797] w-full py-5 px-3 flex items-center justify-center text-center rounded-[12px] font-semibold text-[22px]"
-                  >
-                    Convert at TGE
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

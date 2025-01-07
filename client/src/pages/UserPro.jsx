@@ -70,8 +70,8 @@ const Profile = () => {
         "Token on BASE chain",
       ],
       siteLink: "https://app.virtuals.io/", // Replace with your actual link
-      bgColor: "#ffffff1a", // Example background color
-      textColor: "#ffffff", // Example text color
+      bgColor: "#cee856", // Example background color
+      textColor: "#070e25", // Example text color
     },
     // Add more projects as needed
   ];
@@ -136,7 +136,7 @@ const Profile = () => {
           </div>
 
           {/* Scrollable Content Area with Margin Top and Padding Bottom */}
-          <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20">
+          <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">
             {/* Projects Section */}
             {projects.map((proj) => (
               <div

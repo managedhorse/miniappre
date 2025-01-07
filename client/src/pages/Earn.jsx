@@ -27,6 +27,7 @@ import MilestoneRewards from "../Components/MilestoneRewards";
 import telegram from "../images/telegram.webp";
 import twitter from "../images/twitter.webp";
 import website from "../images/website.webp";
+import boss from "../images/boss88.webp";
 
 const Earn = () => {
   const {
@@ -126,7 +127,7 @@ const Earn = () => {
 const listTasks = [
   {
     taskId: "task1",
-    title: "Join Tapmianus TG",
+    title: "Join TG group",
     url: "https://t.me/+9uQKkz_qB2BiNDU0",
     completed: false,
     point: 50000,
@@ -135,48 +136,30 @@ const listTasks = [
   },
   {
     taskId: "task2",
-    title: "Join Boss88pro.com",
-    url: "https://boss88pro.com",
-    completed: false,
-    point: 50000,
-    status: "start",
-    image: website, // Assign twitter image
-  },
-  {
-    taskId: "task3",
-    title: "Join Boss88.ph",
-    url: "https://t.me/Ibccapital",
-    completed: false,
-    point: 50000,
-    status: "start",
-    image: telegram, // Assign telegram image
-  },
-  {
-    taskId: "task4",
-    title: "Join Boss88pro.com",
-    url: "https://t.me/BicentoHub",
+    title: "Follow Twitter",
+    url: "https://x.com",
     completed: false,
     point: 50000,
     status: "start",
     image: twitter, // Assign twitter image
   },
   {
-    taskId: "task5",
-    title: "Join Boss88 TG",
-    url: "https://t.me/TomCat_meomeo",
+    taskId: "task3",
+    title: "Register Boss88",
+    url: "https://boss88.world/?a=x&c=89989502",
     completed: false,
     point: 50000,
     status: "start",
-    image: telegram, // Assign default taskbook image or another specific image
+    image: boss, 
   },
   {
-    taskId: "task6",
-    title: "Join Boss88 TG",
-    url: "https://t.me/TomCat_meomeo",
+    taskId: "task4",
+    title: "Your project here",
+    url: "https://t.me/tapmianus",
     completed: false,
-    point: 20000,
+    point: 50000,
     status: "start",
-    image: telegram, // Assign default taskbook image or another specific image
+    image: website, 
   },
 ];
 

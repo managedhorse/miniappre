@@ -62,30 +62,16 @@ const Profile = () => {
     {
       id: 1,
       logo: tswap,
-      title: "The Lucky Rabbi",
-      subtitle: "A Jewish-themed gambling platform. 100% Certified Kosher",
+      title: "To be announced",
+      subtitle: "An Agentic AI Token",
       aboutLines: [
-        "BYJFOJ - By Jews For Jews",
-        "The Lucky Rabbi is a provably fair iGaming platform partnered with Boss88, Asia Gaming, and GFG Gaming.",
-        "The Lucky Rabbi token is the platform token that will receive the total GGR (Gross Gaming Revenue) of all games played on the platform in the form of a dividend.",
+        "5% of total supply to TapMianus players",
+        "Agentic AI application powered by Virtuals protocol",
+        "Token on BASE chain",
       ],
-      siteLink: "https://example.com", // Replace with your actual link
+      siteLink: "https://app.virtuals.io/", // Replace with your actual link
       bgColor: "#ffffff1a", // Example background color
       textColor: "#ffffff", // Example text color
-    },
-    {
-      id: 2,
-      logo: tswap,
-      title: "Another Project",
-      subtitle: "Subtitle for another project",
-      aboutLines: [
-        "Description line 1",
-        "Description line 2",
-        "Description line 3",
-      ],
-      siteLink: "https://example.com", // Replace with your actual link
-      bgColor: "#f0f0f0", // Example background color
-      textColor: "#000000", // Example text color
     },
     // Add more projects as needed
   ];
@@ -119,7 +105,7 @@ const Profile = () => {
           </div>
 
           {/* Airdrop Box with Margin Bottom */}
-          <div className="flex slackey-regular justify-between gap-2 px-4 mt-4 mb-4">
+          <div className="flex slackey-regular justify-between gap-2 px-4 mt-4 mb-2">
             <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full flex items-center justify-between">
               <div>
                 <h3 className="text-md">Total Mianus</h3>

@@ -174,9 +174,11 @@ const energyUpgradeCosts = [0, 3000, 6000, 12000, 24000, 50000, 100000, 200000, 
 const chargingUpgradeCosts = [0, 2000, 30000, 100000, 200000];
 
 
+
+
 const Boost = () => {
 
-  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus } = useUser();
+  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus, botLevel, setBotLevel, } = useUser();
   const [openInfo, setOpenInfo] = useState(false);
   const [openInfoTwo, setOpenInfoTwo] = useState(false);
   const [isUpgradeModalVisible, setIsUpgradeModalVisible] = useState(false);
@@ -189,6 +191,21 @@ const Boost = () => {
   const [guru, setGuru] = useState(false);
   const [tank, setTank] = useState(false);
   const [bot, setBot] = useState(false);
+  // Determine the next bot level and its cost
+const nextBotLevel = (botLevel || 0) + 1;
+const nextBotData = tapBotLevels.find(levelData => levelData.level === nextBotLevel);
+const nextBotUpgradeCost = nextBotData ? nextBotData.cost : Infinity;
+
+// Compute if the user has enough balance for the next bot upgrade
+const hasSufficientBalanceForBotUpgrade = (balance + refBonus) >= nextBotUpgradeCost;
+
+  const tapBotLevels = [
+    { level: 1, cost: 1000000, tapsPerSecond: 3 },
+    { level: 2, cost: 2000000, tapsPerSecond: 6 },
+    { level: 3, cost: 4000000, tapsPerSecond: 12 },
+    { level: 4, cost: 8000000, tapsPerSecond: 24 },
+    { level: 5, cost: 16000000, tapsPerSecond: 48 },
+  ];
 
 
   const infoRef = useRef(null);
@@ -394,6 +411,34 @@ const Boost = () => {
     }
     };
   };
+
+  const handleBotUpgrade = async () => {
+    // Find next bot level data based on current botLevel
+    const nextLevelData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
+    if (!nextLevelData) return; // No further levels
+  
+    const { cost } = nextLevelData;
+    if ((balance + refBonus) >= cost && id) {
+      const newBotLevel = (botLevel || 0) + 1;
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      try {
+        await updateDoc(userRef, {
+          botLevel: newBotLevel,
+          balance: balance - cost,
+        });
+        // Update local context/state
+        setBalance(prev => prev - cost);
+        setBotLevel(newBotLevel);
+        setCongrats(true);
+        setTimeout(() => setCongrats(false), 2000);
+        console.log('Bot upgraded to level', newBotLevel);
+      } catch (error) {
+        console.error('Error upgrading bot level:', error);
+      }
+    } else {
+      console.log('Insufficient funds or no next level available');
+    }
+  };
  
   const calculateTimeRemaining = () => {
     const now = new Date();
@@ -447,7 +492,7 @@ const Boost = () => {
     </div>
               <div className="bg-borders w-full px-5 h-[1px] !mt-2 !mb-4"></div>
 
-              <div className="flex flex-col w-full">
+               <div className="flex flex-col w-full">
                 <h3 className="text-[18px] slackey-regular font-semibold pb-4">
                   Your daily boosters:
                 </h3>
@@ -468,7 +513,7 @@ const Boost = () => {
                         Master
                       </span>
                       {freeGuru > 0 ? (
-   <span className="font-medium tapguru2">{freeGuru}/3</span>
+                    <span className="font-medium tapguru2">{freeGuru}/3</span>
                       ) : (
                         <span className="font-normal tapguru2">      
                       {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
@@ -490,7 +535,7 @@ const Boost = () => {
                     <div className="flex flex-col flex-1 text-left">
                       <span className="font-semibold slackey-regular tapguru">Full Juice</span>
                       {fullTank> 0 ? (
-   <span className="font-medium tapguru2">{fullTank}/3</span>
+                <span className="font-medium tapguru2">{fullTank}/3</span>
                       ) : (
                         <span className="font-normal tapguru2">      
                       {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
@@ -505,9 +550,9 @@ const Boost = () => {
                   <h3 className="text-[18px] slackey-regular font-semibold">Boosters:</h3>
                 </div>
               </div>
-            </div>
+             </div>
 
-            <div className="w-full flex flex-col h-[50vh] pt-2 pb-[60px] overflow-y-auto">
+             <div className="w-full flex flex-col h-[50vh] pt-2 pb-[60px] overflow-y-auto">
               <div
                 className={`flex alltaskscontainer flex-col w-full space-y-2 pb-20`}
               >
@@ -535,11 +580,11 @@ const Boost = () => {
               <>
               MAX
               </>
-            ) : (
+             ) : (
               <>
                 {formatNumber(nextUpgradeCost)}
               </>
-            )} 
+             )} 
                    
                        
                             
@@ -587,11 +632,11 @@ const Boost = () => {
               <>
               MAX
               </>
-            ) : (
+             ) : (
               <>
                {formatNumber(nextEnergyUpgradeCost)}
               </>
-            )} 
+             )} 
                    
 
                         
@@ -638,11 +683,11 @@ const Boost = () => {
               <>
               MAX
               </>
-            ) : (
+             ) : (
               <>
                {formatNumber(nextChargingUpgradeCost)}
               </>
-            )} 
+             )} 
                         
                             
                             
@@ -694,18 +739,18 @@ const Boost = () => {
 
                 {/*  */}
               </div>
-            </div>
+             </div>
 
 
                {/* Multitap Modal */}
 
 
 
-            <div
+             <div
               className={`${
                 isUpgradeModalVisible  === true ? "visible" : "invisible"
               } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
+             >
               <div className="flex flex-col justify-between w-full py-8">
               <button
                       onClick={() =>  setIsUpgradeModalVisible(false)}
@@ -749,15 +794,15 @@ const Boost = () => {
                   </button>
                 </div>
               </div>
-            </div>
+             </div>
 
-            {/* energylimit modal */}
+             {/* energylimit modal */}
 
-            <div
+             <div
               className={`${
                 isUpgradeModalVisibleEn  === true ? "visible" : "invisible"
               } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
+             >
               <div className="flex flex-col justify-between w-full py-8">
               <button
                       onClick={() =>  setIsUpgradeModalVisibleEn(false)}
@@ -801,15 +846,15 @@ const Boost = () => {
                   </button>
                 </div>
               </div>
-            </div>
+             </div>
 
-            {/* charging modal */}
+             {/* charging modal */}
 
-            <div
+             <div
               className={`${
                 isUpgradeModalVisibleEnc  === true ? "visible" : "invisible"
               } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
+             >
               <div className="flex flex-col justify-between w-full py-8">
               <button
                       onClick={() =>  setIsUpgradeModalVisibleEnc(false)}
@@ -852,16 +897,16 @@ const Boost = () => {
                   </button>
                 </div>
               </div>
-            </div>
+             </div>
 
             
-            {/* tapping Guru Model */}
+             {/* tapping Guru Model */}
 
-            <div
+             <div
               className={`${
                 guru  === true ? "visible" : "invisible"
               } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
+             >
               <div className="flex flex-col justify-between w-full py-8">
               <button
                       onClick={() =>  setGuru(false)}
@@ -904,15 +949,15 @@ const Boost = () => {
                   </button>
                 </div>
               </div>
-            </div>
+             </div>
 
-            {/* full tank Model */}
+             {/* full tank Model */}
 
-            <div
+             <div
               className={`${
                 tank  === true ? "visible" : "invisible"
               } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
+             >
               <div className="flex flex-col justify-between w-full py-8">
               <button
                       onClick={() =>  setTank(false)}
@@ -955,64 +1000,54 @@ const Boost = () => {
                   </button>
                 </div>
               </div>
-            </div>
+             </div>
 
 
 
                {/* Bot Modal */}
+<div className={`${bot === true ? "visible" : "invisible"} absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}>
+  <div className="flex flex-col justify-between w-full py-8">
+    <button
+      onClick={() => setBot(false)}
+      className="flex items-center justify-center absolute right-8 top-8 text-center rounded-[12px] font-medium text-[16px]"
+    >
+      <IoClose size={24} className="text-[#9a96a6]"/>
+    </button>
 
+    <div className="flex flex-col items-center justify-center w-full">
+      <div className="flex flex-col items-center justify-center w-full">
+        <div className="flex items-center justify-center">
+          <img alt="Bot Mianus" src={botr} className="w-[100px]" />
+        </div>
+        <h3 className="font-semibold slackey-regular text-[32px] py-4">Bot Mianus</h3>
+        <p className="pb-6 text-[#9a96a6] slackey-regular text-[16px] text-center">
+          Tap Bot will tap when your juice is full<br />Max duration is 12 hours
+        </p>
+        <div className="flex items-center flex-1 space-x-2">
+          <div className="">
+            <img src={coinsmall} className="w-[25px]" alt="coin" />
+          </div>
+          <div className="font-bold text-[26px] slackey-regular flex items-center">
+            {formatNumber(nextBotUpgradeCost)} 
+            <span className="text-[16px] font-medium slackey-regular text-[#9a96a6] pl-2">
+              | Level {nextBotData?.level}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-
-               <div
-              className={`${
-                bot  === true ? "visible" : "invisible"
-              } absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}
-            >
-              <div className="flex flex-col justify-between w-full py-8">
-              <button
-                      onClick={() =>  setBot(false)}
-                      className="flex items-center justify-center absolute right-8 top-8 text-center rounded-[12px] font-medium text-[16px]"
-                    >
-                     <IoClose size={24} className="text-[#9a96a6]"/>
-                    </button>
-
-
-                <div className="flex flex-col items-center justify-center w-full">
-                  <div className=" flex items-center justify-center">
-                    <img alt="claim" src={botr} className="w-[100px]" />
-                  </div>
-                  <h3 className="font-semibold slackey-regular text-[32px] py-4">
-                  Bot Mianus
-                  </h3>
-                  <p className="pb-6 text-[#9a96a6] slackey-regular text-[16px] text-center">
-                  Tap Bot will tap when your juice is full <br/>
-                 Max duration is 12 hours
-                  </p>
-
-                  <div className="flex items-center flex-1 space-x-2">
-                    <div className="">
-                      <img
-                        src={coinsmall}
-                        className="w-[25px]"
-                        alt="Coin Icon"
-                      />
-                    </div>
-                    <div className="font-bold text-[26px] slackey-regular flex items-center">1 000 000 
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center w-full pt-4 pb-6">
-                  <button
-                          
-                                       disabled
-                    className={`bg-btn2 text-[#979797] w-full py-5 px-3 flex items-center justify-center text-center rounded-[12px] slackey-regular font-semibold text-[22px]`}
-                  >
-                    Insufficient Mianus
-                  </button>
-                </div>
-              </div>
-            </div>
+    <div className="flex justify-center w-full pt-4 pb-6">
+      <button
+        onClick={handleBotUpgrade}
+        disabled={!hasSufficientBalanceForBotUpgrade}
+        className={`${!hasSufficientBalanceForBotUpgrade ? 'bg-btn2 text-[#979797] slackey-regular' : 'bg-gradient-to-b gradient from-[#ffba4c] to-[#aa6900]'} w-full py-5 px-3 flex items-center justify-center text-center rounded-[12px] slackey-regular font-semibold text-[22px]`}
+      >
+        {hasSufficientBalanceForBotUpgrade ? 'Buy Bot Upgrade' : 'Insufficient Mianus'}
+      </button>
+    </div>
+  </div>
+</div>
 
 
 

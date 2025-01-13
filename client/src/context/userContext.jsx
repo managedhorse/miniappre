@@ -58,7 +58,7 @@ export const UserProvider = ({ children }) => {
   const [taskCompleted2, setTaskCompleted2] = useState(false);
   const [leaderboard, SetLeaderboard] = useState([]);
   const [rankUser, setRankUser] = useState(0);
-
+  const [botLevel, setBotLevel] = useState(0);
   const refillIntervalRef = useRef(null);
   const accumulatedEnergyRef = useRef(energy);
   const [isRefilling, setIsRefilling] = useState(false);
@@ -168,6 +168,7 @@ export const UserProvider = ({ children }) => {
           setRefiller(userData.battery.energy);
           setTimeRefill(userData.timeRefill);
           setLevel(userData.level);
+          setBotLevel(userData.botLevel || 0);
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
           await updateReferrals(userRef);
@@ -200,7 +201,8 @@ export const UserProvider = ({ children }) => {
           energy: 500,
           battery: {level: 1, energy: 500},
           refereeId: referrerId || null,
-          referrals: []
+          referrals: [],
+          botLevel: 0,
         };
 
         await setDoc(userRef, userData);
@@ -630,6 +632,8 @@ export const UserProvider = ({ children }) => {
     <UserContext.Provider value={{
       balance,
       battery,
+      botLevel,
+      setBotLevel,
       freeGuru,
       fullTank,
       taskCompleted,

@@ -110,7 +110,7 @@ const Plutos = () => {
   // Declare state hooks first
   const [splashes, setSplashes] = useState([]); // Array to manage multiple splashes
   const [clicks, setClicks] = useState([]);   // Array of click objects
-  const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading } = useUser();
+  const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading, botLevel } = useUser();
   const [points, setPoints] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const [openClaim, setOpenClaim] = useState(false);
@@ -130,6 +130,14 @@ const Plutos = () => {
   const lastSplashTimeRef = useRef(0);
   const imageRef = useRef(null);
   const containerRef = useRef(null); // Reference to the container for positioning
+
+  const tapBotLevels = [
+    { level: 1, cost: 1000000, tapsPerSecond: 3 },
+    { level: 2, cost: 2000000, tapsPerSecond: 6 },
+    { level: 3, cost: 4000000, tapsPerSecond: 12 },
+    { level: 4, cost: 8000000, tapsPerSecond: 24 },
+    { level: 5, cost: 16000000, tapsPerSecond: 48 },
+  ];
 
   const navigate = useNavigate();
 
@@ -158,6 +166,21 @@ const Plutos = () => {
     const img = new Image();
     img.src = '/splat.gif';
   }, []);
+
+  useEffect(() => {
+    if (botLevel > 0) {
+      const botData = tapBotLevels.find(levelData => levelData.level === botLevel);
+      if (botData) {
+        const interval = setInterval(() => {
+          const increment = botData.tapsPerSecond;
+          setBalance(prev => prev + increment);
+          setTapBalance(prev => prev + increment);
+        }, 1000); // Update every second
+  
+        return () => clearInterval(interval);
+      }
+    }
+  }, [botLevel, setBalance, setTapBalance]);
 
   function triggerHapticFeedback() {
     const isAndroid = /Android/i.test(navigator.userAgent);

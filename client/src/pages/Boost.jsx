@@ -191,13 +191,7 @@ const Boost = () => {
   const [guru, setGuru] = useState(false);
   const [tank, setTank] = useState(false);
   const [bot, setBot] = useState(false);
-  // Determine the next bot level and its cost
-const nextBotLevel = (botLevel || 0) + 1;
-const nextBotData = tapBotLevels.find(levelData => levelData.level === nextBotLevel);
-const nextBotUpgradeCost = nextBotData ? nextBotData.cost : Infinity;
-
-// Compute if the user has enough balance for the next bot upgrade
-const hasSufficientBalanceForBotUpgrade = (balance + refBonus) >= nextBotUpgradeCost;
+  
 
   const tapBotLevels = [
     { level: 1, cost: 1000000, tapsPerSecond: 3 },
@@ -206,7 +200,13 @@ const hasSufficientBalanceForBotUpgrade = (balance + refBonus) >= nextBotUpgrade
     { level: 4, cost: 8000000, tapsPerSecond: 24 },
     { level: 5, cost: 16000000, tapsPerSecond: 48 },
   ];
+  // Determine the next bot level and its cost
+  const nextBotLevel = (botLevel || 0) + 1;
+  const nextBotData = tapBotLevels.find(levelData => levelData.level === nextBotLevel);
+  const nextBotUpgradeCost = nextBotData ? nextBotData.cost : Infinity;
 
+  // Compute if the user has enough balance for the next bot upgrade
+  const hasSufficientBalanceForBotUpgrade = (balance + refBonus) >= nextBotUpgradeCost;
 
   const infoRef = useRef(null);
   const infoRefTwo = useRef(null);

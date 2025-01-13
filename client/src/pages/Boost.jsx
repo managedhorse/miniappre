@@ -720,13 +720,15 @@ const Boost = () => {
                     <div className="flex flex-col space-y-1 text-left">
                       <span className="font-semibold slackey-regular text-[17px]">Bot Mianus</span>
                       <div className="flex items-center space-x-1">
-                        <span className="w-[20px] h-[20px]">
-                          <img src={coinsmall} className="w-full" alt="coin" />
+                      <span className="w-[20px] h-[20px]">
+                        <img src={coinsmall} className="w-full" alt="coin" />
+                      </span>
+                      <span className="flex items-center font-medium">
+                        <span className="text-[15px]">
+                          {formatNumber(nextBotUpgradeCost)} | Level {nextBotData?.level || 'Max'}
                         </span>
-                        <span className="flex items-center font-medium">
-                          <span className="text-[15px]">1 000 000</span>
-                        </span>
-                      </div>
+                      </span>
+                    </div>
                     </div>
                   </div>
 

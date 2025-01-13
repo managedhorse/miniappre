@@ -413,21 +413,30 @@ const Boost = () => {
   };
 
   const handleBotUpgrade = async () => {
-    // Find next bot level data based on current botLevel
-    const nextLevelData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
+    // Find next bot level data
+    const nextLevelData = tapBotLevels.find(
+      (levelData) => levelData.level === (botLevel || 0) + 1
+    );
     if (!nextLevelData) return; // No further levels
   
     const { cost } = nextLevelData;
+  
+    // Check if user has enough funds
     if ((balance + refBonus) >= cost && id) {
       const newBotLevel = (botLevel || 0) + 1;
+      const newBalance = balance - cost; // Compute new balance
+  
       const userRef = doc(db, 'telegramUsers', id.toString());
+  
       try {
+        // Update Firestore document with computed values
         await updateDoc(userRef, {
           botLevel: newBotLevel,
-          balance: balance - cost,
+          balance: newBalance,
         });
-        // Update local context/state
-        setBalance(prev => prev - cost);
+  
+        // After successful Firestore update, update local state
+        setBalance(newBalance > 0 ? newBalance : 0);
         setBotLevel(newBotLevel);
         setCongrats(true);
         setTimeout(() => setCongrats(false), 2000);

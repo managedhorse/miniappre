@@ -9,7 +9,7 @@ import full from "../images/full.webp";
 import botr from "../images/bott.webp";
 import boost from "../images/boost.webp";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase.jsx'; // Adjust the path as needed
 import { useUser } from "../context/userContext.jsx";
 import { IoClose } from "react-icons/io5";
@@ -413,31 +413,26 @@ const Boost = () => {
   };
 
   const handleBotUpgrade = async () => {
-    // Find next bot level data
-    const nextLevelData = tapBotLevels.find(
-      (levelData) => levelData.level === (botLevel || 0) + 1
-    );
+    const nextLevelData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
     if (!nextLevelData) return; // No further levels
   
     const { cost } = nextLevelData;
-  
-    // Check if user has enough funds
     if ((balance + refBonus) >= cost && id) {
       const newBotLevel = (botLevel || 0) + 1;
-      const newBalance = balance - cost; // Compute new balance
-  
       const userRef = doc(db, 'telegramUsers', id.toString());
-  
       try {
-        // Update Firestore document with computed values
+        // Update Firestore with new bot level and balance
         await updateDoc(userRef, {
           botLevel: newBotLevel,
-          balance: newBalance,
+          balance: balance - cost,
         });
-  
-        // After successful Firestore update, update local state
-        setBalance(newBalance > 0 ? newBalance : 0);
-        setBotLevel(newBotLevel);
+        // Retrieve updated data from Firestore
+        const updatedDoc = await getDoc(userRef);
+        if (updatedDoc.exists()) {
+          const data = updatedDoc.data();
+          setBalance(data.balance);
+          setBotLevel(data.botLevel);
+        }
         setCongrats(true);
         setTimeout(() => setCongrats(false), 2000);
         console.log('Bot upgraded to level', newBotLevel);

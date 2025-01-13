@@ -167,21 +167,6 @@ const Plutos = () => {
     img.src = '/splat.gif';
   }, []);
 
-  useEffect(() => {
-    if (botLevel > 0) {
-      const botData = tapBotLevels.find(levelData => levelData.level === botLevel);
-      if (botData) {
-        const interval = setInterval(() => {
-          const increment = botData.tapsPerSecond;
-          setBalance(prev => prev + increment);
-          setTapBalance(prev => prev + increment);
-        }, 1000); // Update every second
-  
-        return () => clearInterval(interval);
-      }
-    }
-  }, [botLevel, setBalance, setTapBalance]);
-
   function triggerHapticFeedback() {
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);

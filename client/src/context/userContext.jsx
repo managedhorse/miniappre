@@ -3,7 +3,6 @@ import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query,
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
 
-//author : chris_lev11 //Tg
 if (import.meta.NODE_ENV === 'production') {
   disableReactDevTools();
 }
@@ -66,7 +65,20 @@ export const UserProvider = ({ children }) => {
   const refillSteps = timeRefill.step; // Number of increments
   const incrementValue = refiller / refillSteps; // Amount to increment each step
   const defaultEnergy = refiller; // Default energy value
-
+  const tapBotLevels = [
+    { level: 1, cost: 1000000, tapsPerSecond: 3 },
+    { level: 2, cost: 2000000, tapsPerSecond: 6 },
+    { level: 3, cost: 4000000, tapsPerSecond: 12 },
+    { level: 4, cost: 8000000, tapsPerSecond: 24 },
+    { level: 5, cost: 16000000, tapsPerSecond: 48 },
+  ];
+  
+  const [unsavedEarnings, setUnsavedEarnings] = useState(0);
+  const lastEarningsUpdateKey = "lastEarningsUpdate";
+  const unsavedEarningsKey = "unsavedEarnings";
+  const balanceRef = useRef(balance);
+  const tapBalanceRef = useRef(tapBalance);
+  const unsavedEarningsRef = useRef(unsavedEarnings);
   
   const refillEnergy = () => {
     if (isRefilling) return;
@@ -91,6 +103,93 @@ export const UserProvider = ({ children }) => {
       });
     }, refillDuration / refillSteps); // Increase energy at each step
   };
+  useEffect(() => {
+    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+    if (storedEarnings) {
+      setUnsavedEarnings(parseFloat(storedEarnings) || 0);
+    }
+  }, []);
+
+  useEffect(() => { balanceRef.current = balance; }, [balance]);
+useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);
+useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarnings]);
+
+  useEffect(() => {
+    if (botLevel > 0) {
+      const botData = tapBotLevels.find(l => l.level === botLevel);
+      if (!botData) return;
+      const interval = setInterval(() => {
+        setUnsavedEarnings(prev => {
+          const newEarnings = prev + botData.tapsPerSecond;
+          localStorage.setItem(unsavedEarningsKey, newEarnings.toString());
+          return newEarnings;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [botLevel]);
+
+  useEffect(() => {
+    if (!id) return; // Ensure 'id' is set before starting the interval
+  
+    const updateInterval = setInterval(async () => {
+      const currentUnsaved = unsavedEarningsRef.current;
+      // Only update if there are earnings to save
+      if (currentUnsaved > 0) {
+        try {
+          const userRef = doc(db, 'telegramUsers', id.toString());
+          // Use the refs to access the latest balance and tapBalance
+          const updatedBalance = balanceRef.current + currentUnsaved;
+          const updatedTapBalance = tapBalanceRef.current + currentUnsaved;
+          await updateDoc(userRef, {
+            balance: updatedBalance,
+            tapBalance: updatedTapBalance,
+          });
+          // Update local state after successful Firestore update
+          setBalance(updatedBalance);
+          setTapBalance(updatedTapBalance);
+          setUnsavedEarnings(0);
+          localStorage.setItem(unsavedEarningsKey, "0");
+          localStorage.setItem(lastEarningsUpdateKey, Date.now().toString());
+        } catch (error) {
+          console.error("Error batching tapbot earnings:", error);
+        }
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+  
+    return () => clearInterval(updateInterval);
+  }, [id]);
+  
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.setItem(lastEarningsUpdateKey, Date.now().toString());
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (botLevel > 0) {
+      const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
+      if (lastUpdate) {
+        const lastTime = parseInt(lastUpdate);
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - lastTime) / 1000);
+        const botData = tapBotLevels.find(l => l.level === botLevel);
+        if (botData) {
+          const missedEarnings = elapsedSeconds * botData.tapsPerSecond;
+          setUnsavedEarnings(prev => {
+            const newTotal = prev + missedEarnings;
+            localStorage.setItem(unsavedEarningsKey, newTotal.toString());
+            return newTotal;
+          });
+        }
+      }
+    }
+  }, [botLevel]);
   
   useEffect(() => {
     if (energy < refiller && !isRefilling) {

@@ -48,7 +48,7 @@ const { totalCount, dividedCount, users, dividedUsers } = useUser();
                         </div>
                         <div className="w-full item-text">
                             <h3 className="font-semibold text-[17px]"> Daily Rewasrd </h3>
-                            <p className="font-medium text-[15px] pt-2">Com every day to get reward</p>
+                            <p className="font-medium text-[15px] pt-2">Come every day to get a reward</p>
                         </div>
                     </div>
                     <div onClick={() => navigate("/more/leaderboard")} className="text-center item-list bg-[#3b393942] border-[#45434305] rounded-2xl p-4">

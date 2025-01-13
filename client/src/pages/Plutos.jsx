@@ -302,7 +302,9 @@ const Plutos = () => {
       if (energy < battery.energy) {
         refillEnergy();
       }
-    }, 1000); // Set the inactivity period to 1 second (adjust as needed)
+    }, 1000); 
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(updateFirestore, 1000);// Set the inactivity period to 1 second (adjust as needed)
   };
 
   const handleTouchStartGuru = (e) => {
@@ -359,7 +361,9 @@ const Plutos = () => {
       if (energy < battery.energy) {
         refillEnergy();
       }
-    }, 1000); // Set the inactivity period to 1 second (adjust as needed)
+    }, 1000);
+    learTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(updateFirestore, 1000); // Set the inactivity period to 1 second (adjust as needed)
   };
 
   const updateFirestore = async () => {
@@ -385,7 +389,7 @@ const Plutos = () => {
         accumulatedEnergyRef.current = energy;
         accumulatedTapBalanceRef.current = tapBalance;
       } catch (error) {
-
+        console.error('Error updating balance and energy:', error);
       } finally {
         // Clear updating flag
         isUpdatingRef.current = false;

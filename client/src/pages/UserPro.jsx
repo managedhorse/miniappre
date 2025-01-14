@@ -118,7 +118,7 @@ const Profile = () => {
                     />
                   </div>
                   <p className="text-sm">
-                    {formatNumber(balance + unsavedEarnings + refBonus)}
+                    {formatNumber(totalCount)}
                   </p>
                 </div>
               </div>

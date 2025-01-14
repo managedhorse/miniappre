@@ -21,7 +21,7 @@ function formatUserShare(share) {
 
 const Profile = () => {
   // Destructure user-related data from the context
-  const { totalCount, dividedCount, users, dividedUsers, username, balance, unsavedEarnings, refBonus } = useUser();
+  const { totalCount, dividedCount, users, dividedUsers, username, balance, refBonus } = useUser();
 
   // State for modal visibility (if needed in future)
   const [modalConvertVisibleEnc, setModalConvert] = useState(false);
@@ -42,7 +42,7 @@ const Profile = () => {
   // Calculate the user's share percentage
   let userSharePercent = 0;
   if (totalCount && totalCount !== 0) {
-    userSharePercent = ((balance + unsavedEarnings + refBonus)/ totalCount) * 100;
+    userSharePercent = ((balance + refBonus)/ totalCount) * 100;
   }
 
   // Format the share percentage based on the helper function

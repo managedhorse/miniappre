@@ -502,7 +502,7 @@ const Plutos = () => {
                 />
               </div>
               <h1 className="text-[#fff] text-[42px] slackey-regular font-extrabold">
-                {formatNumber(balance + unsavedEarnings + refBonus)}
+                {formatNumber(balance + refBonus)}
               </h1>
             </div>
               

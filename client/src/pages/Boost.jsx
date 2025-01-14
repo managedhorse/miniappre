@@ -178,7 +178,7 @@ const chargingUpgradeCosts = [0, 2000, 30000, 100000, 200000];
 
 const Boost = () => {
 
-  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus, unsavedEarnings, botLevel, setBotLevel, } = useUser();
+  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus, botLevel, setBotLevel, } = useUser();
   const [openInfo, setOpenInfo] = useState(false);
   const [openInfoTwo, setOpenInfoTwo] = useState(false);
   const [isUpgradeModalVisible, setIsUpgradeModalVisible] = useState(false);
@@ -206,7 +206,7 @@ const Boost = () => {
   const nextBotUpgradeCost = nextBotData ? nextBotData.cost : Infinity;
 
   // Compute if the user has enough balance for the next bot upgrade
-  const hasSufficientBalanceForBotUpgrade = (balance + unsavedEarnings +refBonus) >= nextBotUpgradeCost;
+  const hasSufficientBalanceForBotUpgrade = (balance + refBonus) >= nextBotUpgradeCost;
 
   const infoRef = useRef(null);
   const infoRefTwo = useRef(null);
@@ -249,7 +249,7 @@ const Boost = () => {
     setIsUpgrading(true);
     const nextLevel = tapValue.level;
     const upgradeCost = upgradeCosts[nextLevel];
-    if (nextLevel < tapValues.length && (balance + unsavedEarnings + refBonus) >= upgradeCost && id) {
+    if (nextLevel < tapValues.length && (balance + refBonus) >= upgradeCost && id) {
       const newTapValue = tapValues[nextLevel];
       const userRef = doc(db, 'telegramUsers', id.toString());
       try {
@@ -279,7 +279,7 @@ const Boost = () => {
     setIsUpgradingEn(true);
     const nextEnergyLevel = battery.level;
     const energyUpgradeCost = energyUpgradeCosts[nextEnergyLevel];
-    if (nextEnergyLevel< energyValues.length && (balance + unsavedEarnings + refBonus) >= energyUpgradeCost && id) {
+    if (nextEnergyLevel< energyValues.length && (balance + refBonus) >= energyUpgradeCost && id) {
       const newEnergyValue = energyValues[nextEnergyLevel];
       const userRef = doc(db, 'telegramUsers', id.toString());
       try {
@@ -315,7 +315,7 @@ const Boost = () => {
     setIsUpgradingEnc(true);
     const nextChargingLevel = timeRefill.level;
     const chargingUpgradeCost = chargingUpgradeCosts[nextChargingLevel];
-    if (nextChargingLevel< chargingValues.length && (balance + unsavedEarnings + refBonus) >= chargingUpgradeCost && id) {
+    if (nextChargingLevel< chargingValues.length && (balance + refBonus) >= chargingUpgradeCost && id) {
       const newChargingValue = chargingValues[nextChargingLevel];
       const userRef = doc(db, 'telegramUsers', id.toString());
       try {
@@ -344,13 +344,13 @@ const Boost = () => {
 
 
   const nextUpgradeCost = upgradeCosts[tapValue.level];
-  const hasSufficientBalance = (balance + unsavedEarnings + refBonus) >= nextUpgradeCost;
+  const hasSufficientBalance = (balance + refBonus) >= nextUpgradeCost;
 
   const nextEnergyUpgradeCost = energyUpgradeCosts[battery.level];
-  const hasSufficientBalanceEn = (balance + unsavedEarnings + refBonus) >= nextEnergyUpgradeCost;
+  const hasSufficientBalanceEn = (balance + refBonus) >= nextEnergyUpgradeCost;
 
   const nextChargingUpgradeCost = chargingUpgradeCosts[timeRefill.level];
-  const hasSufficientBalanceEnc = (balance + unsavedEarnings + refBonus) >= nextChargingUpgradeCost;
+  const hasSufficientBalanceEnc = (balance + refBonus) >= nextChargingUpgradeCost;
 
   const location = useNavigate();
 
@@ -417,7 +417,7 @@ const Boost = () => {
     if (!nextLevelData) return; // No further levels
   
     const { cost } = nextLevelData;
-    if ((balance + unsavedEarnings + refBonus) >= cost && id) {
+    if ((balance + refBonus) >= cost && id) {
       const newBotLevel = (botLevel || 0) + 1;
       const userRef = doc(db, 'telegramUsers', id.toString());
       try {
@@ -484,7 +484,7 @@ const Boost = () => {
                   <img src={coinsmall} className="w-full" alt="coin" />
                 </div>
                 <h1 className="text-[#fff] slackey-regular text-[42px] font-extrabold">
-                  {formatNumber(balance + unsavedEarnings + refBonus)}
+                  {formatNumber(balance + refBonus)}
                 </h1>
               </div>
               <div>

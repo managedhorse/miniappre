@@ -278,26 +278,25 @@ useEffect(() => {
           if (userData.photo_url !== photo_url) {
             await updateDoc(userRef, { photo_url });
           }
-          // Read unsaved earnings from localStorage
-    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-    const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-          // Incorporate unsaved earnings into userData
-        userData.balance = (userData.balance || 0) + unsaved;
-        userData.tapBalance = (userData.tapBalance || 0) + unsaved;
+          
+        // Read unsaved earnings and stored balances from localStorage
+  const storedEarnings = parseFloat(localStorage.getItem(unsavedEarningsKey)) || 0;
+  const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
+  const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
 
-        // Retrieve last known balances from localStorage
-    const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
-    const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
+  // Incorporate unsaved earnings into Firestore data
+  userData.balance = (userData.balance || 0) + storedEarnings;
+  userData.tapBalance = (userData.tapBalance || 0) + storedEarnings;
 
-    // Use the larger of the Firestore balance or the locally stored balance
-    userData.balance = Math.max(userData.balance, storedBalance);
-    userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
+  // Use the larger of Firestore and locally stored balances
+  userData.balance = Math.max(userData.balance, storedBalance);
+  userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
 
-        // Update Firestore with the new merged balance values
-        await updateDoc(userRef, {
-          balance: userData.balance,
-          tapBalance: userData.tapBalance
-        });
+  // Update Firestore and local state
+  await updateDoc(userRef, {
+    balance: userData.balance,
+    tapBalance: userData.tapBalance
+  });
           setBalance(userData.balance);
           setTapBalance(userData.tapBalance);
           setTapValue(userData.tapValue);

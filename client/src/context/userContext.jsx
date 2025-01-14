@@ -186,12 +186,14 @@ useEffect(() => {
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.setItem(lastEarningsUpdateKey, Date.now().toString());
+      localStorage.setItem('lastBalance', balance.toString());
+      localStorage.setItem('lastTapBalance', tapBalance.toString());
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [balance, tapBalance]);
 
   useEffect(() => {
     if (id && botLevel > 0) {
@@ -276,9 +278,20 @@ useEffect(() => {
           if (userData.photo_url !== photo_url) {
             await updateDoc(userRef, { photo_url });
           }
+          // Read unsaved earnings from localStorage
+    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+    const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
           // Incorporate unsaved earnings into userData
         userData.balance = (userData.balance || 0) + unsaved;
         userData.tapBalance = (userData.tapBalance || 0) + unsaved;
+
+        // Retrieve last known balances from localStorage
+    const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
+    const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
+
+    // Use the larger of the Firestore balance or the locally stored balance
+    userData.balance = Math.max(userData.balance, storedBalance);
+    userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
 
         // Update Firestore with the new merged balance values
         await updateDoc(userRef, {

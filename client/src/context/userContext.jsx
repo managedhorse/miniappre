@@ -146,7 +146,7 @@ useEffect(() => {
         localStorage.setItem(unsavedEarningsKey, newEarnings.toString());
         return newEarnings;
       });
-    }, 1000);
+    }, 3000);
     return () => clearInterval(interval);
   }
 }, [botLevel]);
@@ -249,6 +249,7 @@ useEffect(() => {
     setTapGuru(true);
     setIsTimerRunning(true);
   }, []);
+
   useEffect(() => {
     const storedEarnings = localStorage.getItem(unsavedEarningsKey);
     const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;

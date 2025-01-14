@@ -190,7 +190,7 @@ useEffect(() => {
           console.error("Error batching tapbot earnings:", error);
         }
       }
-    }, 0.5 * 60 * 1000); // 30 seconds
+    }, 2 * 60 * 1000); // 2 minutes
   
     return () => clearInterval(updateInterval);
   }, [id]);

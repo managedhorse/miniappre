@@ -131,14 +131,6 @@ const Plutos = () => {
   const imageRef = useRef(null);
   const containerRef = useRef(null); // Reference to the container for positioning
 
-  const tapBotLevels = [
-    { level: 1, cost: 1000000, tapsPerSecond: 3 },
-    { level: 2, cost: 2000000, tapsPerSecond: 6 },
-    { level: 3, cost: 4000000, tapsPerSecond: 12 },
-    { level: 4, cost: 8000000, tapsPerSecond: 24 },
-    { level: 5, cost: 16000000, tapsPerSecond: 48 },
-  ];
-
   const navigate = useNavigate();
 
   // Debugging: Log splashes and clicks state changes
@@ -312,7 +304,7 @@ const Plutos = () => {
       }
     }, 1000); 
     clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(updateFirestore, 1000);// Set the inactivity period to 1 second (adjust as needed)
+    debounceTimerRef.current = setTimeout(updateFirestore, 2000);// Set the inactivity period to 1 second (adjust as needed)
   };
 
   const handleTouchStartGuru = (e) => {

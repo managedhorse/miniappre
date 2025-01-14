@@ -42,7 +42,7 @@ const Profile = () => {
   // Calculate the user's share percentage
   let userSharePercent = 0;
   if (totalCount && totalCount !== 0) {
-    userSharePercent = (balance / totalCount) * 100;
+    userSharePercent = (balance + unsavedEarnings + refBonus/ totalCount) * 100;
   }
 
   // Format the share percentage based on the helper function

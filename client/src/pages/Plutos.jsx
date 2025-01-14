@@ -110,7 +110,7 @@ const Plutos = () => {
   // Declare state hooks first
   const [splashes, setSplashes] = useState([]); // Array to manage multiple splashes
   const [clicks, setClicks] = useState([]);   // Array of click objects
-  const { balance, username, unsavedEarnings, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading, botLevel } = useUser();
+  const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading, botLevel } = useUser();
   const [points, setPoints] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const [openClaim, setOpenClaim] = useState(false);

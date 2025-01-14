@@ -80,6 +80,19 @@ export const UserProvider = ({ children }) => {
   const balanceRef = useRef(balance);
   const tapBalanceRef = useRef(tapBalance);
   const unsavedEarningsRef = useRef(unsavedEarnings);
+
+  // New effect to read stored unsaved earnings on mount
+useEffect(() => {
+  const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+  const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+
+  if (unsaved > 0) {
+    setBalance(prevBalance => prevBalance + unsaved);
+    setTapBalance(prevTapBalance => prevTapBalance + unsaved);
+    setUnsavedEarnings(0);
+    localStorage.setItem(unsavedEarningsKey, "0");
+  }
+}, []);
   
   const refillEnergy = () => {
     if (isRefilling) return;
@@ -146,7 +159,7 @@ useEffect(() => {
         localStorage.setItem(unsavedEarningsKey, newEarnings.toString());
         return newEarnings;
       });
-    }, 3000);
+    }, 1000);
     return () => clearInterval(interval);
   }
 }, [botLevel]);
@@ -250,17 +263,7 @@ useEffect(() => {
     setIsTimerRunning(true);
   }, []);
 
-  useEffect(() => {
-    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-    const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
   
-    if (unsaved > 0) {
-      setBalance(prevBalance => prevBalance + unsaved);
-      setTapBalance(prevTapBalance => prevTapBalance + unsaved);
-      setUnsavedEarnings(0);
-      localStorage.setItem(unsavedEarningsKey, "0");
-    }
-  }, []);
 
   const sendUserData = async () => {
     const queryParams = new URLSearchParams(window.location.search);

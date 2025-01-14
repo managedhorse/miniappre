@@ -314,6 +314,18 @@ useEffect(() => {
         localStorage.setItem(unsavedEarningsKey, "0");
         // Calculate and incorporate unsaved earnings after loading user data
         calculateMissedEarnings();
+        // Read the newly calculated unsaved earnings
+        const newStoredEarnings = localStorage.getItem(unsavedEarningsKey);
+        const newUnsaved = newStoredEarnings ? parseFloat(newStoredEarnings) : 0;
+
+        if(newUnsaved > 0) {
+          // Update balance and tapBalance with missed earnings
+          setBalance(prev => prev + newUnsaved);
+          setTapBalance(prev => prev + newUnsaved);
+          // Reset unsaved earnings after applying them
+          setUnsavedEarnings(0);
+          localStorage.setItem(unsavedEarningsKey, "0");
+      }
           console.log("Battery is:", userData.battery.energy)
           return;
         }

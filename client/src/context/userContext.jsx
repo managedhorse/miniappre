@@ -249,7 +249,17 @@ useEffect(() => {
     setTapGuru(true);
     setIsTimerRunning(true);
   }, []);
-
+  useEffect(() => {
+    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+    const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+  
+    if (unsaved > 0) {
+      setBalance(prevBalance => prevBalance + unsaved);
+      setTapBalance(prevTapBalance => prevTapBalance + unsaved);
+      setUnsavedEarnings(0);
+      localStorage.setItem(unsavedEarningsKey, "0");
+    }
+  }, []);
 
   const sendUserData = async () => {
     const queryParams = new URLSearchParams(window.location.search);

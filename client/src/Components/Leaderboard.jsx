@@ -145,7 +145,7 @@ const Leaderboard = () => {
                           </span>
                           <span className="flex items-center font-medium">
                             <span className="text-[14px]">
-                            {formatNumber(rank.balance + (rank.userId === currentUserId ? refBonus : 0))}
+                            {formatNumber(rank.balance + refBonus)}
                             </span>{" "}
                             <span className="bg-[#bdbdbd] w-[1px] h-[13px] mx-2"></span>
                             <span className="text-[#9a96a6] text-[14px]">

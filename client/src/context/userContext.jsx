@@ -736,7 +736,6 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
       botLevel,
       setBotLevel,
       unsavedEarnings,
-      newEarnings,
       freeGuru,
       fullTank,
       taskCompleted,

@@ -105,6 +105,27 @@ export const UserProvider = ({ children }) => {
     }, refillDuration / refillSteps); // Increase energy at each step
   };
 
+  // Define a function to calculate missed earnings
+  const calculateMissedEarnings = () => {
+    if (id && botLevel > 0) {
+      const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
+      if (lastUpdate) {
+        const lastTime = parseInt(lastUpdate, 10);
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - lastTime) / 1000);
+        const botData = tapBotLevels.find(l => l.level === botLevel);
+        if (botData) {
+          const missedEarnings = elapsedSeconds * botData.tapsPerSecond;
+          setUnsavedEarnings(prev => {
+            const newTotal = prev + missedEarnings;
+            localStorage.setItem(unsavedEarningsKey, newTotal.toString());
+            return newTotal;
+          });
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     // Read unsaved earnings from localStorage on mount
     const storedEarnings = localStorage.getItem(unsavedEarningsKey);
@@ -306,7 +327,8 @@ useEffect(() => {
           // After applying unsaved earnings, reset them
         setUnsavedEarnings(0);
         localStorage.setItem(unsavedEarningsKey, "0");
-
+        // Calculate and incorporate unsaved earnings after loading user data
+        calculateMissedEarnings();
           console.log("Battery is:", userData.battery.energy)
           return;
         }

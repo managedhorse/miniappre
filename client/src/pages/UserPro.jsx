@@ -21,7 +21,7 @@ function formatUserShare(share) {
 
 const Profile = () => {
   // Destructure user-related data from the context
-  const { totalCount, dividedCount, users, dividedUsers, username, balance } = useUser();
+  const { totalCount, dividedCount, users, dividedUsers, username, balance, unsavedEarnings, refBonus } = useUser();
 
   // State for modal visibility (if needed in future)
   const [modalConvertVisibleEnc, setModalConvert] = useState(false);
@@ -118,7 +118,7 @@ const Profile = () => {
                     />
                   </div>
                   <p className="text-sm">
-                    {formatNumber(totalCount)}
+                    {formatNumber(balance + unsavedEarnings + refBonus)}
                   </p>
                 </div>
               </div>

@@ -104,6 +104,7 @@ export const UserProvider = ({ children }) => {
       });
     }, refillDuration / refillSteps); // Increase energy at each step
   };
+
   useEffect(() => {
     const storedEarnings = localStorage.getItem(unsavedEarningsKey);
     if (storedEarnings) {
@@ -111,7 +112,7 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => { balanceRef.current = balance; }, [balance]);
+useEffect(() => { balanceRef.current = balance; }, [balance]);
 useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);
 useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarnings]);
 
@@ -173,10 +174,10 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
   }, []);
 
   useEffect(() => {
-    if (botLevel > 0) {
+    if (id && botLevel > 0) {
       const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
       if (lastUpdate) {
-        const lastTime = parseInt(lastUpdate);
+        const lastTime = parseInt(lastUpdate, 10);
         const now = Date.now();
         const elapsedSeconds = Math.floor((now - lastTime) / 1000);
         const botData = tapBotLevels.find(l => l.level === botLevel);
@@ -190,7 +191,7 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
         }
       }
     }
-  }, [botLevel]);
+  }, [id, botLevel]); 
   
   useEffect(() => {
     if (energy < refiller && !isRefilling) {

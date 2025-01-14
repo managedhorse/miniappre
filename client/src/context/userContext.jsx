@@ -125,20 +125,25 @@ useEffect(() => { balanceRef.current = balance; }, [balance]);
 useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);
 useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarnings]);
 
-  useEffect(() => {
-    if (botLevel > 0) {
-      const botData = tapBotLevels.find(l => l.level === botLevel);
-      if (!botData) return;
-      const interval = setInterval(() => {
-        setUnsavedEarnings(prev => {
-          const newEarnings = prev + botData.tapsPerSecond;
-          localStorage.setItem(unsavedEarningsKey, newEarnings.toString());
-          return newEarnings;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [botLevel]);
+useEffect(() => {
+  if (botLevel > 0) {
+    const botData = tapBotLevels.find(l => l.level === botLevel);
+    if (!botData) return;
+    const interval = setInterval(() => {
+      // Update the displayed balance and tapBalance for immediate UI feedback
+      setBalance(prev => prev + botData.tapsPerSecond);
+      setTapBalance(prev => prev + botData.tapsPerSecond);
+      
+      // Also accumulate unsaved earnings for Firestore batching
+      setUnsavedEarnings(prev => {
+        const newEarnings = prev + botData.tapsPerSecond;
+        localStorage.setItem(unsavedEarningsKey, newEarnings.toString());
+        return newEarnings;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }
+}, [botLevel]);
 
   useEffect(() => {
     if (!id) return; // Ensure 'id' is set before starting the interval
@@ -254,6 +259,10 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
       try {
         const userRef = doc(db, 'telegramUsers', userId.toString());
         const userDoc = await getDoc(userRef);
+
+        // Read unsaved earnings from localStorage
+      const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+      const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
         if (userDoc.exists()) {
           console.log('User already exists in Firestore');
           const userData = userDoc.data();
@@ -261,6 +270,15 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
           if (userData.photo_url !== photo_url) {
             await updateDoc(userRef, { photo_url });
           }
+          // Incorporate unsaved earnings into userData
+        userData.balance = (userData.balance || 0) + unsaved;
+        userData.tapBalance = (userData.tapBalance || 0) + unsaved;
+
+        // Update Firestore with the new merged balance values
+        await updateDoc(userRef, {
+          balance: userData.balance,
+          tapBalance: userData.tapBalance
+        });
           setBalance(userData.balance);
           setTapBalance(userData.tapBalance);
           setTapValue(userData.tapValue);
@@ -285,6 +303,10 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
           setInitialized(true);
           setLoading(false);
           fetchData(userData.userId); // Fetch data for the existing user
+          // After applying unsaved earnings, reset them
+        setUnsavedEarnings(0);
+        localStorage.setItem(unsavedEarningsKey, "0");
+
           console.log("Battery is:", userData.battery.energy)
           return;
         }

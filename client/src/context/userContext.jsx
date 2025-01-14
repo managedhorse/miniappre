@@ -1,3 +1,4 @@
+//userContext.jsx:
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
@@ -733,6 +734,7 @@ useEffect(() => { unsavedEarningsRef.current = unsavedEarnings; }, [unsavedEarni
       battery,
       botLevel,
       setBotLevel,
+      unsavedEarnings,
       freeGuru,
       fullTank,
       taskCompleted,

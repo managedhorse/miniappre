@@ -126,21 +126,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    // Read unsaved earnings from localStorage on mount
-    const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-    const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-    
-    if (unsaved > 0) {
-      // Add unsaved earnings to current balance and tapBalance
-      setBalance(prevBalance => prevBalance + unsaved);
-      setTapBalance(prevTapBalance => prevTapBalance + unsaved);
-      // Optionally reset unsavedEarnings if desired
-      setUnsavedEarnings(0);
-      localStorage.setItem(unsavedEarningsKey, "0");
-    }
-    // This effect runs once on mount
-  }, []);
 
 useEffect(() => { balanceRef.current = balance; }, [balance]);
 useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);

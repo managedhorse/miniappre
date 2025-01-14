@@ -118,27 +118,6 @@ useEffect(() => {
     }, refillDuration / refillSteps); // Increase energy at each step
   };
 
-  // Define a function to calculate missed earnings
-  const calculateMissedEarnings = () => {
-    if (id && botLevel > 0) {
-      const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
-      if (lastUpdate) {
-        const lastTime = parseInt(lastUpdate, 10);
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - lastTime) / 1000);
-        const botData = tapBotLevels.find(l => l.level === botLevel);
-        if (botData) {
-          const missedEarnings = elapsedSeconds * botData.tapsPerSecond;
-          setUnsavedEarnings(prev => {
-            const newTotal = prev + missedEarnings;
-            localStorage.setItem(unsavedEarningsKey, newTotal.toString());
-            return newTotal;
-          });
-        }
-      }
-    }
-  };
-
 
 useEffect(() => { balanceRef.current = balance; }, [balance]);
 useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);

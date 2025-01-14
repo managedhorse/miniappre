@@ -35,7 +35,7 @@ export const UserProvider = ({ children }) => {
   const [referrals, setReferrals] = useState([]); // State to hold referrals
   const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
   const [refiller, setRefiller] = useState(0);
-  const { count, setCount } = useState(0);
+  const [ count, setCount ] = useState(0);
   const [tapGuru, setTapGuru] = useState(false);
   const [mainTap, setMainTap] = useState(true);
   const [time, setTime] = useState(22);
@@ -190,7 +190,7 @@ useEffect(() => {
           console.error("Error batching tapbot earnings:", error);
         }
       }
-    }, 30 * 60 * 1000); // 30 minutes
+    }, 0.5 * 60 * 1000); // 30 seconds
   
     return () => clearInterval(updateInterval);
   }, [id]);
@@ -262,6 +262,7 @@ useEffect(() => {
       }
     }
   }, [id, botLevel]);
+
   useEffect(() => {
     if (energy < refiller && !isRefilling) {
       refillEnergy();

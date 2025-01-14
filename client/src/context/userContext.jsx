@@ -210,6 +210,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (id && botLevel > 0) {
+      // Calculate missed earnings
       const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
       if (lastUpdate) {
         const lastTime = parseInt(lastUpdate, 10);
@@ -218,36 +219,23 @@ useEffect(() => {
         const botData = tapBotLevels.find(l => l.level === botLevel);
         if (botData) {
           const missedEarnings = elapsedSeconds * botData.tapsPerSecond;
-          setUnsavedEarnings(prev => {
-            const newTotal = prev + missedEarnings;
-            localStorage.setItem(unsavedEarningsKey, newTotal.toString());
-            return newTotal;
-          });
+          setUnsavedEarnings(missedEarnings);
+          localStorage.setItem(unsavedEarningsKey, missedEarnings.toString());
         }
       }
-    }
-  }, [id, botLevel]); 
-  useEffect(() => {
-    if (id && botLevel > 0) {
-      // Calculate missed earnings based on elapsed time
-      calculateMissedEarnings();
   
-      // Retrieve unsaved earnings from localStorage
+      // Now apply unsaved earnings if any
       const storedEarnings = localStorage.getItem(unsavedEarningsKey);
       const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-  
       if (unsaved > 0) {
-        // Compute new balances based on unsaved earnings
         const newBalance = balance + unsaved;
         const newTapBalance = tapBalance + unsaved;
   
-        // Update local state
         setBalance(newBalance);
         setTapBalance(newTapBalance);
         setUnsavedEarnings(0);
         localStorage.setItem(unsavedEarningsKey, "0");
   
-        // Update Firestore with the new balances
         const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
         if (telegramUser) {
           const { id: userId } = telegramUser;
@@ -262,6 +250,7 @@ useEffect(() => {
       }
     }
   }, [id, botLevel]);
+  
 
   useEffect(() => {
     if (energy < refiller && !isRefilling) {

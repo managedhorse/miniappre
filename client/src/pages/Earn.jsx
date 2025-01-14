@@ -35,6 +35,7 @@ const Earn = () => {
     balance,
     setBalance,
     refBonus,
+    unsavedEarnings,
     taskCompleted,
     level,
     setTaskCompleted,
@@ -289,7 +290,7 @@ const listTasks = [
                   <img src={coinsmall} className="w-full" alt="coin" />
                 </div>
                 <h1 className="text-[#fff] text-[42px] slackey-regular font-extrabold">
-                  {formatNumber(balance + refBonus)}
+                  {formatNumber(balance + unsavedEarnings + refBonus)}
                 </h1>
               </div>
 

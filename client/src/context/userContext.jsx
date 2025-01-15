@@ -722,9 +722,10 @@ useEffect(() => {
         const userId = data.userId;
         const username = data.username;
         const balance = data.balance;
+        const refBonus = data.refBonus || 0;  // Retrieve each user's refBonus
         const photo_url = data.photo_url;
   
-        leaderboardUsers.push({ userId, username, balance, photo_url });
+        leaderboardUsers.push({ userId, username, balance, refBonus, photo_url });
       });
   
       SetLeaderboard(leaderboardUsers);

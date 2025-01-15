@@ -274,46 +274,49 @@ useEffect(() => {
     if (referrerId) {
       referrerId = referrerId.replace(/\D/g, "");
     }
-
+  
     if (telegramUser) {
-      const { id: userId, username, first_name: firstName, last_name: lastName, photo_url, } = telegramUser;
-
+      const { id: userId, username, first_name: firstName, last_name: lastName, photo_url } = telegramUser;
+  
       // Use first name and ID as username if no Telegram username exists
       const finalUsername = username || `${firstName}_${userId}`;
-
+  
       try {
         const userRef = doc(db, 'telegramUsers', userId.toString());
         const userDoc = await getDoc(userRef);
-
+  
         // Read unsaved earnings from localStorage
-      const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-      const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+        const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+        const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+  
         if (userDoc.exists()) {
           console.log('User already exists in Firestore');
           const userData = userDoc.data();
+  
           // Update the photo_url if it has changed
           if (userData.photo_url !== photo_url) {
             await updateDoc(userRef, { photo_url });
           }
-          
-        // Read unsaved earnings and stored balances from localStorage
-  const storedEarnings = parseFloat(localStorage.getItem(unsavedEarningsKey)) || 0;
-  const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
-  const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
-
-  // Incorporate unsaved earnings into Firestore data
-  userData.balance = (userData.balance || 0) + storedEarnings;
-  userData.tapBalance = (userData.tapBalance || 0) + storedEarnings;
-
-  // Use the larger of Firestore and locally stored balances
-  userData.balance = Math.max(userData.balance, storedBalance);
-  userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
-
-  // Update Firestore and local state
-  await updateDoc(userRef, {
-    balance: userData.balance,
-    tapBalance: userData.tapBalance
-  });
+  
+          // Read unsaved earnings and stored balances from localStorage
+          const storedEarnings = parseFloat(localStorage.getItem(unsavedEarningsKey)) || 0;
+          const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
+          const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
+  
+          // Incorporate unsaved earnings into Firestore data
+          userData.balance = (userData.balance || 0) + storedEarnings;
+          userData.tapBalance = (userData.tapBalance || 0) + storedEarnings;
+  
+          // Use the larger of Firestore and locally stored balances
+          userData.balance = Math.max(userData.balance, storedBalance);
+          userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
+  
+          // Update Firestore and local state
+          await updateDoc(userRef, {
+            balance: userData.balance,
+            tapBalance: userData.tapBalance
+          });
+  
           setBalance(userData.balance);
           setTapBalance(userData.tapBalance);
           setTapValue(userData.tapValue);
@@ -326,7 +329,6 @@ useEffect(() => {
           setDailyReward(userData.dailyReward);
           setClaimedMilestones(userData.claimedMilestones || []);
           setClaimedReferralRewards(userData.claimedReferralRewards || []);
-          // setEnergy(userData.energy);
           setBattery(userData.battery);
           setRefiller(userData.battery.energy);
           setTimeRefill(userData.timeRefill);
@@ -334,28 +336,39 @@ useEffect(() => {
           setBotLevel(userData.botLevel || 0);
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
-          await updateReferrals(userRef);
+  
+          // 24-hour check for updating referrals
+          const lastReferralsUpdate = localStorage.getItem('lastReferralsUpdate');
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          if (!lastReferralsUpdate || (Date.now() - Number(lastReferralsUpdate) > twentyFourHours)) {
+            await updateReferrals(userRef);
+            localStorage.setItem('lastReferralsUpdate', Date.now().toString());
+          }
+  
           setInitialized(true);
           setLoading(false);
           fetchData(userData.userId); // Fetch data for the existing user
+  
           // After applying unsaved earnings, reset them
-        setUnsavedEarnings(0);
-        localStorage.setItem(unsavedEarningsKey, "0");
-        // Calculate and incorporate unsaved earnings after loading user data
-        calculateMissedEarnings();
-        // Read the newly calculated unsaved earnings
-        const newStoredEarnings = localStorage.getItem(unsavedEarningsKey);
-        const newUnsaved = newStoredEarnings ? parseFloat(newStoredEarnings) : 0;
-
-        if(newUnsaved > 0) {
-          // Update balance and tapBalance with missed earnings
-          setBalance(prev => prev + newUnsaved);
-          setTapBalance(prev => prev + newUnsaved);
-          // Reset unsaved earnings after applying them
           setUnsavedEarnings(0);
           localStorage.setItem(unsavedEarningsKey, "0");
-      }
-          console.log("Battery is:", userData.battery.energy)
+  
+          // Calculate and incorporate unsaved earnings after loading user data
+          calculateMissedEarnings();
+          // Read the newly calculated unsaved earnings
+          const newStoredEarnings = localStorage.getItem(unsavedEarningsKey);
+          const newUnsaved = newStoredEarnings ? parseFloat(newStoredEarnings) : 0;
+  
+          if (newUnsaved > 0) {
+            // Update balance and tapBalance with missed earnings
+            setBalance(prev => prev + newUnsaved);
+            setTapBalance(prev => prev + newUnsaved);
+            // Reset unsaved earnings after applying them
+            setUnsavedEarnings(0);
+            localStorage.setItem(unsavedEarningsKey, "0");
+          }
+  
+          console.log("Battery is:", userData.battery.energy);
           return;
         }
 
@@ -428,20 +441,20 @@ useEffect(() => {
     const userData = userDoc.data();
     const referrals = userData.referrals || [];
 
-    const updatedReferrals = await Promise.all(referrals.map(async (referral) => {
-      const referralRef = doc(db, 'telegramUsers', referral.userId);
-      const referralDoc = await getDoc(referralRef);
-      if (referralDoc.exists()) {
-        const referralData = referralDoc.data();
-        return {
-          ...referral,
-          balance: referralData.balance,
-          level: referralData.level,
-          photo_url: referralData.photo_url,
-        };
-      }
-      return referral;
-    }));
+   const updatedReferrals = await Promise.all(referrals.map(async (referral) => {
+  const referralRef = doc(db, 'telegramUsers', referral.userId);
+  const referralDoc = await getDoc(referralRef);
+  if (referralDoc.exists()) {
+    const referralData = referralDoc.data();
+    return {
+      ...referral,
+      balance: referralData.balance / 10,  // store 10% of the referral's balance
+      level: referralData.level,
+      photo_url: referralData.photo_url,
+    };
+  }
+  return referral;
+}));
 
     await updateDoc(userRef, {
       referrals: updatedReferrals,

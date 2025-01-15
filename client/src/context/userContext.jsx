@@ -437,41 +437,54 @@ useEffect(() => {
 
 
   const updateReferrals = async (userRef) => {
-    const userDoc = await getDoc(userRef);
-    const userData = userDoc.data();
-    const referrals = userData.referrals || [];
-
-   const updatedReferrals = await Promise.all(referrals.map(async (referral) => {
-  const referralRef = doc(db, 'telegramUsers', referral.userId);
-  const referralDoc = await getDoc(referralRef);
-  if (referralDoc.exists()) {
-    const referralData = referralDoc.data();
-    return {
-      ...referral,
-      balance: referralData.balance / 10,  // store 10% of the referral's balance
-      level: referralData.level,
-      photo_url: referralData.photo_url,
-    };
-  }
-  return referral;
-}));
-
-    await updateDoc(userRef, {
-      referrals: updatedReferrals,
-    });
-
-    const totalEarnings = updatedReferrals.reduce((acc, curr) => acc + curr.balance, 0);
-    const refBonus = Math.floor(totalEarnings * 0.1);
-    const totalBalance = `${balance}` + refBonus;
-    console.log(`Total earnings: ${totalEarnings}, Referrer bonus: ${refBonus}`);
-
-    // Save the refBonus to the user's document
     try {
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+  
+      if (!userData) {
+        console.error("User data not found.");
+        return;
+      }
+  
+      const referrals = userData.referrals || [];
+      const balance = userData.balance || 0; // Ensure balance is initialized
+  
+      const updatedReferrals = await Promise.all(
+        referrals.map(async (referral) => {
+          const referralRef = doc(db, "telegramUsers", referral.userId);
+          const referralDoc = await getDoc(referralRef);
+  
+          if (referralDoc.exists()) {
+            const referralData = referralDoc.data();
+            return {
+              ...referral,
+              balance: referralData.balance ? referralData.balance / 10 : 0, // 10% of referral's balance
+              level: referralData.level,
+              photo_url: referralData.photo_url,
+            };
+          }
+  
+          console.error(`Referral document not found for userId: ${referral.userId}`);
+          return referral; // Keep existing data if referral document is missing
+        })
+      );
+  
+      // Update the user's referrals in Firestore
+      await updateDoc(userRef, { referrals: updatedReferrals });
+  
+      // Calculate total earnings from referrals
+      const totalEarnings = updatedReferrals.reduce((acc, curr) => acc + curr.balance, 0);
+      const refBonus = Math.floor(totalEarnings * 0.1);
+      const totalBalance = balance + refBonus;
+  
+      console.log(`Total earnings: ${totalEarnings}, Referrer bonus: ${refBonus}`);
+  
+      // Update refBonus and totalBalance in Firestore
       await updateDoc(userRef, { refBonus, totalBalance });
-      console.log('Referrer bonus updated in Firestore');
-      console.log('Your balance is:', `${balance}`);
+  
+      console.log("Referrer bonus and referrals updated in Firestore successfully.");
     } catch (error) {
-      console.error('Error updating referrer bonus:', error);
+      console.error("Error updating referrals:", error);
     }
   };
 

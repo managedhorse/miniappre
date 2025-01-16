@@ -232,7 +232,7 @@ const Ref = () => {
                                       />
                                     </span>
                                     <span className="font-normal text-[#ffffff] text-[15px]">
-                                      {formatNumber(user.balance)}
+                                      {formatNumber(user.balance *10 )}
                                     </span>
                                   </div>
                                 </div>
@@ -240,7 +240,7 @@ const Ref = () => {
                                   <p>Upstream </p>
                                 </div>
                                 <div className="text-[#2e3a56] font-semibold text-[14px]">
-                                  +{formatNumber(user.balance / 100 * 10)}
+                                  +{formatNumber(user.balance)}
                                 </div>
                                 <div className="flex w-full mt-2 p-[4px] items-center bg-energybar rounded-[10px] border-[1px] border-borders">
                                   <div className="h-[10px] rounded-[8px] bg-btn w-[.5%]"></div>

@@ -67,11 +67,11 @@ export const UserProvider = ({ children }) => {
   const incrementValue = refiller / refillSteps; // Amount to increment each step
   const defaultEnergy = refiller; // Default energy value
   const tapBotLevels = [
-    { level: 1, cost: 1000000, tapsPerSecond: 3 },
-    { level: 2, cost: 2000000, tapsPerSecond: 6 },
-    { level: 3, cost: 4000000, tapsPerSecond: 12 },
-    { level: 4, cost: 8000000, tapsPerSecond: 24 },
-    { level: 5, cost: 16000000, tapsPerSecond: 48 },
+    { level: 1, cost: 1000000, tapsPerSecond: 1 },
+    { level: 2, cost: 2000000, tapsPerSecond: 2 },
+    { level: 3, cost: 4000000, tapsPerSecond: 4 },
+    { level: 4, cost: 8000000, tapsPerSecond: 8 },
+    { level: 5, cost: 16000000, tapsPerSecond: 16 },
   ];
   
   const [unsavedEarnings, setUnsavedEarnings] = useState(0);

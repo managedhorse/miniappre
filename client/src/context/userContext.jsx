@@ -337,13 +337,7 @@ useEffect(() => {
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
   
-          // 24-hour check for updating referrals
-          const lastReferralsUpdate = localStorage.getItem('lastReferralsUpdate');
-          const twentyFourHours = 24 * 60 * 60 * 1000;
-          if (!lastReferralsUpdate || (Date.now() - Number(lastReferralsUpdate) > twentyFourHours)) {
-            await updateReferrals(userRef);
-            localStorage.setItem('lastReferralsUpdate', Date.now().toString());
-          }
+          await updateReferrals(userRef);
   
           setInitialized(true);
           setLoading(false);

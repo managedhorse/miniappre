@@ -128,7 +128,7 @@ const listTasks = [
   {
     taskId: "task1",
     title: "Join TG group",
-    url: "https://t.me/+9uQKkz_qB2BiNDU0",
+    url: "https://t.me/+IrYxnPor8UplMmRk",
     completed: false,
     point: 50000,
     status: "start",
@@ -137,7 +137,7 @@ const listTasks = [
   {
     taskId: "task2",
     title: "Follow Twitter",
-    url: "https://x.com",
+    url: "https://x.com/tapmianus",
     completed: false,
     point: 50000,
     status: "start",

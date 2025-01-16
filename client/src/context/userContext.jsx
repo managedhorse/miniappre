@@ -337,7 +337,14 @@ useEffect(() => {
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
   
+          const lastReferralsUpdate = localStorage.getItem("lastReferralsUpdate");
+        const now = Date.now();
+        const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+
+        if (!lastReferralsUpdate || now - Number(lastReferralsUpdate) > TWELVE_HOURS) {
           await updateReferrals(userRef);
+          localStorage.setItem("lastReferralsUpdate", String(now));
+        }
   
           setInitialized(true);
           setLoading(false);

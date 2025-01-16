@@ -440,49 +440,66 @@ useEffect(() => {
     try {
       const userDoc = await getDoc(userRef);
       const userData = userDoc.data();
-  
       if (!userData) {
-        console.error("User data not found.");
+        console.error("User data not found for:", userRef.id);
         return;
       }
   
       const referrals = userData.referrals || [];
-      const balance = userData.balance || 0; // Ensure balance is initialized
   
+      // Map through each referral in the array.
+      // We'll fetch the referral's doc to get their 'balance' and 'refBonus'.
       const updatedReferrals = await Promise.all(
         referrals.map(async (referral) => {
           const referralRef = doc(db, "telegramUsers", referral.userId);
           const referralDoc = await getDoc(referralRef);
   
-          if (referralDoc.exists()) {
-            const referralData = referralDoc.data();
-            return {
-              ...referral,
-              balance: referralData.balance ? referralData.balance / 10 : 0, // 10% of referral's balance
-              level: referralData.level,
-              photo_url: referralData.photo_url,
-            };
+          if (!referralDoc.exists()) {
+            console.error(`Referral doc not found for userId: ${referral.userId}`);
+            return referral; // Return the existing referral if doc is missing
           }
   
-          console.error(`Referral document not found for userId: ${referral.userId}`);
-          return referral; // Keep existing data if referral document is missing
+          const referralData = referralDoc.data();
+          // The fields of interest:
+          const theirBalance = referralData.balance || 0;   // The referred user's main balance
+          const theirRefBonus = referralData.refBonus || 0; // The referred user's own ref bonus (if you want to add it)
+  
+          // If you want the referral's "balance" in the referrer's doc
+          // to reflect 10% of (theirBalance + theirRefBonus):
+          const combined = theirBalance + theirRefBonus;
+          const tenPercent = combined * 0.1; 
+  
+          // Return updated referral object
+          return {
+            ...referral,
+            // We store the 10% in the referral's 'balance' field
+            balance: tenPercent,
+            // If you still want to show their level / photo:
+            level: referralData.level,
+            photo_url: referralData.photo_url,
+          };
         })
       );
   
-      // Update the user's referrals in Firestore
-      await updateDoc(userRef, { referrals: updatedReferrals });
+      // Now update the referrer's document with the new referrals array
+      await updateDoc(userRef, {
+        referrals: updatedReferrals,
+      });
   
-      // Calculate total earnings from referrals
-      const totalEarnings = updatedReferrals.reduce((acc, curr) => acc + curr.balance, 0);
-      const refBonus = Math.floor(totalEarnings * 0.1);
-      const totalBalance = balance + refBonus;
+      // Calculate the sum of all referral balances that we just updated
+      const totalEarnings = updatedReferrals.reduce((acc, curr) => acc + (curr.balance || 0), 0);
+      // The referrer’s own “refBonus” is presumably 10% of the sum of these new values:
+      const refBonus = Math.floor(totalEarnings);
   
       console.log(`Total earnings: ${totalEarnings}, Referrer bonus: ${refBonus}`);
   
-      // Update refBonus and totalBalance in Firestore
-      await updateDoc(userRef, { refBonus, totalBalance });
+      // Update refBonus in Firestore
+      await updateDoc(userRef, {
+        refBonus,
+        // No more totalBalance if it’s deprecated, so we remove it
+      });
   
-      console.log("Referrer bonus and referrals updated in Firestore successfully.");
+      console.log("Referrals and refBonus updated successfully for:", userRef.id);
     } catch (error) {
       console.error("Error updating referrals:", error);
     }

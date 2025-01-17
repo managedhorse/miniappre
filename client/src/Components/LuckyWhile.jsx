@@ -1,37 +1,54 @@
-import React, { useState } from 'react'
-import { Wheel } from 'react-custom-roulette'
 
-const data = [
-  { option: 'Lose' },
-  { option: 'Lose' },
-  { option: '1.2×' },
-  { option: '1.5×' },
-  { option: '3×' },
-  { option: '10×' },
-]
+import React, { useState } from "react";
+import SpinWheel from "../Components/spinWheel";
 
-export default function SimpleWheel() {
-  const [mustSpin, setMustSpin] = useState(false)
-  const [prizeNumber, setPrizeNumber] = useState(0)
+const slicesData = [
+  { option: "Lose" },
+  { option: "Lose" },
+  { option: "1.2×" },
+  { option: "1.5×" },
+  { option: "3×" },
+  { option: "10×" },
+];
 
+export default function ParentWheelWrapper() {
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+
+  // Example: click a button to spin
   const handleSpinClick = () => {
     if (!mustSpin) {
-      const randomIndex = Math.floor(Math.random() * data.length)
-      setPrizeNumber(randomIndex)
-      setMustSpin(true)
+      // pick random slice
+      const randomIndex = Math.floor(Math.random() * slicesData.length);
+      setPrizeNumber(randomIndex);
+      setMustSpin(true);
     }
-  }
+  };
+
+  // Called once spin completes
+  const handleStop = () => {
+    setMustSpin(false);
+    // ... do any “reward logic”
+  };
 
   return (
-    <div>
-      <Wheel
-        mustStartSpinning={mustSpin}
+    <div style={{ textAlign: "center", marginTop: 30 }}>
+      <h2>Demo: Isolated SpinWheel</h2>
+
+      <SpinWheel
+        data={slicesData}
+        mustSpin={mustSpin}
         prizeNumber={prizeNumber}
-        data={data}
-        onStopSpinning={() => setMustSpin(false)}
-        // No startingOptionIndex => full spin
+        onStopSpinning={handleStop}
       />
-      <button onClick={handleSpinClick}>Spin</button>
+
+      <button
+        onClick={handleSpinClick}
+        disabled={mustSpin}
+        style={{ marginTop: 20 }}
+      >
+        Spin
+      </button>
     </div>
-  )
+  );
 }

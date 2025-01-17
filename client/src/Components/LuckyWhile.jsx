@@ -214,7 +214,7 @@ export default function LuckyWheel() {
 
         <div className="bg-activebg border border-activeborder rounded-lg w-full max-w-[420px] shadow-lg p-4">
           <h2 className="text-white slackey-regular text-[18px] font-medium text-center mb-3">
-            Spin-Wheel
+            Spin Mianus
           </h2>
 
           {/* Bet input & Spin button */}
@@ -258,19 +258,20 @@ export default function LuckyWheel() {
               height: "80vw",
               maxWidth: "360px",
               maxHeight: "360px",
-              overflow: "hidden", // hide any partial
+              overflow: "visible", // hide any partial
             }}
           >
             {/* spin-wheel goes here */}
             <div
-              ref={containerRef}
-              style={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-                margin: "0 auto",
-              }}
-            />
+            ref={containerRef}
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              margin: "0 auto",
+              overflow: "hidden",
+            }}
+          />
             {/* pointer image absolutely positioned at top center */}
             {renderPointer()}
           </div>

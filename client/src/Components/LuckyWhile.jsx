@@ -1,6 +1,6 @@
-
 import React, { useState } from "react";
 import SpinWheel from "../Components/spinWheel";
+import "../App.css"; // or any global css with your new rule
 
 const slicesData = [
   { option: "Lose" },
@@ -15,38 +15,31 @@ export default function ParentWheelWrapper() {
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
 
-  // Example: click a button to spin
   const handleSpinClick = () => {
     if (!mustSpin) {
-      // pick random slice
       const randomIndex = Math.floor(Math.random() * slicesData.length);
       setPrizeNumber(randomIndex);
       setMustSpin(true);
     }
   };
 
-  // Called once spin completes
   const handleStop = () => {
     setMustSpin(false);
-    // ... do any “reward logic”
   };
 
   return (
     <div style={{ textAlign: "center", marginTop: 30 }}>
       <h2>Demo: Isolated SpinWheel</h2>
-
-      <SpinWheel
-        data={slicesData}
-        mustSpin={mustSpin}
-        prizeNumber={prizeNumber}
-        onStopSpinning={handleStop}
-      />
-
-      <button
-        onClick={handleSpinClick}
-        disabled={mustSpin}
-        style={{ marginTop: 20 }}
-      >
+      {/* Wrap the <SpinWheel> in a special container with a custom class */}
+      <div className="my-roulette-wheel-container">
+        <SpinWheel
+          data={slicesData}
+          mustSpin={mustSpin}
+          prizeNumber={prizeNumber}
+          onStopSpinning={handleStop}
+        />
+      </div>
+      <button onClick={handleSpinClick} disabled={mustSpin} style={{ marginTop: 20 }}>
         Spin
       </button>
     </div>

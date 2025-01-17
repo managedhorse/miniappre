@@ -1,12 +1,14 @@
+// Spinner.jsx
 import React from 'react';
-import '../Spinner.css'; // Ensure this file is linked correctly
+import '../App.css'; // or App.css, whichever you prefer
 
 const Spinner = () => {
   return (
     <div className="spinner-container">
+      {/* This container or the img will get the transition */}
       <div className="spinner-revolving-image">
         <img
-          src="../revolvingmianus.webp" // Replace with the actual path to your "mianus" image
+          src="../revolvingmianus.webp"
           alt="Revolving Mianus"
         />
       </div>

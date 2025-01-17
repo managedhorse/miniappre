@@ -28,7 +28,6 @@ export default function SimpleWheel() {
         mustStartSpinning={mustSpin}
         prizeNumber={prizeNumber}
         data={data}
-        spinDuration={2}               // Slightly longer spin
         onStopSpinning={() => setMustSpin(false)}
         // No startingOptionIndex => full spin
       />

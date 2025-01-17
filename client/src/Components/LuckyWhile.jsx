@@ -8,12 +8,12 @@ import pointerImage from "../images/pointer.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
 
-/** A small helper to format big numbers with commas. */
+/** Helper to format numbers with commas */
 function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Base slices distribution. */
+/** Base slices distribution */
 const baseSlices = [
   ...Array(25).fill({ label: "Lose", multiplier: 0, color: "#D30000" }),
   ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#FFD700" }),
@@ -22,7 +22,7 @@ const baseSlices = [
   ...Array(1).fill({ label: "10×", multiplier: 10, color: "#800080" }),
 ];
 
-/** Shuffle function for randomizing slices */
+/** Shuffle function */
 function shuffleArray(arr) {
   const clone = [...arr];
   for (let i = clone.length - 1; i > 0; i--) {
@@ -49,7 +49,7 @@ export default function LuckyWheel() {
   const [items] = useState(createWheelItems);
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
-
+  
   const [betAmount, setBetAmount] = useState(10000);
   const [isSpinning, setIsSpinning] = useState(false);
   const [floatingText, setFloatingText] = useState("");
@@ -57,14 +57,10 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Store the chosen index for the spin
-  const [chosenIndex, setChosenIndex] = useState(null);
-
-  // Mutable reference for the latest balance
+  // Refs for reliable state during callbacks
+  const chosenIndexRef = useRef(null);
   const balanceRef = useRef(balance);
-  useEffect(() => {
-    balanceRef.current = balance;
-  }, [balance]);
+  useEffect(() => { balanceRef.current = balance; }, [balance]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -91,7 +87,7 @@ export default function LuckyWheel() {
 
   function handleWheelRest(e) {
     setIsSpinning(false);
-    const winIndex = chosenIndex;
+    const winIndex = chosenIndexRef.current;
     if (winIndex == null) return;
 
     const currentBalance = balanceRef.current;
@@ -103,8 +99,7 @@ export default function LuckyWheel() {
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2500);
     } else {
-      // Calculate total return: original bet + winnings
-      const totalReturn = Math.floor(betAmount * (multiplier + 1));
+      const totalReturn = Math.floor(betAmount * multiplier);
       const newBal = currentBalance + totalReturn;
 
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal })
@@ -120,6 +115,7 @@ export default function LuckyWheel() {
 
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
+    chosenIndexRef.current = null;
   }
 
   async function handleSpin() {
@@ -129,7 +125,6 @@ export default function LuckyWheel() {
     if (betAmount > balance) return;
 
     setIsSpinning(true);
-    // Subtract bet from user's balance
     const newBal = balance - betAmount;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
@@ -140,11 +135,9 @@ export default function LuckyWheel() {
       return;
     }
 
-    // Choose random winning index and store it
     const randomIdx = Math.floor(Math.random() * items.length);
-    setChosenIndex(randomIdx);
+    chosenIndexRef.current = randomIdx;
 
-    // Spin the wheel to the chosen item
     if (wheelRef.current) {
       wheelRef.current.spinToItem(randomIdx, 4000, true, 2, 1);
     }

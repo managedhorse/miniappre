@@ -46,9 +46,7 @@ export default function LuckyWheel() {
   const { balance, refBonus, setBalance, id } = useUser();
   const totalBalance = balance + refBonus;
 
-  // Create and store items once
   const [items] = useState(createWheelItems);
-
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
 
@@ -59,9 +57,14 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Create a mutable reference for balance
+  // Store the chosen index for the spin
+  const [chosenIndex, setChosenIndex] = useState(null);
+
+  // Mutable reference for the latest balance
   const balanceRef = useRef(balance);
-  useEffect(() => { balanceRef.current = balance; }, [balance]);
+  useEffect(() => {
+    balanceRef.current = balance;
+  }, [balance]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -75,8 +78,8 @@ export default function LuckyWheel() {
       pointerAngle: 0,
       rotationResistance: -35,
       itemLabelFontSizeMax: 14,
-      isInteractive: false,  // Disable user interactions
-      onRest: handleWheelRest,  // Callback when spin ends
+      isInteractive: false,
+      onRest: handleWheelRest,
     });
     return () => {
       if (wheelRef.current) {
@@ -88,10 +91,10 @@ export default function LuckyWheel() {
 
   function handleWheelRest(e) {
     setIsSpinning(false);
-    const winIndex = e.currentIndex;
+    const winIndex = chosenIndex;
     if (winIndex == null) return;
 
-    const currentBalance = balanceRef.current;  // Use the latest balance
+    const currentBalance = balanceRef.current;
     const winningItem = items[winIndex];
     const { multiplier } = winningItem.value || {};
 
@@ -103,18 +106,18 @@ export default function LuckyWheel() {
       // Calculate total return: original bet + winnings
       const totalReturn = Math.floor(betAmount * (multiplier + 1));
       const newBal = currentBalance + totalReturn;
-  
+
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal })
         .catch(console.error);
       setBalance(newBal);
-      balanceRef.current = newBal;  // Update the balance reference
-  
+      balanceRef.current = newBal;
+
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);
       setShowCongratsGif(true);
       setTimeout(() => setFloatingText(""), 2500);
     }
-  
+
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }
@@ -124,19 +127,24 @@ export default function LuckyWheel() {
     if (balance < 50000) return;
     if (betAmount < 10000) return;
     if (betAmount > balance) return;
-  
+
     setIsSpinning(true);
+    // Subtract bet from user's balance
     const newBal = balance - betAmount;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
       setBalance(newBal);
-      balanceRef.current = newBal;  // Store updated balance
+      balanceRef.current = newBal;
     } catch (err) {
       console.error("Error subtracting bet:", err);
       return;
     }
-  
+
+    // Choose random winning index and store it
     const randomIdx = Math.floor(Math.random() * items.length);
+    setChosenIndex(randomIdx);
+
+    // Spin the wheel to the chosen item
     if (wheelRef.current) {
       wheelRef.current.spinToItem(randomIdx, 4000, true, 2, 1);
     }
@@ -154,7 +162,7 @@ export default function LuckyWheel() {
           position: "absolute",
           top: "-20px",
           left: "50%",
-          transform: "translateX(-50%) rotate(-45deg)", 
+          transform: "translateX(-50%) rotate(-45deg)",
           width: "40px",
           zIndex: 1000,
         }}
@@ -246,7 +254,12 @@ export default function LuckyWheel() {
 
         {showCongratsGif && !resultMessage.includes("lost") && (
           <div className="absolute top-[20%] left-0 right-0 flex justify-center pointer-events-none select-none">
-            <img src={congratspic} alt="congrats" className="w-[160px] animate-fade-in-once" onAnimationEnd={handleCongratsAnimationEnd} />
+            <img
+              src={congratspic}
+              alt="congrats"
+              className="w-[160px] animate-fade-in-once"
+              onAnimationEnd={handleCongratsAnimationEnd}
+            />
           </div>
         )}
       </div>

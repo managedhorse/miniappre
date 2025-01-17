@@ -110,7 +110,8 @@ const Plutos = () => {
   // Declare state hooks first
   const [splashes, setSplashes] = useState([]); // Array to manage multiple splashes
   const [clicks, setClicks] = useState([]);   // Array of click objects
-  const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading, botLevel } = useUser();
+  const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, id, initialized, loading, botLevel } = useUser();
+  const userIsReady = Boolean(id && initialized && !loading);
   const [points, setPoints] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const [openClaim, setOpenClaim] = useState(false);
@@ -458,12 +459,16 @@ const Plutos = () => {
               </div>
               {/* Spinner Card */}
               <div
-                onClick={() => navigate("/earn/lucky")}
-                className="bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/3 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
+                onClick={userIsReady ? () => navigate("/earn/lucky") : undefined}
+                className={`bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/3 relative flex flex-col items-center transition-transform transform
+                  ${userIsReady ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"}`
+                }
                 aria-label="Spin Mianus - Spinner"
                 role="button"
-                tabIndex={0}
-                onKeyPress={(e) => { if (e.key === 'Enter') navigate("/earn/lucky"); }}
+                tabIndex={userIsReady ? 0 : -1}
+                onKeyPress={(e) => { 
+                  if (userIsReady && e.key === 'Enter') navigate("/earn/lucky"); 
+                }}
               >
                 <div className="dot"></div>
                 <img src={luckyWheel} alt="Spinner" className="w-10 h-10 mb-1" />

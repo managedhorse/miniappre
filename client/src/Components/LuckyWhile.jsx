@@ -87,26 +87,30 @@ export default function LuckyWheel() {
     setIsSpinning(false);
     const winIndex = e.currentIndex;
     if (winIndex == null) return;
-
+  
     const winningItem = items[winIndex];
     const { multiplier } = winningItem.value || {};
-
+  
     if (!multiplier) {
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2500);
     } else {
-      const totalReturn = Math.floor(betAmount * multiplier);
-      const netGain = totalReturn; 
-      const newBal = balance + netGain;
+      // Calculate total return including the original bet
+      const totalReturn = Math.floor(betAmount * (1 + multiplier));
+      // Add the total return to the current balance (bet was already subtracted)
+      const newBal = balance + totalReturn;
+  
+      // Update user's balance in Firestore and local state
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
       setBalance(newBal);
-
+  
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);
       setShowCongratsGif(true);
       setTimeout(() => setFloatingText(""), 2500);
     }
+  
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }

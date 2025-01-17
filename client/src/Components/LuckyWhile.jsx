@@ -1,203 +1,268 @@
-import React, { useEffect, useRef, useState } from "react";
-// If you installed via NPM, import like this:
-import { Wheel, easing } from "spin-wheel"; 
-// If using a CDN, remove the import and rely on window.Wheel & window.easing.
+import React, { useState, useEffect, useMemo } from "react";
+import { Wheel } from "react-custom-roulette";
+import { updateDoc, doc } from "firebase/firestore";
+import { db } from "../firebase.jsx";
+import { useUser } from "../context/userContext.jsx";
+import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
+import congratspic from "../images/celebrate.gif";
+import Animate from "../Components/Animate";
+import pointerImage from "../images/pointer.webp";
 
-import Animate from "../Components/Animate"; // Example of your existing wrapper
-
-// Example items with random multipliers
-const items = [
-  { label: "Lose",  multiplier: 0, backgroundColor: "#D30000" },
-  { label: "Lose",  multiplier: 0, backgroundColor: "#D30000" },
-  { label: "1.2×",  multiplier: 1.2, backgroundColor: "#004225" },
-  { label: "1.2×",  multiplier: 1.2, backgroundColor: "#004225" },
-  { label: "1.5×",  multiplier: 1.5, backgroundColor: "#FFA500" },
-  { label: "3×",    multiplier: 3,   backgroundColor: "#1E90FF" },
-  { label: "10×",   multiplier: 10,  backgroundColor: "#800080" },
-];
-
+/** Format big numbers with commas. */
 function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-export default function SpinWheel() {
-  const containerRef = useRef(null); // We'll mount the wheel here
-  const [wheel, setWheel] = useState(null);
+/***************************************************************************
+ * Define your slice distribution as before. 
+ * This example uses about ~60 slices total:
+ ***************************************************************************/
+const baseSlices = [
+  // (Lose) 25 slices => ~41.7%
+  ...Array(25).fill({ option: "Lose", multiplier: 0, color: "#D30000" }),
+  // (1.2×) 24 slices => ~40.0%, now racing green (#004225)
+  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#004225" }),
+  // (1.5×) 4 slices => ~6.7%
+  ...Array(4).fill({ option: "1.5×", multiplier: 1.5, color: "#FFA500" }),
+  // (3×) 6 slices => ~10.0%
+  ...Array(6).fill({ option: "3×", multiplier: 3, color: "#1E90FF" }),
+  // (10×) 1 slice => ~1.7%
+  ...Array(1).fill({ option: "10×", multiplier: 10, color: "#800080" }),
+];
 
-  // Example: your game/bet states
-  const [balance, setBalance] = useState(150_000);
-  const [betAmount, setBetAmount] = useState(10_000);
-  const [message, setMessage] = useState("");
-  const [spinning, setSpinning] = useState(false);
-
-  // 1) Initialize the wheel once after mount
-  useEffect(() => {
-    // Only create once:
-    if (!containerRef.current || wheel) return;
-
-    // You can create images in code and pass them for backgrounds or pointer overlay
-    // For now, we'll just rely on basic color slices.
-
-    const props = {
-      // Items => each item gets a label, color, maybe an image...
-      items: items.map((it) => ({
-        label: it.label,
-        backgroundColor: it.backgroundColor,
-        // store your multiplier in item.value for retrieval
-        value: it.multiplier,
-      })),
-
-      // Basic styling
-      radius: 0.95,                // fill 95% of the container
-      borderWidth: 2,             // optional border around wheel
-      borderColor: "#222",
-      lineWidth: 3,
-      lineColor: "#333",
-      // We can set pointerAngle so item '0' is at top, or leave as default
-      pointerAngle: 0,
-
-      // If you want user to spin with drag/flick, set isInteractive: true
-      isInteractive: false, // We'll spin by code
-    };
-
-    const w = new Wheel(containerRef.current, props);
-    setWheel(w);
-
-    // If you want to "clean up" on unmount:
-    return () => {
-      w.remove(); // remove from DOM
-    };
-  }, [wheel]);
-
-  // 2) Function to spin to a chosen item
-  async function spinTheWheel() {
-    if (!wheel) return; // not yet loaded
-    if (spinning) return;
-    if (balance < 50_000) {
-      setMessage("Need ≥ 50,000 Mianus to spin.");
-      return;
-    }
-    if (betAmount < 10_000) {
-      setMessage("Min bet is 10,000 Mianus.");
-      return;
-    }
-    if (betAmount > balance) {
-      setMessage("Insufficient balance.");
-      return;
-    }
-    // Subtract bet
-    setBalance((b) => b - betAmount);
-
-    // Decide winner or random distribution
-    const randomIndex = Math.floor(Math.random() * items.length);
-
-    setMessage("");
-    setSpinning(true);
-
-    // spinToItem: 
-    //   itemIndex,   duration, spinToCenter, 
-    //   numberOfRevs, direction, easingFunction
-    wheel.spinToItem(
-      randomIndex,
-      3000,               // 3s spin
-      true,               // spin to center of that slice
-      2,                  // revolve 2 full rotations before stopping
-      1,                  // clockwise
-      easing.easeSinOut   // or your choice
-    );
-
-    // onSpin event can fire immediately, but we want onRest
-    // We'll do "onRest" via callback or we can poll for it:
-    // We'll just set up an event in code:
-    wheel.onRest = (evt) => {
-      setSpinning(false);
-      const i = wheel.getCurrentIndex(); // pointer on that item
-      const slice = wheel.items[i];
-      const multiplier = slice.value || 0;
-
-      if (multiplier === 0) {
-        // Lost
-        setMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus.`);
-      } else {
-        // Win
-        const totalReturn = Math.floor(betAmount * multiplier);
-        const netGain = totalReturn - betAmount;
-        const newBal = balance + netGain;
-        setBalance(newBal);
-        setMessage(
-          `You won ${formatNumber(totalReturn)} Mianus! (multiplier ${multiplier})`
-        );
-      }
-    };
+/** Shuffle the array once to randomize distribution, 
+ * but keep it stable for the entire session so it spins properly.
+ */
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+  return arr;
+}
+
+function createWheelData() {
+  const shuffled = shuffleArray(baseSlices);
+  return shuffled.map((item) => ({
+    option: item.option,
+    multiplier: item.multiplier,
+    style: {
+      backgroundColor: item.color,
+      textColor: "#ffffff",
+    },
+  }));
+}
+
+const LuckyWhile = () => {
+  const { balance, refBonus, setBalance, id } = useUser();
+  // UseMemo ensures we only shuffle once and keep a stable slice array.
+  const [wheelData] = useState(() => createWheelData());
+
+  const [betAmount, setBetAmount] = useState(10000); // min bet
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeIndex, setPrizeIndex] = useState(0);
+
+  const [floatingText, setFloatingText] = useState("");
+  const [resultMessage, setResultMessage] = useState("");
+  const [showResult, setShowResult] = useState(false);
+  const [showCongratsGif, setShowCongratsGif] = useState(false);
+
+  const totalBalance = balance + refBonus;
+
+  /************************************************************************
+   * onStopSpinning => finalize the spin results
+   ************************************************************************/
+  const onStopSpinning = async () => {
+    setMustSpin(false);
+
+    const slice = wheelData[prizeIndex];
+    const { multiplier } = slice;
+
+    if (multiplier === 0) {
+      // Lose case
+      setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
+      setFloatingText(`-${formatNumber(betAmount)}`);
+      setTimeout(() => setFloatingText(""), 1500);
+    } else {
+      // Win case
+      const totalReturn = Math.floor(betAmount * multiplier);
+      const netGain = totalReturn - betAmount;
+      const newBal = balance + netGain;
+
+      try {
+        await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
+        setBalance(newBal);
+      } catch (error) {
+        console.error("Error updating balance after spin:", error);
+      }
+
+      setResultMessage(`Congratulations! You won your bet × ${multiplier}!`);
+      setFloatingText(`+${formatNumber(totalReturn)}`);
+      setShowCongratsGif(true);
+
+      // Hide floating text after 1.5s
+      setTimeout(() => setFloatingText(""), 1500);
+
+      // Hide the gif after 1 second
+      setTimeout(() => setShowCongratsGif(false), 1000);
+    }
+
+    setShowResult(true);
+    setTimeout(() => setShowResult(false), 5000);
+  };
+
+  /************************************************************************
+   * handleSpin => subtract bet, pick random slice, spin
+   ************************************************************************/
+  const handleSpin = async () => {
+    if (balance < 50000) return;   // need ≥ 50K
+    if (betAmount < 10000) return; // min bet = 10K
+    if (betAmount > balance) return;
+    if (mustSpin) return;
+
+    // Subtract bet from user immediately
+    const newBal = balance - betAmount;
+    try {
+      await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
+      setBalance(newBal);
+    } catch (err) {
+      console.error("Error subtracting bet:", err);
+      return;
+    }
+
+    // Choose a random slice
+    const idx = Math.floor(Math.random() * wheelData.length);
+    setPrizeIndex(idx);
+
+    // Start spinning
+    setMustSpin(true);
+  };
+
+  const canSpin =
+    !mustSpin && balance >= 50000 && betAmount >= 10000 && betAmount <= balance;
 
   return (
     <Animate>
-      <div className="max-w-md mx-auto px-4 py-6 text-white">
-        {/* Basic UI */}
-        <h2 className="text-xl mb-3">Spin-Wheel Demo</h2>
-        <div className="mb-2">
-          <span>Balance: </span>
-          <span className="font-bold">{formatNumber(balance)} Mianus</span>
+      <div className="grid grid-cols-1 place-items-center p-3 relative">
+        {/* Display total balance at the top */}
+        <div className="text-white mb-2 text-center">
+          Balance: {formatNumber(totalBalance)} Mianus
         </div>
 
-        <div className="flex space-x-2 mb-4">
-          <input
-            type="number"
-            className="p-1 rounded text-black w-32"
-            placeholder="Bet"
-            value={betAmount}
-            onChange={(e) => setBetAmount(Number(e.target.value))}
-          />
-          <button
-            className={`px-3 py-1 rounded 
-              ${spinning ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"}`}
-            onClick={spinTheWheel}
-            disabled={spinning}
-          >
-            {spinning ? "Spinning..." : "Spin"}
-          </button>
+        <div className="p-4 bg-activebg border border-activeborder rounded-lg w-full max-w-[420px] shadow-lg">
+          {/* Title */}
+          <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
+            Wheel of Fortune
+          </h2>
+
+          {/* Bet + Spin row */}
+          <div className="flex items-center space-x-2 w-full">
+            <input
+              type="number"
+              placeholder="Enter bet (≥ 10,000)"
+              className="flex-1 py-1 px-2 rounded-md 
+                         bg-white text-black border border-gray-300
+                         focus:outline-none focus:border-blue-500"
+              value={betAmount}
+              onChange={(e) => setBetAmount(Number(e.target.value))}
+            />
+            <button
+              onClick={handleSpin}
+              disabled={!canSpin}
+              className={`px-4 py-2 text-white rounded-md font-semibold
+                          transition-colors duration-300
+                          ${
+                            canSpin
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-gray-500 cursor-not-allowed"
+                          }`}
+            >
+              Spin
+            </button>
+          </div>
+
+          {/* Warnings */}
+          <div className="mt-2 text-sm text-red-400 min-h-[20px]">
+            {balance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
+            {betAmount < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
+            {betAmount > balance && <p>Bet cannot exceed your balance.</p>}
+          </div>
+
+          {/* The Wheel */}
+          <div className="mt-4 flex justify-center">
+            <Wheel
+              mustStartSpinning={mustSpin}
+              prizeNumber={prizeIndex}
+              data={wheelData.map((slice) => ({
+                option: slice.option,
+                style: slice.style,
+              }))}
+              // removing startingOptionIndex fixes short partial spins with random slices
+              onStopSpinning={onStopSpinning}
+              outerBorderWidth={4}
+              disableInitialAnimation={true}
+              innerRadius={30}
+              radiusLineWidth={2}
+              fontSize={14}
+              textDistance={75} // slightly closer to center than edge
+              pointerProps={{
+                src: pointerImage,
+                style: { width: "50px", transform: "translateY(-8px)" },
+              }}
+            />
+          </div>
         </div>
 
-        {message && (
-          <div className="mb-4 text-red-300">{message}</div>
+        {/* ephemeral floating text */}
+        {floatingText && (
+          <div className="absolute flex justify-center items-center top-[50%] left-[50%]
+                          transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
+              {floatingText}
+            </div>
+          </div>
         )}
 
-        {/* 3) The actual wheel container */}
-        <div
-          ref={containerRef}
-          style={{
-            width: "300px",  
-            height: "300px",
-            margin: "0 auto",
-            position: "relative",
-            background: "#111", // or something
-          }}
-        />
+        {/* Toast-like message */}
+        {showResult && (
+          <div className="fixed left-0 right-0 mx-auto bottom-[80px]
+                          flex justify-center z-[9999] px-4">
+            <div
+              className={`flex items-center space-x-2 px-4 py-2
+                          bg-[#121620ef] rounded-[8px] shadow-lg
+                          text-sm w-fit
+                          ${
+                            resultMessage.includes("lost")
+                              ? "text-red-400"
+                              : "text-[#54d192]"
+                          }`}
+            >
+              {resultMessage.includes("lost") ? (
+                <IoCloseCircle size={24} />
+              ) : (
+                <IoCheckmarkCircle size={24} />
+              )}
+              <span className="font-medium slackey-regular">
+                {resultMessage}
+              </span>
+            </div>
+          </div>
+        )}
 
-        {/* Optional pointer overlay:
-            For example, a simple triangle or arrow absolutely positioned. */}
-        <div
-          style={{
-            position: "relative",
-            width: "300px",
-            margin: "0 auto",
-            marginTop: "-70px", /* move pointer over the wheel container */
-            textAlign: "center",
-            pointerEvents: "none",
-          }}
-        >
-          <svg width="60" height="60">
-            {/* simple pointer triangle pointing downward */}
-            <polygon 
-              points="30,0 0,60 60,60"
-              fill="gold"
-              stroke="black"
-              strokeWidth="2"
+        {/* Congrats Image => hide after 1s */}
+        {showCongratsGif && !resultMessage.includes("lost") && (
+          <div className="absolute top-[-35px] left-0 right-0 flex justify-center pointer-events-none select-none">
+            <img
+              src={congratspic}
+              alt="congrats"
+              className="w-[200px]"
             />
-          </svg>
-        </div>
+          </div>
+        )}
       </div>
     </Animate>
   );
-}
+};
+
+export default LuckyWhile;

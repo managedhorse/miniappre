@@ -198,7 +198,6 @@ const LuckyWhile = () => {
                 option: slice.option,
                 style: slice.style,
               }))}
-              spinDuration={3} // set to 3s
               // removing startingOptionIndex fixes short partial spins with random slices
               onStopSpinning={onStopSpinning}
               outerBorderWidth={4}

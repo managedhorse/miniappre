@@ -111,6 +111,7 @@ const Plutos = () => {
   const [splashes, setSplashes] = useState([]); // Array to manage multiple splashes
   const [clicks, setClicks] = useState([]);   // Array of click objects
   const { balance, username, tapBalance, energy, battery, tapGuru, mainTap, setIsRefilling, refillIntervalRef, refillEnergy, setEnergy, tapValue, setTapBalance, setBalance, refBonus, level, loading, botLevel } = useUser();
+  const userIsReady = Boolean(id && initialized && !loading);
   const [points, setPoints] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const [openClaim, setOpenClaim] = useState(false);
@@ -457,18 +458,41 @@ const Plutos = () => {
                 <p className="text-[11px] slackey-regular text-center text-white">Check Mianus</p>
               </div>
               {/* Spinner Card */}
-              <div
-                onClick={() => navigate("/earn/lucky")}
-                className="bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/3 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
-                aria-label="Spin Mianus - Spinner"
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => { if (e.key === 'Enter') navigate("/earn/lucky"); }}
-              >
-                <div className="dot"></div>
-                <img src={luckyWheel} alt="Spinner" className="w-10 h-10 mb-1" />
-                <p className="text-[11px] slackey-regular text-center text-white">Spin Mianus</p>
-              </div>
+<div
+  onClick={() => {
+    if (!userIsReady) {
+      // If user isn't ready, do nothing or show a small toast
+      return;
+    }
+    navigate("/earn/lucky");
+  }}
+  className={`
+    bg-activebg 
+    border-[1px] border-activeborder 
+    rounded-lg px-3 py-1.5 w-1/3 
+    relative flex flex-col items-center 
+    cursor-pointer 
+    transition-transform transform 
+    ${
+      userIsReady
+        ? 'hover:scale-105'               // Normal hover effect
+        : 'opacity-50 cursor-not-allowed' // Greyed out & no pointer
+    }
+  `}
+  aria-label="Spin Mianus - Spinner"
+  role="button"
+  tabIndex={0}
+  onKeyPress={(e) => {
+    if (!userIsReady) return;
+    if (e.key === 'Enter') navigate("/earn/lucky");
+  }}
+>
+  <div className="dot" />
+  <img src={luckyWheel} alt="Spinner" className="w-10 h-10 mb-1" />
+  <p className="text-[11px] slackey-regular text-center text-white">
+    Spin Mianus
+  </p>
+</div>
               {/* Leaderboard Card */}
               <div
                 onClick={() => navigate("/user/leaderboard")}

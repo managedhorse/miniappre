@@ -13,18 +13,15 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** We define the slices & frequencies we want. 
- *   Using 60 slices total for readability,
- *   but distributing them randomly so they are not bunched together.
- *   - Lose:   25 slices (≈ 41.7%)
- *   - 1.2×:   24 slices (≈ 40.0%)
- *   - 1.5×:    4 slices (≈ 6.7%)
- *   - 3×:      6 slices (≈ 10.0%)
- *   - 10×:     1 slice  (≈ 1.7%)
+/**
+ * Example slices. Feel free to expand or reduce. 
+ * For distribution, we randomly shuffle so they're not bunched.
+ * Or if you prefer a simpler approach, you can place them in a certain order.
  */
 const baseSlices = [
+  // Weighted distribution approach (see prior example):
   ...Array(25).fill({ option: "Lose", multiplier: 0, color: "#D30000" }),
-  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#FFD700" }),
+  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#1cc100" }),
   ...Array(4).fill({ option: "1.5×", multiplier: 1.5, color: "#FFA500" }),
   ...Array(6).fill({ option: "3×", multiplier: 3, color: "#1E90FF" }),
   ...Array(1).fill({ option: "10×", multiplier: 10, color: "#800080" }),
@@ -45,11 +42,11 @@ function createWheelData() {
   const shuffled = shuffleArray(baseSlices);
   return shuffled.map((item) => ({
     option: item.option,
+    multiplier: item.multiplier,
     style: {
       backgroundColor: item.color,
       textColor: "#fff",
     },
-    multiplier: item.multiplier,
   }));
 }
 
@@ -63,36 +60,37 @@ const LuckyWhile = () => {
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeIndex, setPrizeIndex] = useState(0);
 
-  const [floatingText, setFloatingText] = useState(""); // ephemeral text like "+12,000"
+  // ephemeral floating text e.g. "+12,000"
+  const [floatingText, setFloatingText] = useState("");
 
-  // Simple messages for the "toast" at the bottom
+  // Toastlike result at bottom
   const [resultMessage, setResultMessage] = useState("");
   const [showResult, setShowResult] = useState(false);
+
+  // For the congrat image: once the fade animation finishes, we hide it
+  const [showCongratsGif, setShowCongratsGif] = useState(false);
 
   // Combine user balance & refBonus
   const totalBalance = balance + refBonus;
 
-  /** Called after wheel stops. */
+  /** Called after the wheel *visually* stops. */
   const onStopSpinning = async () => {
     setMustSpin(false);
+
     const slice = wheelData[prizeIndex];
     const { multiplier } = slice;
 
+    // If multiplier=0 => lost
     if (multiplier === 0) {
-      // Lost entire bet
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
-      showTempMessage();
-      // Show ephemeral text like "-10,000" floating
+      // ephemeral text like "-10,000"
       setFloatingText(`-${formatNumber(betAmount)}`);
-      setTimeout(() => setFloatingText(""), 3000);
+      setTimeout(() => setFloatingText(""), 2500);
     } else {
-      // Net gain = total returned - bet
-      // total returned = bet * multiplier
-      // net = bet*multiplier - bet = bet*(multiplier -1)
+      // user *already* had bet subtracted in handleSpin
       const totalReturn = Math.floor(betAmount * multiplier);
       const netGain = totalReturn - betAmount;
 
-      // Update user balance
       const newBal = balance + netGain;
       try {
         await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
@@ -102,23 +100,25 @@ const LuckyWhile = () => {
       }
 
       setResultMessage(`Congratulations! You won your bet × ${multiplier}!`);
-      showTempMessage();
-
-      // Ephemeral text e.g. "+12000"
+      // ephemeral text e.g. "+12,000"
       setFloatingText(`+${formatNumber(totalReturn)}`);
-      setTimeout(() => setFloatingText(""), 3000);
+      setShowCongratsGif(true); // show confetti
+      setTimeout(() => setFloatingText(""), 2500);
     }
+
+    // Show toastlike message for 5s
+    setShowResult(true);
+    setTimeout(() => setShowResult(false), 5000);
   };
 
   /** Spin button logic. */
   const handleSpin = async () => {
-    // Validate conditions
     if (balance < 50000) return;
     if (betAmount < 10000) return;
     if (betAmount > balance) return;
-    if (mustSpin) return; // already spinning
+    if (mustSpin) return;
 
-    // Subtract bet from user
+    // subtract bet from user
     const newBal = balance - betAmount;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
@@ -128,21 +128,20 @@ const LuckyWhile = () => {
       return;
     }
 
-    // Spin
-    setMustSpin(true);
-
-    // random index
+    // random index for result
     const idx = Math.floor(Math.random() * wheelData.length);
     setPrizeIndex(idx);
+
+    // start spinning
+    setMustSpin(true);
   };
 
   const canSpin =
     !mustSpin && balance >= 50000 && betAmount >= 10000 && betAmount <= balance;
 
-  /** Utility to show toastlike result for a few seconds. */
-  const showTempMessage = () => {
-    setShowResult(true);
-    setTimeout(() => setShowResult(false), 5000);
+  /** Once the "fade-in" confetti has finished, remove the gif. */
+  const handleCongratsAnimationEnd = () => {
+    setShowCongratsGif(false); // hide the image after first iteration
   };
 
   return (
@@ -187,12 +186,8 @@ const LuckyWhile = () => {
 
           {/* Bet warnings */}
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">
-            {balance < 50000 && (
-              <p>You need ≥ 50,000 Mianus to play.</p>
-            )}
-            {betAmount < 10000 && (
-              <p>Minimum bet is 10,000 Mianus.</p>
-            )}
+            {balance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
+            {betAmount < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
             {betAmount > balance && (
               <p>Bet cannot exceed your balance.</p>
             )}
@@ -206,18 +201,15 @@ const LuckyWhile = () => {
                 prizeNumber={prizeIndex}
                 data={wheelData.map((slice) => ({
                   option: slice.option,
-                  style: {
-                    backgroundColor: slice.style.backgroundColor,
-                    textColor: slice.style.textColor,
-                  },
-                  // we ignore multiplier here, as we stored it in the original object
+                  style: slice.style,
                 }))}
+                spinDuration={4}        
                 onStopSpinning={onStopSpinning}
                 outerBorderWidth={4}
                 innerRadius={30}
                 radiusLineWidth={2}
                 fontSize={14}
-                textDistance={95} // push labels near the outer edge
+                textDistance={85}      
                 pointerProps={{
                   src: pointerImage,
                   style: {
@@ -242,18 +234,24 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Congratulations / Lose Message */}
+        {/* Toastlike message at bottom */}
         {showResult && (
           <div
             className="fixed left-0 right-0 mx-auto bottom-[80px]
                        flex justify-center z-[9999] px-4"
           >
-            <div className="flex items-center space-x-2 px-4 py-2
-                            bg-[#121620ef] rounded-[8px] shadow-lg
-                            text-[#54d192] text-sm w-fit"
+            <div
+              className={`flex items-center space-x-2 px-4 py-2
+                          bg-[#121620ef] rounded-[8px] shadow-lg
+                          text-sm w-fit
+                          ${
+                            resultMessage.includes("lost")
+                              ? "text-red-400"
+                              : "text-[#54d192]"
+                          }`}
             >
               {resultMessage.includes("lost") ? (
-                <IoCloseCircle size={24} className="text-red-400" />
+                <IoCloseCircle size={24} />
               ) : (
                 <IoCheckmarkCircle size={24} />
               )}
@@ -264,13 +262,14 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Optionally show a small "Celebrate" image if you want a bigger effect */}
-        {resultMessage.includes("Congratulations") && (
+        {/* Congratulations Image (played once) */}
+        {showCongratsGif && !resultMessage.includes("lost") && (
           <div className="absolute top-[-35px] left-0 right-0 flex justify-center pointer-events-none select-none">
             <img
               src={congratspic}
               alt="congrats"
-              className="w-[200px] animate-fade-in"
+              className="w-[200px] animate-fade-in-once"
+              onAnimationEnd={handleCongratsAnimationEnd}
             />
           </div>
         )}

@@ -52,6 +52,13 @@ function createWheelItems() {
 
 export default function LuckyWheel() {
   const { balance, refBonus, setBalance, id } = useUser();
+  // Create a ref to keep track of the current balance
+  const currentBalanceRef = useRef(balance);
+  
+  // Update the ref whenever balance changes
+  useEffect(() => {
+    currentBalanceRef.current = balance;
+  }, [balance]);
   const totalBalance = balance + refBonus;
 
   /** Generate items array once, so it doesn't shuffle on each render. */
@@ -105,37 +112,36 @@ export default function LuckyWheel() {
     };
   }, [items]);
 
-  /** Called when the wheel finishes spinning. */
   function handleWheelRest(e) {
     setIsSpinning(false);
-
+  
     const winIndex = e.currentIndex; 
     if (winIndex == null) return;
-
+  
     const winningItem = items[winIndex];
     const { multiplier } = winningItem.value || {};
-
+  
     if (!multiplier) {
-      // Lost
+      // Lost case
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2000);
     } else {
-      // Win => user already bet subtracted
+      // Win case: Calculate winnings using the up-to-date balance from the ref
       const totalReturn = Math.floor(multiplier * betAmount);
       const netGain = totalReturn - betAmount;
-      const newBal = balance + netGain;
-
-      // update user
+      const newBal = currentBalanceRef.current + netGain;  // Use the ref here
+  
+      // Update the user document and local state
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
       setBalance(newBal);
-
+  
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);
       setShowCongratsGif(true);
       setTimeout(() => setFloatingText(""), 2000);
     }
-
+  
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }

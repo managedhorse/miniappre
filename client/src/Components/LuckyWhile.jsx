@@ -59,9 +59,12 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
+  // Create a mutable reference for balance
+  const balanceRef = useRef(balance);
+  useEffect(() => { balanceRef.current = balance; }, [balance]);
+
   useEffect(() => {
     if (!containerRef.current) return;
-    // Initialize the wheel with desired configurations
     wheelRef.current = new Wheel(containerRef.current, {
       items,
       radius: 0.9,
@@ -87,25 +90,24 @@ export default function LuckyWheel() {
     setIsSpinning(false);
     const winIndex = e.currentIndex;
     if (winIndex == null) return;
-  
-    const currentBalance = balanceRef.current;  // Get latest balance after bet subtraction
+
+    const currentBalance = balanceRef.current;  // Use the latest balance
     const winningItem = items[winIndex];
     const { multiplier } = winningItem.value || {};
-  
+
     if (!multiplier) {
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2500);
     } else {
-      // Calculate total return based on the multiplier and bet
-      const totalReturn = Math.floor(betAmount * multiplier);
-      // Add the winnings to the current balance
+      // Calculate total return: original bet + winnings
+      const totalReturn = Math.floor(betAmount * (multiplier + 1));
       const newBal = currentBalance + totalReturn;
   
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal })
         .catch(console.error);
       setBalance(newBal);
-      balanceRef.current = newBal;  // Update reference with new balance
+      balanceRef.current = newBal;  // Update the balance reference
   
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);

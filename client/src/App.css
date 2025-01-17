@@ -269,13 +269,3 @@ body{
   animation: balancedParabolaBounce ease-in-out infinite;
 }
 
-.spinner-revolving-image img {
-  transition: transform 0.4s ease-out;  /* smooth the final transform */
-  transition-delay: 0.05s;              /* optional small delay */
-}
-
-.my-roulette-wheel-container {
-  /* The container that receives the rotating transform from react-custom-roulette */
-  transition: transform 0.4s ease-out;
-  transition-delay: 0.05s;
-}

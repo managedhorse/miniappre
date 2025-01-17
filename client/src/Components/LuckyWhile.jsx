@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Wheel } from "react-custom-roulette";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../firebase.jsx";
@@ -8,29 +8,31 @@ import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
 import pointerImage from "../images/pointer.webp";
 
-/** A small helper to format big numbers with commas. */
+/** Format big numbers with commas. */
 function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Example slice distribution. 
- *  Weighted approach: total ~60 slices, 
- *  but reduce or modify for your desired probabilities.
- */
+/***************************************************************************
+ * Define your slice distribution as before. 
+ * This example uses about ~60 slices total:
+ ***************************************************************************/
 const baseSlices = [
-  // 25 slices => 'Lose' => ~41.7%
+  // (Lose) 25 slices => ~41.7%
   ...Array(25).fill({ option: "Lose", multiplier: 0, color: "#D30000" }),
-  // 24 slices => '1.2×' => ~40.0%
-  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#FFD700" }),
-  // 4 slices => '1.5×' => ~6.7%
+  // (1.2×) 24 slices => ~40.0%, now racing green (#004225)
+  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#004225" }),
+  // (1.5×) 4 slices => ~6.7%
   ...Array(4).fill({ option: "1.5×", multiplier: 1.5, color: "#FFA500" }),
-  // 6 slices => '3×' => ~10.0%
+  // (3×) 6 slices => ~10.0%
   ...Array(6).fill({ option: "3×", multiplier: 3, color: "#1E90FF" }),
-  // 1 slice => '10×' => ~1.7%
+  // (10×) 1 slice => ~1.7%
   ...Array(1).fill({ option: "10×", multiplier: 10, color: "#800080" }),
 ];
 
-/** Shuffle the array so slices aren't bunched together. */
+/** Shuffle the array once to randomize distribution, 
+ * but keep it stable for the entire session so it spins properly.
+ */
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -54,28 +56,22 @@ function createWheelData() {
 
 const LuckyWhile = () => {
   const { balance, refBonus, setBalance, id } = useUser();
+  // UseMemo ensures we only shuffle once and keep a stable slice array.
+  const [wheelData] = useState(() => createWheelData());
 
-  // We generate wheel slices once and keep them stable
-  const [wheelData] = useState(createWheelData);
-
-  const [betAmount, setBetAmount] = useState(10000); // minimum bet
+  const [betAmount, setBetAmount] = useState(10000); // min bet
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeIndex, setPrizeIndex] = useState(0);
 
-  // ephemeral floating text: e.g. "+12,000"
   const [floatingText, setFloatingText] = useState("");
-
-  // Toast-like result
   const [resultMessage, setResultMessage] = useState("");
   const [showResult, setShowResult] = useState(false);
-
-  // Confetti image
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
   const totalBalance = balance + refBonus;
 
   /************************************************************************
-   * ROULETTE SPIN CALLBACK
+   * onStopSpinning => finalize the spin results
    ************************************************************************/
   const onStopSpinning = async () => {
     setMustSpin(false);
@@ -83,13 +79,13 @@ const LuckyWhile = () => {
     const slice = wheelData[prizeIndex];
     const { multiplier } = slice;
 
-    // If 0 => lost
-    if (!multiplier) {
+    if (multiplier === 0) {
+      // Lose case
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
       setFloatingText(`-${formatNumber(betAmount)}`);
-      setTimeout(() => setFloatingText(""), 2500);
+      setTimeout(() => setFloatingText(""), 1500);
     } else {
-      // user *already* had bet subtracted in handleSpin
+      // Win case
       const totalReturn = Math.floor(betAmount * multiplier);
       const netGain = totalReturn - betAmount;
       const newBal = balance + netGain;
@@ -104,16 +100,20 @@ const LuckyWhile = () => {
       setResultMessage(`Congratulations! You won your bet × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);
       setShowCongratsGif(true);
-      setTimeout(() => setFloatingText(""), 2500);
+
+      // Hide floating text after 1.5s
+      setTimeout(() => setFloatingText(""), 1500);
+
+      // Hide the gif after 1 second
+      setTimeout(() => setShowCongratsGif(false), 1000);
     }
 
-    // show the result popup for 5s
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   };
 
   /************************************************************************
-   * SPIN LOGIC
+   * handleSpin => subtract bet, pick random slice, spin
    ************************************************************************/
   const handleSpin = async () => {
     if (balance < 50000) return;   // need ≥ 50K
@@ -121,7 +121,7 @@ const LuckyWhile = () => {
     if (betAmount > balance) return;
     if (mustSpin) return;
 
-    // subtract bet from user
+    // Subtract bet from user immediately
     const newBal = balance - betAmount;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
@@ -131,31 +131,21 @@ const LuckyWhile = () => {
       return;
     }
 
-    // pick random slice
+    // Choose a random slice
     const idx = Math.floor(Math.random() * wheelData.length);
     setPrizeIndex(idx);
 
-    // spin
+    // Start spinning
     setMustSpin(true);
   };
 
   const canSpin =
     !mustSpin && balance >= 50000 && betAmount >= 10000 && betAmount <= balance;
 
-  /************************************************************************
-   * Confetti image fade-out
-   ************************************************************************/
-  const handleCongratsAnimationEnd = () => {
-    setShowCongratsGif(false);
-  };
-
-  /************************************************************************
-   * JSX
-   ************************************************************************/
   return (
     <Animate>
       <div className="grid grid-cols-1 place-items-center p-3 relative">
-        {/* Show total balance at top */}
+        {/* Display total balance at the top */}
         <div className="text-white mb-2 text-center">
           Balance: {formatNumber(totalBalance)} Mianus
         </div>
@@ -208,13 +198,14 @@ const LuckyWhile = () => {
                 option: slice.option,
                 style: slice.style,
               }))}
-              spinDuration={4} // ~4s spin
+              spinDuration={3} // set to 3s
+              // removing startingOptionIndex fixes short partial spins with random slices
               onStopSpinning={onStopSpinning}
               outerBorderWidth={4}
               innerRadius={30}
               radiusLineWidth={2}
               fontSize={14}
-              textDistance={85} // a bit closer to center
+              textDistance={75} // slightly closer to center than edge
               pointerProps={{
                 src: pointerImage,
                 style: { width: "50px", transform: "translateY(-8px)" },
@@ -233,7 +224,7 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Toastlike message */}
+        {/* Toast-like message */}
         {showResult && (
           <div className="fixed left-0 right-0 mx-auto bottom-[80px]
                           flex justify-center z-[9999] px-4">
@@ -259,14 +250,13 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Congratulations Image */}
+        {/* Congrats Image => hide after 1s */}
         {showCongratsGif && !resultMessage.includes("lost") && (
           <div className="absolute top-[-35px] left-0 right-0 flex justify-center pointer-events-none select-none">
             <img
               src={congratspic}
               alt="congrats"
-              className="w-[200px] animate-fade-in-once"
-              onAnimationEnd={handleCongratsAnimationEnd}
+              className="w-[200px]"
             />
           </div>
         )}

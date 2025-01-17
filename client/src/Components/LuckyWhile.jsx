@@ -13,21 +13,24 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/**
- * Example slices. Feel free to expand or reduce. 
- * For distribution, we randomly shuffle so they're not bunched.
- * Or if you prefer a simpler approach, you can place them in a certain order.
+/** Example slice distribution. 
+ *  Weighted approach: total ~60 slices, 
+ *  but reduce or modify for your desired probabilities.
  */
 const baseSlices = [
-  // Weighted distribution approach (see prior example):
+  // 25 slices => 'Lose' => ~41.7%
   ...Array(25).fill({ option: "Lose", multiplier: 0, color: "#D30000" }),
-  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#1cc100" }),
+  // 24 slices => '1.2×' => ~40.0%
+  ...Array(24).fill({ option: "1.2×", multiplier: 1.2, color: "#FFD700" }),
+  // 4 slices => '1.5×' => ~6.7%
   ...Array(4).fill({ option: "1.5×", multiplier: 1.5, color: "#FFA500" }),
+  // 6 slices => '3×' => ~10.0%
   ...Array(6).fill({ option: "3×", multiplier: 3, color: "#1E90FF" }),
+  // 1 slice => '10×' => ~1.7%
   ...Array(1).fill({ option: "10×", multiplier: 10, color: "#800080" }),
 ];
 
-/** Simple shuffle so slices are distributed more evenly around the wheel. */
+/** Shuffle the array so slices aren't bunched together. */
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -37,7 +40,6 @@ function shuffleArray(array) {
   return arr;
 }
 
-/** Convert the slices into the final "react-custom-roulette" structure. */
 function createWheelData() {
   const shuffled = shuffleArray(baseSlices);
   return shuffled.map((item) => ({
@@ -45,7 +47,7 @@ function createWheelData() {
     multiplier: item.multiplier,
     style: {
       backgroundColor: item.color,
-      textColor: "#fff",
+      textColor: "#ffffff",
     },
   }));
 }
@@ -53,45 +55,45 @@ function createWheelData() {
 const LuckyWhile = () => {
   const { balance, refBonus, setBalance, id } = useUser();
 
-  // We'll store the final wheel data in state once, so it doesn't shuffle on every render
+  // We generate wheel slices once and keep them stable
   const [wheelData] = useState(createWheelData);
 
-  const [betAmount, setBetAmount] = useState(10000); // minimal default bet
+  const [betAmount, setBetAmount] = useState(10000); // minimum bet
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeIndex, setPrizeIndex] = useState(0);
 
-  // ephemeral floating text e.g. "+12,000"
+  // ephemeral floating text: e.g. "+12,000"
   const [floatingText, setFloatingText] = useState("");
 
-  // Toastlike result at bottom
+  // Toast-like result
   const [resultMessage, setResultMessage] = useState("");
   const [showResult, setShowResult] = useState(false);
 
-  // For the congrat image: once the fade animation finishes, we hide it
+  // Confetti image
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Combine user balance & refBonus
   const totalBalance = balance + refBonus;
 
-  /** Called after the wheel *visually* stops. */
+  /************************************************************************
+   * ROULETTE SPIN CALLBACK
+   ************************************************************************/
   const onStopSpinning = async () => {
     setMustSpin(false);
 
     const slice = wheelData[prizeIndex];
     const { multiplier } = slice;
 
-    // If multiplier=0 => lost
-    if (multiplier === 0) {
+    // If 0 => lost
+    if (!multiplier) {
       setResultMessage(`You lost your bet of ${formatNumber(betAmount)} Mianus!`);
-      // ephemeral text like "-10,000"
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2500);
     } else {
       // user *already* had bet subtracted in handleSpin
       const totalReturn = Math.floor(betAmount * multiplier);
       const netGain = totalReturn - betAmount;
-
       const newBal = balance + netGain;
+
       try {
         await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
         setBalance(newBal);
@@ -100,21 +102,22 @@ const LuckyWhile = () => {
       }
 
       setResultMessage(`Congratulations! You won your bet × ${multiplier}!`);
-      // ephemeral text e.g. "+12,000"
       setFloatingText(`+${formatNumber(totalReturn)}`);
-      setShowCongratsGif(true); // show confetti
+      setShowCongratsGif(true);
       setTimeout(() => setFloatingText(""), 2500);
     }
 
-    // Show toastlike message for 5s
+    // show the result popup for 5s
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   };
 
-  /** Spin button logic. */
+  /************************************************************************
+   * SPIN LOGIC
+   ************************************************************************/
   const handleSpin = async () => {
-    if (balance < 50000) return;
-    if (betAmount < 10000) return;
+    if (balance < 50000) return;   // need ≥ 50K
+    if (betAmount < 10000) return; // min bet = 10K
     if (betAmount > balance) return;
     if (mustSpin) return;
 
@@ -128,22 +131,27 @@ const LuckyWhile = () => {
       return;
     }
 
-    // random index for result
+    // pick random slice
     const idx = Math.floor(Math.random() * wheelData.length);
     setPrizeIndex(idx);
 
-    // start spinning
+    // spin
     setMustSpin(true);
   };
 
   const canSpin =
     !mustSpin && balance >= 50000 && betAmount >= 10000 && betAmount <= balance;
 
-  /** Once the "fade-in" confetti has finished, remove the gif. */
+  /************************************************************************
+   * Confetti image fade-out
+   ************************************************************************/
   const handleCongratsAnimationEnd = () => {
-    setShowCongratsGif(false); // hide the image after first iteration
+    setShowCongratsGif(false);
   };
 
+  /************************************************************************
+   * JSX
+   ************************************************************************/
   return (
     <Animate>
       <div className="grid grid-cols-1 place-items-center p-3 relative">
@@ -158,11 +166,11 @@ const LuckyWhile = () => {
             Wheel of Fortune
           </h2>
 
-          {/* Bet input & spin button side by side */}
+          {/* Bet + Spin row */}
           <div className="flex items-center space-x-2 w-full">
             <input
               type="number"
-              placeholder="Enter bet (≥10,000)"
+              placeholder="Enter bet (≥ 10,000)"
               className="flex-1 py-1 px-2 rounded-md 
                          bg-white text-black border border-gray-300
                          focus:outline-none focus:border-blue-500"
@@ -173,60 +181,51 @@ const LuckyWhile = () => {
               onClick={handleSpin}
               disabled={!canSpin}
               className={`px-4 py-2 text-white rounded-md font-semibold
-                         transition-colors duration-300
-                         ${
-                           canSpin
-                             ? "bg-blue-600 hover:bg-blue-700"
-                             : "bg-gray-500 cursor-not-allowed"
-                         }`}
+                          transition-colors duration-300
+                          ${
+                            canSpin
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-gray-500 cursor-not-allowed"
+                          }`}
             >
               Spin
             </button>
           </div>
 
-          {/* Bet warnings */}
+          {/* Warnings */}
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">
             {balance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
             {betAmount < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
-            {betAmount > balance && (
-              <p>Bet cannot exceed your balance.</p>
-            )}
+            {betAmount > balance && <p>Bet cannot exceed your balance.</p>}
           </div>
 
           {/* The Wheel */}
           <div className="mt-4 flex justify-center">
-            <div className="relative">
-              <Wheel
-                mustStartSpinning={mustSpin}
-                prizeNumber={prizeIndex}
-                data={wheelData.map((slice) => ({
-                  option: slice.option,
-                  style: slice.style,
-                }))}
-                spinDuration={4}        
-                onStopSpinning={onStopSpinning}
-                outerBorderWidth={4}
-                innerRadius={30}
-                radiusLineWidth={2}
-                fontSize={14}
-                textDistance={85}      
-                pointerProps={{
-                  src: pointerImage,
-                  style: {
-                    width: "45px",
-                    transform: "translateY(-8px)",
-                  },
-                }}
-              />
-              {/* Subtle overlay if you like */}
-              <div className="absolute inset-0 shadow-lg pointer-events-none"></div>
-            </div>
+            <Wheel
+              mustStartSpinning={mustSpin}
+              prizeNumber={prizeIndex}
+              data={wheelData.map((slice) => ({
+                option: slice.option,
+                style: slice.style,
+              }))}
+              spinDuration={4} // ~4s spin
+              onStopSpinning={onStopSpinning}
+              outerBorderWidth={4}
+              innerRadius={30}
+              radiusLineWidth={2}
+              fontSize={14}
+              textDistance={85} // a bit closer to center
+              pointerProps={{
+                src: pointerImage,
+                style: { width: "50px", transform: "translateY(-8px)" },
+              }}
+            />
           </div>
         </div>
 
-        {/* ephemeral floating text if any */}
+        {/* ephemeral floating text */}
         {floatingText && (
-          <div className="absolute flex justify-center items-center top-[50%] left-[50%] 
+          <div className="absolute flex justify-center items-center top-[50%] left-[50%]
                           transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
             <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
               {floatingText}
@@ -234,12 +233,10 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Toastlike message at bottom */}
+        {/* Toastlike message */}
         {showResult && (
-          <div
-            className="fixed left-0 right-0 mx-auto bottom-[80px]
-                       flex justify-center z-[9999] px-4"
-          >
+          <div className="fixed left-0 right-0 mx-auto bottom-[80px]
+                          flex justify-center z-[9999] px-4">
             <div
               className={`flex items-center space-x-2 px-4 py-2
                           bg-[#121620ef] rounded-[8px] shadow-lg
@@ -262,7 +259,7 @@ const LuckyWhile = () => {
           </div>
         )}
 
-        {/* Congratulations Image (played once) */}
+        {/* Congratulations Image */}
         {showCongratsGif && !resultMessage.includes("lost") && (
           <div className="absolute top-[-35px] left-0 right-0 flex justify-center pointer-events-none select-none">
             <img

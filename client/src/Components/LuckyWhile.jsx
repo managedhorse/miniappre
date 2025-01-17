@@ -199,7 +199,7 @@ export default function LuckyWheel() {
         <div className="p-4 bg-activebg border border-activeborder rounded-lg w-full max-w-[420px] shadow-lg">
           {/* Title */}
           <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
-            Spin-Wheel (spin-wheel library)
+            Spin Mianus
           </h2>
 
           {/* Bet input + button */}

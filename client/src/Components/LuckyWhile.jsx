@@ -201,6 +201,7 @@ const LuckyWhile = () => {
               // removing startingOptionIndex fixes short partial spins with random slices
               onStopSpinning={onStopSpinning}
               outerBorderWidth={4}
+              disableInitialAnimation={true}
               innerRadius={30}
               radiusLineWidth={2}
               fontSize={14}

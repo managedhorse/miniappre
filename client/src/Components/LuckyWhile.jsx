@@ -88,6 +88,7 @@ export default function LuckyWheel() {
     const winIndex = e.currentIndex;
     if (winIndex == null) return;
   
+    const currentBalance = balanceRef.current;  // Get latest balance after bet subtraction
     const winningItem = items[winIndex];
     const { multiplier } = winningItem.value || {};
   
@@ -96,14 +97,15 @@ export default function LuckyWheel() {
       setFloatingText(`-${formatNumber(betAmount)}`);
       setTimeout(() => setFloatingText(""), 2500);
     } else {
-      // Calculate total return including the original bet
-      const totalReturn = Math.floor(betAmount * (1 + multiplier));
-      // Add the total return to the current balance (bet was already subtracted)
-      const newBal = balance + totalReturn;
+      // Calculate total return based on the multiplier and bet
+      const totalReturn = Math.floor(betAmount * multiplier);
+      // Add the winnings to the current balance
+      const newBal = currentBalance + totalReturn;
   
-      // Update user's balance in Firestore and local state
-      updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
+      updateDoc(doc(db, "telegramUsers", id), { balance: newBal })
+        .catch(console.error);
       setBalance(newBal);
+      balanceRef.current = newBal;  // Update reference with new balance
   
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(totalReturn)}`);
@@ -120,17 +122,18 @@ export default function LuckyWheel() {
     if (balance < 50000) return;
     if (betAmount < 10000) return;
     if (betAmount > balance) return;
-
+  
     setIsSpinning(true);
     const newBal = balance - betAmount;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
       setBalance(newBal);
+      balanceRef.current = newBal;  // Store updated balance
     } catch (err) {
       console.error("Error subtracting bet:", err);
       return;
     }
-
+  
     const randomIdx = Math.floor(Math.random() * items.length);
     if (wheelRef.current) {
       wheelRef.current.spinToItem(randomIdx, 4000, true, 2, 1);

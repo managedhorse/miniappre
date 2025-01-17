@@ -9,7 +9,4 @@ export default defineConfig({
     http: true,
     ssr: false,
   },
-  ssr: {
-    noExternal: ['spin-wheel']
-  }
 })

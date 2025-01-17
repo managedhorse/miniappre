@@ -218,7 +218,7 @@ export default function LuckyWheel() {
 
         <div className="bg-activebg border border-activeborder rounded-lg w-full max-w-[420px] shadow-lg p-4">
           <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
-            Wheel of Fortune
+            Spin Mianus
           </h2>
 
           {/* Bet Input & Spin Button */}
@@ -246,7 +246,7 @@ export default function LuckyWheel() {
           {/* Warnings */}
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">
             {balance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
-            {betAmount < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
+            {betAmount < 10000 && <p>Min bet 10,000 Mianus.</p>}
             {betAmount > balance && <p>Bet cannot exceed your balance.</p>}
           </div>
 

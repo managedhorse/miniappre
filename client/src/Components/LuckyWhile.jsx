@@ -183,9 +183,9 @@ export default function LuckyWheel() {
           position: "absolute",
           top: "-20px",
           left: "50%",
-          transform: "translateX(-50%)",
+          transform: "translateX(-50%) rotate(-45deg)",
           width: "40px",
-          zIndex: 5,
+          zIndex: 1000,
         }}
       />
     );

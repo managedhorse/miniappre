@@ -62,6 +62,7 @@ class Slot {
     this.slot = null;
   }
   create() {
+    // Use absolute path since numbered assets are in the public folder
     const slot = PIXI.Sprite.from(`/${this.cost}.png`);
     slot.anchor.set(this.anchor);
     slot.x = this.x;
@@ -140,7 +141,7 @@ class Play {
             that.pegs[pegIndx].pegBall.tint = 0xffffff;
           }, 100);
 
-          let collisionSoundEffect = new Audio("./Sound Effects/collisionEffect.wav");
+          let collisionSoundEffect = new Audio("/Sound Effects/collisionEffect.wav");
           collisionSoundEffect.volume = 0.2;
           collisionSoundEffect.play();
 
@@ -177,7 +178,7 @@ class Play {
           )
         ) {
           that.app.stage.removeChild(that.pinkBall);
-          let scoredSoundEffect = new Audio("./Sound Effects/scoreEffect.wav");
+          let scoredSoundEffect = new Audio("/Sound Effects/scoreEffect.wav");
           scoredSoundEffect.volume = 0.2;
           scoredSoundEffect.play();
           if (that.cost_scored === 0) {
@@ -191,7 +192,9 @@ class Play {
 
             const pointsWonEl = document.getElementById("points-won");
             if (pointsWonEl) pointsWonEl.innerHTML = that.cost_scored;
-            const playerPointsEl = document.getElementById("points-bet-wrapper__points--player-points");
+            const playerPointsEl = document.getElementById(
+              "points-bet-wrapper__points--player-points"
+            );
             if (playerPointsEl) playerPointsEl.innerHTML = window.points;
             const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
             if (wonFlashEl) wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
@@ -235,15 +238,54 @@ export default function Plinko() {
 
   useEffect(() => {
     let app;
-    (async () => {
-      app = new PIXI.Application();
-      await app.init({ height: 700, backgroundColor: 0x1496c });
-      appRef.current = app;
-      if (containerRef.current) {
-        containerRef.current.appendChild(app.canvas);
-      }
-      setupPixiGame(app);
-    })();
+    let assetsToLoad = new Set([
+      circleImage,
+      pinkBallImage,
+      "/bC.png",
+      "/0.5.png",
+      "/0.7.png",
+      "/1.1.png",
+      "/1.2.png",
+      "/1.3.png",
+      "/1.4.png",
+      "/1.5.png",
+      "/1.6.png",
+      "/1.9.png",
+      "/1.png",
+      "/2.1.png",
+      "/2.png",
+      "/3.png",
+      "/4.png",
+      "/5.6.png",
+      "/7.1.png",
+      "/8.1png",
+      "/8.4.png",
+      "/8.9.png",
+      "/8.png",
+      "/9.png",
+      "/10.png",
+      "/15.png",
+      "/16.png",
+    ]);
+    // Preload images for initial level slot costs
+    slot_costs_list[initial_level - 8].forEach((cost) => {
+      assetsToLoad.add(`/${cost}.png`);
+    });
+
+    PIXI.Loader.shared
+      .add([...assetsToLoad])
+      .load(() => {
+        (async () => {
+          app = new PIXI.Application();
+          await app.init({ height: 700, backgroundColor: 0x1496c });
+          appRef.current = app;
+          if (containerRef.current) {
+            containerRef.current.appendChild(app.canvas);
+          }
+          setupPixiGame(app);
+        })();
+      });
+
     return () => {
       if (app) {
         app.destroy(true, { children: true });
@@ -267,7 +309,14 @@ export default function Plinko() {
         space_left += 50 * fraction;
       }
       for (let point = 1; point <= i; point++) {
-        let pegObj = new Peg(space_left, space_bottom, 0, 30 * fraction, 30 * fraction, (30 * fraction) / 2);
+        let pegObj = new Peg(
+          space_left,
+          space_bottom,
+          0,
+          30 * fraction,
+          30 * fraction,
+          (30 * fraction) / 2
+        );
         let newPeg = pegObj.create();
         stage.addChild(newPeg);
         pegs.push(pegObj);

@@ -261,7 +261,7 @@ export default function Plinko() {
       "/4.png",
       "/5.6.png",
       "/7.1.png",
-      "/8.1png",
+      "/8.1.png", // fixed filename typo if needed
       "/8.4.png",
       "/8.9.png",
       "/8.png",
@@ -270,6 +270,7 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
+
     // Preload numbered slot images for the initial level
     slot_costs_list[initial_level - 8].forEach((cost) => {
       assetsToLoad.add(`/${cost}.png`);

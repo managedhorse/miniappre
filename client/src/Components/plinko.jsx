@@ -4,7 +4,7 @@ import collisionEffect from "../images/collisionEffect.wav";
 import scoreEffect from "../images/scoreEffect.wav";
 import backgroundMusic from "../images/background_music.mp3";
 import pinkBallImage from "../images/pink_ball.png";
-import circleImage from "../images/images/circle.png";
+import circleImage from "../images/circle.png";
 // ... other asset imports
 
 // Define helper classes (Peg, Slot, Play) outside the component

@@ -853,26 +853,26 @@ useEffect(() => {
     fetchReferrals();
   }, []);
 
-  // 1) Create a new Plinko session
-async function createPlinkoSession() {
-  try {
-    if (!id) throw new Error("User not logged in.");
-
-    const sessionsColl = collection(db, "users", id, "plinkoSessions");
-    const sessionDoc = await addDoc(sessionsColl, {
-      userId: id,
-      initialBalance: balance, // from state
-      netProfit: 0,
-      active: true,
-      createdAt: serverTimestamp()
-    });
-
-    return sessionDoc.id;  // Return the new sessionId
-  } catch (err) {
-    console.error("Error creating plinko session:", err);
-    throw err;
+  async function createPlinkoSession() {
+    try {
+      if (!id) throw new Error("User not logged in.");
+      
+      // Use 'telegramUsers' instead of 'users'
+      const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
+      const sessionDoc = await addDoc(sessionsColl, {
+        userId: id,
+        initialBalance: balance,
+        netProfit: 0,
+        active: true,
+        createdAt: serverTimestamp()
+      });
+  
+      return sessionDoc.id; 
+    } catch (err) {
+      console.error("Error creating plinko session:", err);
+      throw err;
+    }
   }
-}
 
 // 2) End a Plinko session with netProfit
 async function endPlinkoSession(sessionId, netProfit) {
@@ -880,7 +880,7 @@ async function endPlinkoSession(sessionId, netProfit) {
     if (!id) throw new Error("User not logged in.");
 
     // Mark session doc inactive
-    const sessionRef = doc(db, "users", id, "plinkoSessions", sessionId);
+    const sessionRef = doc(db, "telegramUsers", id, "plinkoSessions", sessionId);
     await updateDoc(sessionRef, {
       netProfit,
       active: false
@@ -888,7 +888,7 @@ async function endPlinkoSession(sessionId, netProfit) {
 
     // Update user’s main balance
     const updatedBalance = balance + netProfit;
-    await updateDoc(doc(db, "users", id), {
+    await updateDoc(doc(db, "telegramUsers", id), {
       balance: updatedBalance
     });
 

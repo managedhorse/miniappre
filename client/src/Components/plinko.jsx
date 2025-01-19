@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as PIXI from "pixi.js";
-import collisionEffect from "../images/collisionEffect.wav";
-import scoreEffect from "../images/scoreEffect.wav";
+
 import backgroundMusic from "../images/background_music.mp3";
 import pinkBallImage from "../images/pink_ball.png";
 import circleImage from "../images/circle.png";
@@ -169,6 +168,7 @@ export default function Plinko() {
       height: 700,
       backgroundColor: 0x1496c,
     });
+    console.log("PIXI Application:", appRef.current);
     if (containerRef.current) {
       containerRef.current.appendChild(appRef.current.view);
     }
@@ -243,7 +243,7 @@ export default function Plinko() {
         
       </div>
       <div className="canvas-wrapper">
-        <div id="canvas" ref={containerRef}>
+      <div id="pixi-container" ref={containerRef}>
           {/* Canvas and UI controls will be injected here */}
           <div className="canvas-options">
             <span className="canvas-options_title">Lines</span>

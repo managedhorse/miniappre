@@ -1,5 +1,4 @@
-// plinko.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "../context/userContext";
 
 function PlinkoIframePage() {
@@ -7,62 +6,83 @@ function PlinkoIframePage() {
   const userIsReady = Boolean(id && initialized && !loading);
   const iframeRef = useRef(null);
 
+  // We'll keep a list of messages or errors to display on screen.
+  const [logs, setLogs] = useState([]);
+
+  // Helper function to append a message to our on-screen log
+  // Use plain JS:
+function logMessage(message) {
+    setLogs((prev) => [...prev, message]);
+  }
+
   useEffect(() => {
-    if (!userIsReady) return;
+    if (!userIsReady) {
+      logMessage("User is not ready yet (loading or missing ID).");
+      return;
+    }
+
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe) {
+      logMessage("iframeRef is null; cannot start session.");
+      return;
+    }
 
     let sessionId = null;
 
     async function startSession() {
       try {
-        // 1) Create session in Firestore via userContext
+        logMessage("Attempting to create a new Plinko session in Firestore...");
         sessionId = await createPlinkoSession();
+        logMessage(`Session created with ID: ${sessionId}`);
 
         // 2) Post INIT_SESSION to the iframe
-        iframe.contentWindow?.postMessage(
-          {
-            type: "INIT_SESSION",
-            userId: id,
-            sessionBalance: balance,
-            sessionId,
-          },
-          "https://plinko-game-main-two.vercel.app"
-        );
-        console.log("Sent INIT_SESSION to iframe with sessionId =", sessionId);
+        const msg = {
+          type: "INIT_SESSION",
+          userId: id,
+          sessionBalance: balance,
+          sessionId,
+        };
+        logMessage(`Sending INIT_SESSION to iframe: ${JSON.stringify(msg)}`);
+
+        iframe.contentWindow?.postMessage(msg, "https://plinko-game-main-two.vercel.app");
+        logMessage("INIT_SESSION posted to iframe.");
       } catch (err) {
-        console.error("Error starting plinko session:", err);
+        logMessage("Error starting plinko session: " + err.message);
       }
     }
 
     function onIframeLoad() {
+      logMessage("Iframe loaded event fired. Starting session...");
       startSession();
     }
+
     iframe.addEventListener("load", onIframeLoad);
 
     // If iframe is already loaded, call startSession
     if (iframe.contentWindow?.document.readyState === "complete") {
+      logMessage("Iframe is already fully loaded. Starting session immediately...");
       startSession();
     }
 
     // 3) Listen for END_SESSION
     const handleMessage = async (event) => {
-      console.log("Parent received message from origin:", event.origin);
+      logMessage(`Received message from origin: ${event.origin}`);
 
-      // If you want to debug the exact domain, loosen the check:
-      if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+      // Loosen the check to allow subdomains, trailing slashes, etc.
+      if (!event.origin.includes("plinko-game-main-two.vercel.app")) {
+        logMessage(`Ignoring message from untrusted origin: ${event.origin}`);
+        return;
+      }
 
       const { type, netProfit, sessionId: childSessionId } = event.data || {};
-
       if (type === "END_SESSION") {
-        console.log("Got END_SESSION from iframe. netProfit =", netProfit);
+        logMessage(`Got END_SESSION from iframe with netProfit=${netProfit}, sessionId=${childSessionId}`);
 
-        // 4) End session in Firestore via userContext
         try {
           await endPlinkoSession(childSessionId, netProfit);
-          // Optionally navigate away or show a message
+          logMessage(`Session ended. Net profit = ${netProfit}. User balance updated in Firestore.`);
         } catch (err) {
-          console.error("Error ending plinko session:", err);
+          logMessage("Error ending plinko session: " + err.message);
         }
       }
     };
@@ -75,15 +95,34 @@ function PlinkoIframePage() {
     };
   }, [userIsReady, id, balance, createPlinkoSession, endPlinkoSession]);
 
-  if (!userIsReady) return <div>Loading user...</div>;
+  if (!userIsReady) {
+    return (
+      <div>
+        <p>Loading user...</p>
+        {logs.map((msg, i) => (
+          <p key={i} style={{ color: "red" }}>{msg}</p>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <iframe
-      ref={iframeRef}
-      src="https://plinko-game-main-two.vercel.app"
-      style={{ width: "100%", height: "100vh", border: "none" }}
-      title="Plinko Game"
-    />
+    <div style={{ width: "100%", height: "100vh" }}>
+      {/* Display any debug/error messages */}
+      <div style={{ padding: "0.5rem", backgroundColor: "#fff", color: "#000", maxHeight: "200px", overflowY: "auto" }}>
+        <h3 style={{ margin: 0 }}>Debug/Errors:</h3>
+        {logs.map((msg, i) => (
+          <p key={i} style={{ margin: 0, padding: 0, color: "red" }}>{msg}</p>
+        ))}
+      </div>
+      {/* The Iframe for Plinko */}
+      <iframe
+        ref={iframeRef}
+        src="https://plinko-game-main-two.vercel.app"
+        style={{ width: "100%", height: "calc(100% - 200px)", border: "none" }}
+        title="Plinko Game"
+      />
+    </div>
   );
 }
 

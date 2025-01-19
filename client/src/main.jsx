@@ -17,6 +17,7 @@ import Plutos from "./pages/Plutos.jsx";
 import UserPro from "./pages/UserPro.jsx";
 import LuckyWhile from "./Components/LuckyWhile.jsx";
 import DailyReward from "./Components/DailyReward.jsx";
+import Plinko from "./Components/plinko.jsx";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
       {
         path:"/earn/daily-reward",
         element: <DailyReward />,
+      },
+      {
+        path:"/earn/plinko",
+        element: <Plinko />,
       },
     ]
 

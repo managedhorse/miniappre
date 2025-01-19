@@ -19,7 +19,7 @@ class Peg {
     this.pegBall = null;
   }
   create() {
-    const peg = PIXI.Sprite.from(circleImage); // Use imported circleImage path
+    const peg = PIXI.Sprite.from(circleImage);
     peg.anchor.set(this.anchor);
     peg.x = this.x;
     peg.y = this.y;
@@ -154,7 +154,7 @@ export default function Plinko() {
       slotsRef.current.push(slotObj);
     }
 
-    openningRef.current = PIXI.Sprite.from("path_to_images/bC.png");
+    openningRef.current = PIXI.Sprite.from("/bC.png");
     openningRef.current.anchor.set(0);
     openningRef.current.x = pegsRef.current[1].x - 8 * fractionRef.current;
     openningRef.current.y = 50 * fractionRef.current;
@@ -238,9 +238,9 @@ export default function Plinko() {
   return (
     <div className="game-wrapper">
       <div className="heading">
-        <img className="gg-logo" src="path_to_images/gg-logo.png" height="30" alt="gg-logo" />
+        
         <span>Plinko</span>
-        <img className="info-logo" id="info-logo" src="path_to_images/info.png" height="40" alt="info-logo" />
+        
       </div>
       <div className="canvas-wrapper">
         <div id="canvas" ref={containerRef}>
@@ -305,7 +305,7 @@ export default function Plinko() {
               </div>
             </div>
           </div>
-          <img className="rocket" src="path_to_images/SimpleRocket.gif" alt="rocket" />
+          
         </div>
       </div>
       <div className="game-history">

@@ -343,7 +343,7 @@ const listTasks = [
                   {tasks.map((item) => (
                     <div
                       key={item.taskId}
-                      className="bg-activebg border-[1px] border-activeborder slackey-regular rounded-[10px] flex items-center justify-between border-t-[1px] border-white px-[14px] py-[5px] mt-1"
+                      className="bg-activebg border-[1px] slackey-regular rounded-[10px] flex items-center justify-between border-t-[1px] border-white px-[14px] py-[5px] mt-1"
                     >
                       <div className="flex items-center flex-1 space-x-2">
                         <div className="">

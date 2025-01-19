@@ -161,7 +161,6 @@ class Play {
           } else if (randomTurn === 1) {
             that.pinkBall.x += that.pinkBall.vx;
           }
-
           break;
         }
       }
@@ -268,10 +267,10 @@ export default function Plinko() {
         space_left += 50 * fraction;
       }
       for (let point = 1; point <= i; point++) {
-        let beg_obj = new Peg(space_left, space_bottom, 0, 30 * fraction, 30 * fraction, (30 * fraction) / 2);
-        let new_beg = beg_obj.create();
-        stage.addChild(new_beg);
-        pegs.push(beg_obj);
+        let pegObj = new Peg(space_left, space_bottom, 0, 30 * fraction, 30 * fraction, (30 * fraction) / 2);
+        let newPeg = pegObj.create();
+        stage.addChild(newPeg);
+        pegs.push(pegObj);
         space_left += 100 * fraction;
       }
       space_bottom += 90 * fraction;
@@ -279,7 +278,7 @@ export default function Plinko() {
 
     for (let s = 0; s < slot_costs.length; s++) {
       let temp_bottom_peg = pegs[pegs.length - 1 - slot_costs.length + s];
-      let slot_obj = new Slot(
+      let slotObj = new Slot(
         temp_bottom_peg.x + temp_bottom_peg.width * fraction,
         space_bottom,
         0,
@@ -287,9 +286,9 @@ export default function Plinko() {
         50 - lines,
         slot_costs[s]
       );
-      let new_slot = slot_obj.create();
-      stage.addChild(new_slot);
-      slots.push(slot_obj);
+      let newSlot = slotObj.create();
+      stage.addChild(newSlot);
+      slots.push(slotObj);
     }
 
     openning = PIXI.Sprite.from("./images/bC.png");
@@ -324,7 +323,6 @@ export default function Plinko() {
   const handlePlayButton = () => {
     if (points > 0 && bet <= points) {
       setPoints((prev) => +((prev - bet).toFixed(2)));
-      // Implement game play logic by creating and starting a new Play instance
       const playInstance = new Play(
         openning,
         appRef.current,
@@ -348,9 +346,13 @@ export default function Plinko() {
         <div id="pixi-container" ref={containerRef}>
           <div className="canvas-options">
             <span className="canvas-options_title">Lines</span>
-            {["8","9","10","11","12","13","14","15","16"].map((line) => (
-              <div key={line} className="canvas-option_div">{line}</div>
-            ))}
+            {["8", "9", "10", "11", "12", "13", "14", "15", "16"].map(
+              (line) => (
+                <div key={line} className="canvas-option_div">
+                  {line}
+                </div>
+              )
+            )}
           </div>
           <div id="play-button" className="play-button" onClick={handlePlayButton}>
             <label>Play</label>

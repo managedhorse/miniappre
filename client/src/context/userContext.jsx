@@ -855,19 +855,18 @@ useEffect(() => {
 
   async function createPlinkoSession() {
     try {
-      if (!id) throw new Error("User not logged in.");
-      
-      // Use 'telegramUsers' instead of 'users'
+      // use userContext's `balance` RIGHT NOW as the snapshot
       const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
       const sessionDoc = await addDoc(sessionsColl, {
         userId: id,
-        initialBalance: balance,
+        initialBalance: balance,  // snapshot
         netProfit: 0,
         active: true,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        // optional: expires at in 1 minute
+        sessionExpiresAt: new Date(Date.now() + 60 * 1000)
       });
-  
-      return sessionDoc.id; 
+      return sessionDoc.id;
     } catch (err) {
       console.error("Error creating plinko session:", err);
       throw err;
@@ -901,7 +900,33 @@ async function endPlinkoSession(sessionId, netProfit) {
     throw err;
   }
 }
+useEffect(() => {
+  async function cleanupSessions() {
+    if (!id) return;
+    
+    const now = new Date();
+    const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
+    const q = query(
+      sessionsColl,
+      where("active", "==", true),
+      where("sessionExpiresAt", "<=", now)
+    );
+    const snap = await getDocs(q);
 
+    snap.forEach(async (docSnap) => {
+      await updateDoc(docSnap.ref, {
+        active: false,
+        netProfit: 0
+      });
+      // Optionally adjust user’s Firestore balance if needed
+    });
+  }
+
+  // For example, run this once every 30 seconds or on app start:
+  cleanupSessions();
+  const interval = setInterval(cleanupSessions, 30 * 1000);
+  return () => clearInterval(interval);
+}, [id]);
   return (
     <UserContext.Provider value={{
       balance,

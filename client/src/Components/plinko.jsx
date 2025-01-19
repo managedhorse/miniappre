@@ -62,7 +62,7 @@ class Slot {
     this.slot = null;
   }
   create() {
-    // Use absolute path since numbered assets are in the public folder
+    // Use absolute path for numbered images in public folder
     const slot = PIXI.Sprite.from(`/${this.cost}.png`);
     slot.anchor.set(this.anchor);
     slot.x = this.x;
@@ -109,7 +109,7 @@ class Play {
       wonFlashEl.classList.remove("points-bet-wrapper__won-flash__animate");
     }
 
-    this.pinkBall.x = openning.x + (5 * this.fraction);
+    this.pinkBall.x = openning.x + 5 * this.fraction;
     this.pinkBall.y = openning.y;
     this.pinkBall.width = 35 * this.fraction;
     this.pinkBall.height = 35 * this.fraction;
@@ -128,7 +128,7 @@ class Play {
       for (let pegIndx = 0; pegIndx < that.pegs.length; pegIndx++) {
         if (
           that.isCollision(
-            that.pegs[pegIndx].x - (1 * that.fraction),
+            that.pegs[pegIndx].x - 1 * that.fraction,
             that.pegs[pegIndx].y,
             that.pegs[pegIndx].radius,
             that.pinkBall.x,
@@ -197,9 +197,12 @@ class Play {
             );
             if (playerPointsEl) playerPointsEl.innerHTML = window.points;
             const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
-            if (wonFlashEl) wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
+            if (wonFlashEl)
+              wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
 
-            let tableGameHistory = document.getElementById("game-history-table-body");
+            let tableGameHistory = document.getElementById(
+              "game-history-table-body"
+            );
             if (tableGameHistory) {
               tableGameHistory.innerHTML =
                 `<tr>
@@ -267,24 +270,23 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
-    // Preload images for initial level slot costs
+    // Preload numbered slot images for the initial level
     slot_costs_list[initial_level - 8].forEach((cost) => {
       assetsToLoad.add(`/${cost}.png`);
     });
 
-    PIXI.Loader.shared
-      .add([...assetsToLoad])
-      .load(() => {
-        (async () => {
-          app = new PIXI.Application();
-          await app.init({ height: 700, backgroundColor: 0x1496c });
-          appRef.current = app;
-          if (containerRef.current) {
-            containerRef.current.appendChild(app.canvas);
-          }
-          setupPixiGame(app);
-        })();
-      });
+    let loader = new PIXI.Loader();
+    loader.add([...assetsToLoad]).load(() => {
+      (async () => {
+        app = new PIXI.Application();
+        await app.init({ height: 700, backgroundColor: 0x1496c });
+        appRef.current = app;
+        if (containerRef.current) {
+          containerRef.current.appendChild(app.canvas);
+        }
+        setupPixiGame(app);
+      })();
+    });
 
     return () => {
       if (app) {

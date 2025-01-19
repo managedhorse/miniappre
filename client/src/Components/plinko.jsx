@@ -39,6 +39,7 @@ class Peg {
     this.pegBall = null;
   }
   create() {
+    console.log("Creating peg at:", this.x, this.y);
     const peg = PIXI.Sprite.from(circleImage);
     peg.anchor.set(this.anchor);
     peg.x = this.x;
@@ -62,6 +63,7 @@ class Slot {
     this.slot = null;
   }
   create() {
+    console.log("Creating slot for cost:", this.cost, "at", this.x, this.y);
     const slot = PIXI.Sprite.from(`/${this.cost}.png`);
     slot.anchor.set(this.anchor);
     slot.x = this.x;
@@ -90,8 +92,7 @@ class Play {
   }
 
   isCollision(peg_x, peg_y, peg_r, ball_x, ball_y, ball_r) {
-    const circleDistance = (peg_x - ball_x) ** 2 + (peg_y - ball_y) ** 2;
-    return circleDistance <= ((peg_r + ball_r) ** 2);
+    return (peg_x - ball_x) ** 2 + (peg_y - ball_y) ** 2 <= ((peg_r + ball_r) ** 2);
   }
 
   getCostScored(bet, slot_cost) {
@@ -103,6 +104,7 @@ class Play {
   }
 
   start() {
+    console.log("Starting Play instance with bet:", this.bet);
     const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
     if (wonFlashEl) {
       wonFlashEl.classList.remove("points-bet-wrapper__won-flash__animate");
@@ -115,118 +117,124 @@ class Play {
     this.pinkBall.vy = 0;
     this.pinkBall.vx = 0;
     this.app.stage.addChild(this.pinkBall);
+    console.log("Added pinkBall to stage at:", this.pinkBall.x, this.pinkBall.y);
 
     let last_peg;
     let randomTurn = Math.floor(Math.random() * 2);
     const that = this;
 
-    console.log("Starting ticker for ball animation.");
     this.app.ticker.add(function () {
-      that.pinkBall.y += that.pinkBall.vy;
-      that.pinkBall.vy += 0.8;
+      try {
+        that.pinkBall.y += that.pinkBall.vy;
+        that.pinkBall.vy += 0.8;
+        // Logging collision detection process
+        for (let pegIndx = 0; pegIndx < that.pegs.length; pegIndx++) {
+          if (
+            that.isCollision(
+              that.pegs[pegIndx].x - 1 * that.fraction,
+              that.pegs[pegIndx].y,
+              that.pegs[pegIndx].radius,
+              that.pinkBall.x,
+              that.pinkBall.y,
+              that.pinkBall.width / 2
+            )
+          ) {
+            console.log("Collision detected with peg:", pegIndx);
+            that.pegs[pegIndx].pegBall.tint = 0xF101C4;
+            setTimeout(() => {
+              that.pegs[pegIndx].pegBall.tint = 0xffffff;
+            }, 100);
 
-      for (let pegIndx = 0; pegIndx < that.pegs.length; pegIndx++) {
-        if (
-          that.isCollision(
-            that.pegs[pegIndx].x - 1 * that.fraction,
-            that.pegs[pegIndx].y,
-            that.pegs[pegIndx].radius,
-            that.pinkBall.x,
-            that.pinkBall.y,
-            that.pinkBall.width / 2
-          )
-        ) {
-          console.log("Collision detected with peg index:", pegIndx);
-          that.pegs[pegIndx].pegBall.tint = 0xF101C4;
-          setTimeout(() => {
-            that.pegs[pegIndx].pegBall.tint = 0xffffff;
-          }, 100);
+            let collisionSoundEffect = new Audio("/Sound Effects/collisionEffect.wav");
+            collisionSoundEffect.volume = 0.2;
+            collisionSoundEffect.play();
 
-          let collisionSoundEffect = new Audio("/Sound Effects/collisionEffect.wav");
-          collisionSoundEffect.volume = 0.2;
-          collisionSoundEffect.play();
+            let current_peg = that.pegs[pegIndx];
 
-          let current_peg = that.pegs[pegIndx];
+            that.pinkBall.vy *= -that.top_bounce;
+            that.pinkBall.y += that.pinkBall.vy;
+            that.pinkBall.vx += that.side_bounce;
+            that.pinkBall.vx = that.pinkBall.vx * that.fraction;
 
-          that.pinkBall.vy *= -that.top_bounce;
-          that.pinkBall.y += that.pinkBall.vy;
-          that.pinkBall.vx += that.side_bounce;
-          that.pinkBall.vx = that.pinkBall.vx * that.fraction;
-
-          if (current_peg !== last_peg) {
-            randomTurn = Math.floor(Math.random() * 2);
-            last_peg = current_peg;
-          }
-
-          if (randomTurn === 0) {
-            that.pinkBall.x -= that.pinkBall.vx;
-          } else if (randomTurn === 1) {
-            that.pinkBall.x += that.pinkBall.vx;
-          }
-          break;
-        }
-      }
-
-      for (let slotIndx = 0; slotIndx < that.slots.length; slotIndx++) {
-        if (
-          that.isCollision(
-            that.slots[slotIndx].x,
-            that.slots[slotIndx].y + 40,
-            that.slots[slotIndx].width / 2,
-            that.pinkBall.x,
-            that.pinkBall.y,
-            that.pinkBall.width / 2
-          )
-        ) {
-          console.log("Collision detected with slot index:", slotIndx);
-          that.app.stage.removeChild(that.pinkBall);
-          let scoredSoundEffect = new Audio("/Sound Effects/scoreEffect.wav");
-          scoredSoundEffect.volume = 0.2;
-          scoredSoundEffect.play();
-          if (that.cost_scored === 0) {
-            that.slotCost = that.slots[slotIndx].cost;
-            that.cost_scored = that.roundToTwoDecimal(
-              that.getCostScored(that.bet, that.slotCost)
-            );
-
-            window.points = (window.points || 100) + that.cost_scored;
-            window.points = that.roundToTwoDecimal(window.points);
-
-            const pointsWonEl = document.getElementById("points-won");
-            if (pointsWonEl) pointsWonEl.innerHTML = that.cost_scored;
-            const playerPointsEl = document.getElementById(
-              "points-bet-wrapper__points--player-points"
-            );
-            if (playerPointsEl) playerPointsEl.innerHTML = window.points;
-            const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
-            if (wonFlashEl)
-              wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
-
-            let tableGameHistory = document.getElementById(
-              "game-history-table-body"
-            );
-            if (tableGameHistory) {
-              tableGameHistory.innerHTML =
-                `<tr>
-                  <td colspan="1">${that.time}</td>
-                  <td>${that.bet}</td>
-                  <td>${that.slotCost}x</td>
-                  ${
-                    that.cost_scored > that.bet
-                      ? `<td class="td-won"><div>${that.cost_scored}</div></td>`
-                      : that.cost_scored < that.bet
-                      ? `<td class="td-lost"><div>${that.cost_scored}</div></td>`
-                      : `<td class="td-no-gain"><div>${that.cost_scored}</div></td>`
-                  }
-                </tr>` + tableGameHistory.innerHTML;
+            if (current_peg !== last_peg) {
+              randomTurn = Math.floor(Math.random() * 2);
+              last_peg = current_peg;
             }
 
-            that.slots[slotIndx].slot.y += 10;
-            setTimeout(() => {
-              that.slots[slotIndx].slot.y -= 10;
-            }, 50);
+            if (randomTurn === 0) {
+              that.pinkBall.x -= that.pinkBall.vx;
+            } else if (randomTurn === 1) {
+              that.pinkBall.x += that.pinkBall.vx;
+            }
+            break;
           }
         }
+
+        for (let slotIndx = 0; slotIndx < that.slots.length; slotIndx++) {
+          if (
+            that.isCollision(
+              that.slots[slotIndx].x,
+              that.slots[slotIndx].y + 40,
+              that.slots[slotIndx].width / 2,
+              that.pinkBall.x,
+              that.pinkBall.y,
+              that.pinkBall.width / 2
+            )
+          ) {
+            console.log("Ball reached slot:", slotIndx);
+            that.app.stage.removeChild(that.pinkBall);
+            let scoredSoundEffect = new Audio("/Sound Effects/scoreEffect.wav");
+            scoredSoundEffect.volume = 0.2;
+            scoredSoundEffect.play();
+            if (that.cost_scored === 0) {
+              that.slotCost = that.slots[slotIndx].cost;
+              that.cost_scored = that.roundToTwoDecimal(
+                that.getCostScored(that.bet, that.slotCost)
+              );
+
+              window.points = (window.points || 100) + that.cost_scored;
+              window.points = that.roundToTwoDecimal(window.points);
+
+              console.log("Points won:", that.cost_scored, "Total points:", window.points);
+
+              const pointsWonEl = document.getElementById("points-won");
+              if (pointsWonEl) pointsWonEl.innerHTML = that.cost_scored;
+              const playerPointsEl = document.getElementById(
+                "points-bet-wrapper__points--player-points"
+              );
+              if (playerPointsEl) playerPointsEl.innerHTML = window.points;
+              const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
+              if (wonFlashEl)
+                wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
+
+              let tableGameHistory = document.getElementById(
+                "game-history-table-body"
+              );
+              if (tableGameHistory) {
+                tableGameHistory.innerHTML =
+                  `<tr>
+                    <td colspan="1">${that.time}</td>
+                    <td>${that.bet}</td>
+                    <td>${that.slotCost}x</td>
+                    ${
+                      that.cost_scored > that.bet
+                        ? `<td class="td-won"><div>${that.cost_scored}</div></td>`
+                        : that.cost_scored < that.bet
+                        ? `<td class="td-lost"><div>${that.cost_scored}</div></td>`
+                        : `<td class="td-no-gain"><div>${that.cost_scored}</div></td>`
+                    }
+                  </tr>` + tableGameHistory.innerHTML;
+              }
+
+              that.slots[slotIndx].slot.y += 10;
+              setTimeout(() => {
+                that.slots[slotIndx].slot.y -= 10;
+              }, 50);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error in ticker loop:", error);
       }
     });
   }
@@ -272,42 +280,43 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
-
-    // Preload images related to initial level
+  
     slot_costs_list[initial_level - 8].forEach((cost) => {
       assetsToLoad.add(`/${cost}.png`);
     });
-
-    console.log("Assets to load:", assetsToLoad);
-
-    const loader = new PIXI.Loader(); // Create a new loader instance
-    console.log("Created new PIXI.Loader instance:", loader);
-
+  
+    console.log("Assets to load before creating loader:", assetsToLoad);
+  
+    const loader = new PIXI.Loader();
+    console.log("Created loader:", loader);
+  
     assetsToLoad.forEach((asset) => {
-      if (typeof loader.add === "function") {
-        console.log(`Adding asset: ${asset}`);
+      try {
+        console.log("Adding asset to loader:", asset);
         loader.add(asset);
-      } else {
-        console.error("loader.add is not a function!", loader);
+      } catch (error) {
+        console.error("Error adding asset:", asset, error);
       }
     });
-
-    console.log("Starting loader.load()...");
+  
+    console.log("Starting to load assets...");
     loader.load(() => {
-      console.log("Loader finished loading assets.");
+      console.log("Assets loaded successfully.");
       (async () => {
         app = new PIXI.Application({ height: 700, backgroundColor: 0x1496c });
+        await app.init({ height: 700, backgroundColor: 0x1496c });
         appRef.current = app;
         if (containerRef.current) {
           containerRef.current.appendChild(app.view);
+          console.log("App canvas appended to container.");
         }
         setupPixiGame(app);
       })();
     });
-
+  
     return () => {
       if (app) {
-        console.log("Destroying app...");
+        console.log("Cleaning up: destroying app.");
         app.destroy(true, { children: true });
       }
     };
@@ -321,7 +330,7 @@ export default function Plinko() {
     pegs = [];
     slots = [];
 
-    console.log("Setting up Pixi game with lines:", lines, "and fraction:", fraction);
+    console.log("Setting up Pixi game: lines =", lines, "fraction =", fraction);
 
     let space_bottom = 150 * fraction;
 
@@ -370,7 +379,7 @@ export default function Plinko() {
     openning.height = 50 * fraction;
     stage.addChild(openning);
 
-    console.log("Board setup complete. Pegs count:", pegs.length, "Slots count:", slots.length);
+    console.log("Board setup complete.");
   }
 
   const increaseBet = () => {
@@ -396,6 +405,7 @@ export default function Plinko() {
   const handlePlayButton = () => {
     if (points > 0 && bet <= points) {
       setPoints((prev) => +((prev - bet).toFixed(2)));
+      console.log("Handle Play Button clicked. Creating Play instance.");
       const playInstance = new Play(
         openning,
         appRef.current,
@@ -406,7 +416,7 @@ export default function Plinko() {
         topBounce,
         sideBounce
       );
-      console.log("Starting play with instance:", playInstance);
+      console.log("Play instance created:", playInstance);
       playInstance.start();
     }
   };

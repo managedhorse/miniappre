@@ -1,35 +1,54 @@
-// In your mini app's /earn/plinko component/page
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
+import { useUser } from "../context/userContext"; // adjust path as needed
 
-function PlinkoIframePage({ playerBalance }) {
+function PlinkoIframePage() {
+  const { balance, refBonus, id, loading, initialized } = useUser();
+  const userIsReady = Boolean(id && initialized && !loading);
+  const totalBalance = balance + refBonus;
+
   const iframeRef = useRef(null);
 
   useEffect(() => {
-    // When iframe loads, send the player's balance
+    if (!userIsReady) return;
+
     const iframe = iframeRef.current;
-    const sendBalanceToIframe = () => {
+    if (!iframe) return;
+
+    const sendUserDataToIframe = () => {
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage(
-          { type: 'SET_BALANCE', balance: playerBalance },
-          'https://plinko-game-main-two.vercel.app'
+          {
+            type: "SET_USER_INFO",
+            userId: id,
+            totalBalance: totalBalance,
+          },
+          "https://plinko-game-main-two.vercel.app" // target origin of the iframe
         );
+        console.log("Sent user info to iframe:", { userId: id, totalBalance });
       }
     };
 
-    // Listen for iframe load event to send initial balance
-    iframe.addEventListener('load', sendBalanceToIframe);
+    // Send data when the iframe loads
+    iframe.addEventListener("load", sendUserDataToIframe);
+
+    // Also send data immediately in case the iframe is already loaded
+    sendUserDataToIframe();
 
     return () => {
-      iframe.removeEventListener('load', sendBalanceToIframe);
+      iframe.removeEventListener("load", sendUserDataToIframe);
     };
-  }, [playerBalance]); // resend if balance changes
+  }, [userIsReady, id, totalBalance]);
+
+  if (!userIsReady) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <iframe
       ref={iframeRef}
       src="https://plinko-game-main-two.vercel.app/"
       title="Plinko Game"
-      style={{ width: '100%', height: '100vh', border: 'none' }}
+      style={{ width: "100%", height: "100vh", border: "none" }}
     ></iframe>
   );
 }

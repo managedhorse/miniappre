@@ -127,7 +127,7 @@ class Play {
       try {
         that.pinkBall.y += that.pinkBall.vy;
         that.pinkBall.vy += 0.8;
-        // Logging collision detection process
+
         for (let pegIndx = 0; pegIndx < that.pegs.length; pegIndx++) {
           if (
             that.isCollision(
@@ -207,9 +207,7 @@ class Play {
               if (wonFlashEl)
                 wonFlashEl.classList.add("points-bet-wrapper__won-flash__animate");
 
-              let tableGameHistory = document.getElementById(
-                "game-history-table-body"
-              );
+              let tableGameHistory = document.getElementById("game-history-table-body");
               if (tableGameHistory) {
                 tableGameHistory.innerHTML =
                   `<tr>
@@ -292,18 +290,7 @@ export default function Plinko() {
 
     console.log("Assets to load after adding slot costs:", assetsToLoad);
 
-    const loader = PIXI.Loader.shared;
-    console.log("Using PIXI.Loader.shared:", loader);
-    if (!loader) {
-      console.error("PIXI.Loader.shared is undefined!");
-    }
-
-    try {
-      loader.reset();
-      console.log("Loader reset successfully.");
-    } catch (err) {
-      console.error("Error resetting loader:", err);
-    }
+    const loader = PIXI.loader; // Use PIXI.loader in v8
 
     assetsToLoad.forEach((asset) => {
       try {

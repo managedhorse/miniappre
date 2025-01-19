@@ -853,6 +853,55 @@ useEffect(() => {
     fetchReferrals();
   }, []);
 
+  // 1) Create a new Plinko session
+async function createPlinkoSession() {
+  try {
+    if (!id) throw new Error("User not logged in.");
+
+    const sessionsColl = collection(db, "users", id, "plinkoSessions");
+    const sessionDoc = await addDoc(sessionsColl, {
+      userId: id,
+      initialBalance: balance, // from state
+      netProfit: 0,
+      active: true,
+      createdAt: serverTimestamp()
+    });
+
+    return sessionDoc.id;  // Return the new sessionId
+  } catch (err) {
+    console.error("Error creating plinko session:", err);
+    throw err;
+  }
+}
+
+// 2) End a Plinko session with netProfit
+async function endPlinkoSession(sessionId, netProfit) {
+  try {
+    if (!id) throw new Error("User not logged in.");
+
+    // Mark session doc inactive
+    const sessionRef = doc(db, "users", id, "plinkoSessions", sessionId);
+    await updateDoc(sessionRef, {
+      netProfit,
+      active: false
+    });
+
+    // Update user’s main balance
+    const updatedBalance = balance + netProfit;
+    await updateDoc(doc(db, "users", id), {
+      balance: updatedBalance
+    });
+
+    // Also update local state
+    setBalance(updatedBalance);
+
+    console.log("endPlinkoSession complete. New balance:", updatedBalance);
+  } catch (err) {
+    console.error("Error ending plinko session:", err);
+    throw err;
+  }
+}
+
   return (
     <UserContext.Provider value={{
       balance,
@@ -941,7 +990,9 @@ useEffect(() => {
       openInfoTwo,
       setOpenInfoTwo,
       leaderboard,
-      rankUser
+      rankUser,
+      createPlinkoSession,
+    endPlinkoSession
       }}>
       {children}
     </UserContext.Provider>

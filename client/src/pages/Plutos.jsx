@@ -441,15 +441,7 @@ const Plutos = () => {
                 <span className="text-sm font-bold slackey-regular text-white">/ {battery.energy}</span>
               </div>
             </div>
-            {/* Insert Test Button Here */}
-            <div className="flex items-center justify-center p-4">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => navigate("/earn/plinko")}
-            >
-              Test Plinko
-            </button>
-          </div>
+           
             {/* Daily Reward, Spinner, Leaderboard Section */}
             <div className="flex justify-between gap-2 px-4">
               {/* Daily Reward Card */}

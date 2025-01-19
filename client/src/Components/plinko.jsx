@@ -290,7 +290,7 @@ export default function Plinko() {
 
     console.log("Assets to load after adding slot costs:", assetsToLoad);
 
-    const loader = PIXI.loader; // Use PIXI.loader in v8
+    const loader = PIXI.loaders.Loader.shared; // Use shared loader for PixiJS v8
 
     assetsToLoad.forEach((asset) => {
       try {

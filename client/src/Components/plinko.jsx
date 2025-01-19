@@ -90,7 +90,6 @@ class Play {
     this.time = new Date().toLocaleTimeString();
   }
 
-
   isCollision(peg_x, peg_y, peg_r, ball_x, ball_y, ball_r) {
     const circleDistance = (peg_x - ball_x) ** 2 + (peg_y - ball_y) ** 2;
     return circleDistance <= ((peg_r + ball_r) ** 2);
@@ -277,9 +276,8 @@ export default function Plinko() {
       assetsToLoad.add(`/${cost}.png`);
     });
 
-    // Use the shared loader
-    PIXI.Loader.shared.reset();
-    PIXI.Loader.shared.add(...assetsToLoad).load(() => {
+    const loader = new PIXI.Loader();
+    loader.add(...Array.from(assetsToLoad)).load(() => {
       (async () => {
         app = new PIXI.Application();
         await app.init({ height: 700, backgroundColor: 0x1496c });

@@ -62,7 +62,7 @@ class Slot {
     this.slot = null;
   }
   create() {
-    const slot = PIXI.Sprite.from(`./images/${this.cost}.png`);
+    const slot = PIXI.Sprite.from(`/${this.cost}.png`);
     slot.anchor.set(this.anchor);
     slot.x = this.x;
     slot.y = this.y;
@@ -291,7 +291,7 @@ export default function Plinko() {
       slots.push(slotObj);
     }
 
-    openning = PIXI.Sprite.from("./images/bC.png");
+    openning = PIXI.Sprite.from("/bC.png");
     openning.anchor.set(0);
     openning.x = pegs[1].x - 8 * fraction;
     openning.y = 50 * fraction;

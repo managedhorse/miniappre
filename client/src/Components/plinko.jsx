@@ -5,7 +5,29 @@ import backgroundMusic from "../images/background_music.mp3";
 import pinkBallImage from "../images/pink_ball.png";
 import circleImage from "../images/circle.png";
 
-// Helper Classes
+// Global variables for game configuration and state
+let fraction;
+let slots = [];
+let pegs = [];
+let openning;
+const slot_costs_list = [
+  [5.6, 2.1, 1.1, 1, 0.5, 1, 1.1, 2.1, 5.6],
+  [5.6, 2, 1.6, 1, 0.7, 0.7, 1, 1.6, 2, 5.6],
+  [8.9, 3, 1.1, 1.1, 1, 0.5, 1, 1.1, 1.4, 3, 8.9],
+  [8.4, 3, 1.9, 1.3, 1, 0.7, 0.7, 1, 1.3, 1.9, 3, 8.4],
+  [10, 3, 1.6, 1.4, 1.1, 1, 0.5, 1, 1.1, 1.4, 1.6, 3, 10],
+  [8.1, 4, 3, 1.9, 1.2, 0.9, 0.7, 0.7, 0.9, 1.2, 1.9, 3, 4, 8.1],
+  [7.1, 4, 1.9, 1.4, 1.3, 1.1, 1, 0.5, 1, 1.1, 1.3, 1.4, 1.9, 4, 7.1],
+  [15, 8, 3, 2, 1.5, 1.1, 1, 0.7, 0.7, 1, 1.1, 1.5, 2, 3, 8, 15],
+  [16, 9, 2, 1.4, 1.4, 1.2, 1.1, 1, 0.5, 1, 1.1, 1.2, 1.4, 1.4, 2, 9, 16],
+];
+const initial_level = 8;
+let top_bounce = 0.5;
+let side_bounce = 4;
+let incr_weight_value = 0;
+window.points = 100; // Global points
+
+// Class Definitions
 class Peg {
   constructor(x, y, anchor, width, height, radius) {
     this.x = x;
@@ -164,7 +186,7 @@ class Play {
             that.cost_scored = that.roundToTwoDecimal(
               that.getCostScored(that.bet, that.slotCost)
             );
-            // Update global points (you might integrate this with React state)
+
             window.points = (window.points || 100) + that.cost_scored;
             window.points = that.roundToTwoDecimal(window.points);
 
@@ -222,7 +244,6 @@ export default function Plinko() {
         containerRef.current.appendChild(app.canvas);
       }
       setupPixiGame(app);
-      // Optional: background music setup...
     })();
     return () => {
       if (app) {

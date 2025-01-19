@@ -1,6 +1,6 @@
 //userContext.jsx:
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
 

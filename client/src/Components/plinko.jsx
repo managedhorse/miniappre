@@ -1,4 +1,4 @@
-// PlinkoIframePage.jsx
+// plinko.jsx
 import React, { useEffect, useRef } from "react";
 import { useUser } from "../context/userContext";
 
@@ -24,7 +24,7 @@ function PlinkoIframePage() {
           {
             type: "INIT_SESSION",
             userId: id,
-            sessionBalance: balance, // local state
+            sessionBalance: balance,
             sessionId,
           },
           "https://plinko-game-main-two.vercel.app"
@@ -47,7 +47,11 @@ function PlinkoIframePage() {
 
     // 3) Listen for END_SESSION
     const handleMessage = async (event) => {
-      if (event.origin !== "https://plinko-game-main-two.vercel.app") return;
+      console.log("Parent received message from origin:", event.origin);
+
+      // If you want to debug the exact domain, loosen the check:
+      if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+
       const { type, netProfit, sessionId: childSessionId } = event.data || {};
 
       if (type === "END_SESSION") {
@@ -56,7 +60,7 @@ function PlinkoIframePage() {
         // 4) End session in Firestore via userContext
         try {
           await endPlinkoSession(childSessionId, netProfit);
-          // optionally navigate away or do something else
+          // Optionally navigate away or show a message
         } catch (err) {
           console.error("Error ending plinko session:", err);
         }

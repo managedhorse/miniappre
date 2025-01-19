@@ -270,19 +270,20 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
-
+  
     // Preload numbered slot images for the initial level
     slot_costs_list[initial_level - 8].forEach((cost) => {
       assetsToLoad.add(`/${cost}.png`);
     });
-
+  
     const loader = PIXI.Loader.shared;
-    for (const asset of assetsToLoad) {
-      if (asset) {
-        loader.add(asset);
-      }
-    }
-
+    loader.reset(); // Reset the loader to clear previous assets
+  
+    // Add each asset individually
+    assetsToLoad.forEach((asset) => {
+      loader.add(asset);
+    });
+  
     loader.load(() => {
       (async () => {
         app = new PIXI.Application();
@@ -294,7 +295,7 @@ export default function Plinko() {
         setupPixiGame(app);
       })();
     });
-
+  
     return () => {
       if (app) {
         app.destroy(true, { children: true });

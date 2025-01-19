@@ -102,7 +102,6 @@ class Play {
     return +(Math.round(num + "e+2") + "e-2");
   }
 
-
   start() {
     const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
     if (wonFlashEl) {
@@ -121,6 +120,7 @@ class Play {
     let randomTurn = Math.floor(Math.random() * 2);
     const that = this;
 
+    console.log("Starting ticker for ball animation.");
     this.app.ticker.add(function () {
       that.pinkBall.y += that.pinkBall.vy;
       that.pinkBall.vy += 0.8;
@@ -136,6 +136,7 @@ class Play {
             that.pinkBall.width / 2
           )
         ) {
+          console.log("Collision detected with peg index:", pegIndx);
           that.pegs[pegIndx].pegBall.tint = 0xF101C4;
           setTimeout(() => {
             that.pegs[pegIndx].pegBall.tint = 0xffffff;
@@ -177,6 +178,7 @@ class Play {
             that.pinkBall.width / 2
           )
         ) {
+          console.log("Collision detected with slot index:", slotIndx);
           that.app.stage.removeChild(that.pinkBall);
           let scoredSoundEffect = new Audio("/Sound Effects/scoreEffect.wav");
           scoredSoundEffect.volume = 0.2;
@@ -270,21 +272,32 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
-  
+
     // Preload numbered slot images for the initial level
     slot_costs_list[initial_level - 8].forEach((cost) => {
       assetsToLoad.add(`/${cost}.png`);
     });
-  
+
+    console.log("Assets to load:", assetsToLoad);
+
     const loader = PIXI.Loader.shared;
-    loader.reset(); // Reset the loader to clear previous assets
-  
-    // Add each asset individually
+    console.log("Using PIXI.Loader.shared:", loader);
+
+    loader.reset();
+    console.log("After reset, loader:", loader);
+
     assetsToLoad.forEach((asset) => {
-      loader.add(asset);
+      if (typeof loader.add === "function") {
+        console.log(`Adding asset: ${asset}`);
+        loader.add(asset);
+      } else {
+        console.error("loader.add is not a function!", loader);
+      }
     });
-  
+
+    console.log("Starting loader.load()...");
     loader.load(() => {
+      console.log("Loader finished loading assets.");
       (async () => {
         app = new PIXI.Application();
         await app.init({ height: 700, backgroundColor: 0x1496c });
@@ -295,9 +308,10 @@ export default function Plinko() {
         setupPixiGame(app);
       })();
     });
-  
+
     return () => {
       if (app) {
+        console.log("Destroying app...");
         app.destroy(true, { children: true });
       }
     };
@@ -310,6 +324,8 @@ export default function Plinko() {
     fraction = 7 / lines;
     pegs = [];
     slots = [];
+
+    console.log("Setting up Pixi game with lines:", lines, "and fraction:", fraction);
 
     let space_bottom = 150 * fraction;
 
@@ -357,6 +373,8 @@ export default function Plinko() {
     openning.width = 50 * fraction;
     openning.height = 50 * fraction;
     stage.addChild(openning);
+
+    console.log("Board setup complete. Pegs count:", pegs.length, "Slots count:", slots.length);
   }
 
   const increaseBet = () => {
@@ -392,6 +410,7 @@ export default function Plinko() {
         topBounce,
         sideBounce
       );
+      console.log("Starting play with instance:", playInstance);
       playInstance.start();
     }
   };

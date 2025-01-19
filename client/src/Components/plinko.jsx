@@ -168,19 +168,22 @@ export default function Plinko() {
       height: 700,
       backgroundColor: 0x1496c,
     });
-    console.log("PIXI Application:", appRef.current);
-    if (containerRef.current) {
-      containerRef.current.appendChild(appRef.current.view);
+  
+    if (containerRef.current && appRef.current) {
+      // Use the new canvas property if available, otherwise fallback to view
+      const canvasElement = appRef.current.canvas || appRef.current.view;
+      containerRef.current.appendChild(canvasElement);
     }
+  
     setup(initialLevel);
-
+  
     // Background music setup
     const music = new Audio(backgroundMusic);
     music.loop = true;
     music.volume = 0.03;
     const playMusicOnInteraction = () => music.play();
     document.body.addEventListener("mousemove", playMusicOnInteraction);
-
+  
     // Clean up on unmount
     return () => {
       document.body.removeEventListener("mousemove", playMusicOnInteraction);

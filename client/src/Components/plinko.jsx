@@ -276,7 +276,7 @@ export default function Plinko() {
     });
 
     let loader = new PIXI.Loader();
-    loader.add([...assetsToLoad]).load(() => {
+    loader.add(...assetsToLoad).load(() => {
       (async () => {
         app = new PIXI.Application();
         await app.init({ height: 700, backgroundColor: 0x1496c });

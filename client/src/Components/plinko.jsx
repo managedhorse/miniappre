@@ -170,9 +170,19 @@ export default function Plinko() {
     });
   
     if (containerRef.current && appRef.current) {
-      // Use the new canvas property if available, otherwise fallback to view
-      const canvasElement = appRef.current.canvas || appRef.current.view;
-      containerRef.current.appendChild(canvasElement);
+      let canvasElement;
+      try {
+        // Try to access the new canvas property if available, or fallback to view
+        canvasElement = appRef.current.canvas || appRef.current.view;
+      } catch (e) {
+        console.warn("Error accessing canvas property:", e);
+        canvasElement = appRef.current.view;
+      }
+      if (canvasElement) {
+        containerRef.current.appendChild(canvasElement);
+      } else {
+        console.error("No canvas element available to append.");
+      }
     }
   
     setup(initialLevel);

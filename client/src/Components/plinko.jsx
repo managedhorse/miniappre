@@ -5,7 +5,7 @@ import backgroundMusic from "../images/background_music.mp3";
 import pinkBallImage from "../images/pink_ball.png";
 import circleImage from "../images/circle.png";
 
-// Global variables for game configuration and state
+// Global game configuration and state variables
 let fraction;
 let slots = [];
 let pegs = [];
@@ -25,9 +25,9 @@ const initial_level = 8;
 let top_bounce = 0.5;
 let side_bounce = 4;
 let incr_weight_value = 0;
-window.points = 100; // Global points
+window.points = 100; // Initialize global points
 
-// Class Definitions
+// Helper Classes
 class Peg {
   constructor(x, y, anchor, width, height, radius) {
     this.x = x;
@@ -108,8 +108,8 @@ class Play {
       wonFlashEl.classList.remove("points-bet-wrapper__won-flash__animate");
     }
 
-    this.pinkBall.x = this.openning.x + (5 * this.fraction);
-    this.pinkBall.y = this.openning.y;
+    this.pinkBall.x = openning.x + (5 * this.fraction);
+    this.pinkBall.y = openning.y;
     this.pinkBall.width = 35 * this.fraction;
     this.pinkBall.height = 35 * this.fraction;
     this.pinkBall.vy = 0;
@@ -254,8 +254,51 @@ export default function Plinko() {
 
   function setupPixiGame(app) {
     const { stage } = app;
-    // Setup board with pegs, slots, etc. using your original logic or custom implementation
-    // For now, this is a placeholder for further game setup.
+    let lines = 2 + initial_level;
+    let slot_costs = slot_costs_list[initial_level - 8];
+    fraction = 7 / lines;
+    pegs = [];
+    slots = [];
+
+    let space_bottom = 150 * fraction;
+
+    for (let i = 3; i <= lines; i++) {
+      let space_left = 50;
+      for (let space = 1; space <= lines - i; space++) {
+        space_left += 50 * fraction;
+      }
+      for (let point = 1; point <= i; point++) {
+        let beg_obj = new Peg(space_left, space_bottom, 0, 30 * fraction, 30 * fraction, (30 * fraction) / 2);
+        let new_beg = beg_obj.create();
+        stage.addChild(new_beg);
+        pegs.push(beg_obj);
+        space_left += 100 * fraction;
+      }
+      space_bottom += 90 * fraction;
+    }
+
+    for (let s = 0; s < slot_costs.length; s++) {
+      let temp_bottom_peg = pegs[pegs.length - 1 - slot_costs.length + s];
+      let slot_obj = new Slot(
+        temp_bottom_peg.x + temp_bottom_peg.width * fraction,
+        space_bottom,
+        0,
+        55 - lines,
+        50 - lines,
+        slot_costs[s]
+      );
+      let new_slot = slot_obj.create();
+      stage.addChild(new_slot);
+      slots.push(slot_obj);
+    }
+
+    openning = PIXI.Sprite.from("./images/bC.png");
+    openning.anchor.set(0);
+    openning.x = pegs[1].x - 8 * fraction;
+    openning.y = 50 * fraction;
+    openning.width = 50 * fraction;
+    openning.height = 50 * fraction;
+    stage.addChild(openning);
   }
 
   const increaseBet = () => {
@@ -281,10 +324,16 @@ export default function Plinko() {
   const handlePlayButton = () => {
     if (points > 0 && bet <= points) {
       setPoints((prev) => +((prev - bet).toFixed(2)));
-      // Implement game logic for "Play" using your Play class.
+      // Implement game play logic by creating and starting a new Play instance
       const playInstance = new Play(
-        // Pass required arguments: openning sprite, app, fraction, pegs, slots, bet, topBounce, sideBounce
-        // You need to define or obtain these references from your setup.
+        openning,
+        appRef.current,
+        fraction,
+        pegs,
+        slots,
+        bet,
+        topBounce,
+        sideBounce
       );
       playInstance.start();
     }
@@ -324,7 +373,7 @@ export default function Plinko() {
         </div>
       </div>
       <div className="game-history">
-        {/* Add your game history UI here */}
+        {/* Add game history UI elements as needed */}
       </div>
     </div>
   );

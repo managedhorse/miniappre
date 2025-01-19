@@ -10,13 +10,37 @@ import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 // Access the Telegram WebApp object
 const tele = window.Telegram?.WebApp;
 
+// Toggle this flag to allow desktop browsers
+const allowDesktop = true; // set to false to enforce Telegram-only mode
+
 const App = () => {
   // State to determine if the app is running inside Telegram on supported platforms
   const [isTelegram, setIsTelegram] = useState(null); // null = not yet determined
 
   // Effect to detect Telegram WebApp environment and platform
   useEffect(() => {
-    if (tele) {
+    if (allowDesktop) {
+      // If desktop is allowed, bypass platform restrictions
+      setIsTelegram(true);
+      if (tele) {
+        tele.ready();
+        tele.expand();
+        tele.setHeaderColor("#191b33");
+
+        if (typeof tele.disableVerticalSwipes === "function") {
+          tele.disableVerticalSwipes();
+          console.log("Vertical swipes disabled.");
+        } else {
+          console.warn("disableVerticalSwipes method is not available.");
+        }
+
+        if (tele.HapticFeedback) {
+          tele.HapticFeedback.impactOccurred("medium");
+        }
+      } else {
+        console.warn("Telegram.WebApp is not available.");
+      }
+    } else if (tele) {
       const platform = tele.platform; // "android", "ios", "web", etc.
 
       // Allow only if platform is 'android' or 'ios'
@@ -26,11 +50,8 @@ const App = () => {
         // Initialize Telegram WebApp
         tele.ready();
         tele.expand();
+        tele.setHeaderColor("#191b33");
 
-        // Set the header color
-        tele.setHeaderColor("#191b33"); // Adjust as needed
-
-        // Disable vertical swipes if the method exists
         if (typeof tele.disableVerticalSwipes === "function") {
           tele.disableVerticalSwipes();
           console.log("Vertical swipes disabled.");
@@ -38,17 +59,14 @@ const App = () => {
           console.warn("disableVerticalSwipes method is not available.");
         }
 
-        // Haptic feedback if supported
         if (tele.HapticFeedback) {
           tele.HapticFeedback.impactOccurred("medium");
         }
       } else {
-        // If platform is not supported (e.g., desktop)
         setIsTelegram(false);
         console.warn(`Unsupported platform: ${platform}`);
       }
     } else {
-      // Not running inside Telegram
       setIsTelegram(false);
       console.warn("Telegram.WebApp is not available.");
     }
@@ -75,7 +93,6 @@ const App = () => {
     };
   }, []);
 
-  // Function to render the Telegram-only message
   const renderTelegramOnlyMessage = () => (
     <div className="flex items-center justify-center min-h-screen bg-black text-white px-4 text-center">
       <div>
@@ -84,7 +101,7 @@ const App = () => {
           This application is exclusively available within the Telegram mobile app. Please open it through the Telegram app on your mobile device to continue.
         </p>
         <a
-          href="https://t.me/TapMianusBot" // Replace with your bot's link
+          href="https://t.me/TapMianusBot"
           className="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
         >
           Open in Telegram
@@ -93,21 +110,19 @@ const App = () => {
     </div>
   );
 
-  // While determining the environment, you can show a loader or nothing
   if (isTelegram === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <p>Loading...</p> {/* You can replace this with a spinner */}
+        <p>Loading...</p>
       </div>
     );
   }
 
-  // If not running inside Telegram on supported platforms, show the restricted access message
-  if (!isTelegram) {
+  // Only show restricted message if Telegram restrictions are enforced and not on Telegram
+  if (!isTelegram && !allowDesktop) {
     return renderTelegramOnlyMessage();
   }
 
-  // If inside Telegram on supported platforms, render the app normally
   return (
     <>
       <div className="flex justify-center w-full">

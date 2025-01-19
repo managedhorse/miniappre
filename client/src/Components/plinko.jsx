@@ -62,7 +62,6 @@ class Slot {
     this.slot = null;
   }
   create() {
-    // Use absolute path for numbered images in public folder
     const slot = PIXI.Sprite.from(`/${this.cost}.png`);
     slot.anchor.set(this.anchor);
     slot.x = this.x;
@@ -102,6 +101,7 @@ class Play {
   roundToTwoDecimal(num) {
     return +(Math.round(num + "e+2") + "e-2");
   }
+
 
   start() {
     const wonFlashEl = document.getElementById("points-bet-wrapper__won-flash");
@@ -277,7 +277,8 @@ export default function Plinko() {
     });
 
     const loader = new PIXI.Loader();
-    loader.add(...Array.from(assetsToLoad)).load(() => {
+    Array.from(assetsToLoad).forEach((asset) => loader.add(asset));
+    loader.load(() => {
       (async () => {
         app = new PIXI.Application();
         await app.init({ height: 700, backgroundColor: 0x1496c });

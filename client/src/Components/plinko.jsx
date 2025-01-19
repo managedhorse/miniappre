@@ -250,6 +250,7 @@ export default function Plinko() {
   const appRef = useRef(null);
 
   useEffect(() => {
+    console.log("useEffect: Starting asset loading...");
     let app;
     let assetsToLoad = new Set([
       circleImage,
@@ -280,49 +281,67 @@ export default function Plinko() {
       "/15.png",
       "/16.png",
     ]);
-  
+
+    console.log("Initial assets to load:", assetsToLoad);
+
     slot_costs_list[initial_level - 8].forEach((cost) => {
-      assetsToLoad.add(`/${cost}.png`);
+      let assetPath = `/${cost}.png`;
+      console.log(`Adding slot cost asset: ${assetPath}`);
+      assetsToLoad.add(assetPath);
     });
-  
-    console.log("Assets to load before creating loader:", assetsToLoad);
-  
-    const loader = new PIXI.Loader();
-    console.log("Created loader:", loader);
-  
+
+    console.log("Assets to load after adding slot costs:", assetsToLoad);
+
+    const loader = PIXI.Loader.shared;
+    console.log("Using PIXI.Loader.shared:", loader);
+    if (!loader) {
+      console.error("PIXI.Loader.shared is undefined!");
+    }
+
+    try {
+      loader.reset();
+      console.log("Loader reset successfully.");
+    } catch (err) {
+      console.error("Error resetting loader:", err);
+    }
+
     assetsToLoad.forEach((asset) => {
       try {
         console.log("Adding asset to loader:", asset);
         loader.add(asset);
-      } catch (error) {
-        console.error("Error adding asset:", asset, error);
+      } catch (err) {
+        console.error(`Error adding asset ${asset}:`, err);
       }
     });
-  
+
     console.log("Starting to load assets...");
     loader.load(() => {
-      console.log("Assets loaded successfully.");
+      console.log("Assets loaded.");
       (async () => {
-        app = new PIXI.Application({ height: 700, backgroundColor: 0x1496c });
+        app = new PIXI.Application();
+        console.log("Initializing PIXI.Application...");
         await app.init({ height: 700, backgroundColor: 0x1496c });
+        console.log("PIXI.Application initialized.");
         appRef.current = app;
         if (containerRef.current) {
-          containerRef.current.appendChild(app.view);
-          console.log("App canvas appended to container.");
+          containerRef.current.appendChild(app.canvas);
+          console.log("App canvas added to container.");
         }
         setupPixiGame(app);
       })();
     });
-  
+
     return () => {
+      console.log("Cleaning up: destroying PIXI application if exists.");
       if (app) {
-        console.log("Cleaning up: destroying app.");
         app.destroy(true, { children: true });
+        console.log("PIXI application destroyed.");
       }
     };
   }, []);
 
   function setupPixiGame(app) {
+    console.log("Setup PIXI game with app:", app);
     const { stage } = app;
     let lines = 2 + initial_level;
     let slot_costs = slot_costs_list[initial_level - 8];
@@ -330,9 +349,8 @@ export default function Plinko() {
     pegs = [];
     slots = [];
 
-    console.log("Setting up Pixi game: lines =", lines, "fraction =", fraction);
-
     let space_bottom = 150 * fraction;
+    console.log("Calculated fraction:", fraction, "lines:", lines);
 
     for (let i = 3; i <= lines; i++) {
       let space_left = 50;
@@ -355,6 +373,7 @@ export default function Plinko() {
       }
       space_bottom += 90 * fraction;
     }
+    console.log("Pegs created:", pegs.length);
 
     for (let s = 0; s < slot_costs.length; s++) {
       let temp_bottom_peg = pegs[pegs.length - 1 - slot_costs.length + s];
@@ -370,6 +389,7 @@ export default function Plinko() {
       stage.addChild(newSlot);
       slots.push(slotObj);
     }
+    console.log("Slots created:", slots.length);
 
     openning = PIXI.Sprite.from("/bC.png");
     openning.anchor.set(0);
@@ -378,7 +398,7 @@ export default function Plinko() {
     openning.width = 50 * fraction;
     openning.height = 50 * fraction;
     stage.addChild(openning);
-
+    console.log("Opening sprite added at:", openning.x, openning.y);
     console.log("Board setup complete.");
   }
 

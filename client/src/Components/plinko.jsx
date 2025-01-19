@@ -276,8 +276,13 @@ export default function Plinko() {
       assetsToLoad.add(`/${cost}.png`);
     });
 
-    const loader = new PIXI.Loader();
-    Array.from(assetsToLoad).forEach((asset) => loader.add(asset));
+    const loader = PIXI.Loader.shared;
+    for (const asset of assetsToLoad) {
+      if (asset) {
+        loader.add(asset);
+      }
+    }
+
     loader.load(() => {
       (async () => {
         app = new PIXI.Application();

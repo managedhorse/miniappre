@@ -826,8 +826,8 @@ useEffect(() => {
   // Call this function when appropriate, such as on component mount or before handleClick
   useEffect(() => {
     if (id) {
-   // checkAndUpdateFreeGuru();
-   // checkAndUpdateFullTank();
+   checkAndUpdateFreeGuru();
+   checkAndUpdateFullTank();
     }
       // eslint-disable-next-line
   }, [id]);

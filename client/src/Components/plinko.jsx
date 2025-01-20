@@ -28,11 +28,10 @@ function PlinkoIframePage() {
 
   // Log user context on each render (optional)
   useEffect(() => {
-    logMessage("==== On Render / Re-render ====");
-    logMessage(`User context -> id: ${id}, balance: ${balance}, loading: ${loading}, initialized: ${initialized}`);
+    logMessage("==== On Render / Re-render (ID/Init) ====");
+    logMessage(`User context -> id: ${id}, loading: ${loading}, initialized: ${initialized}`);
     logMessage(`userIsReady: ${userIsReady}`);
-    // We do NOT do anything else here—just logging
-  }, [id, balance, loading, initialized, userIsReady]);
+  }, [id, loading, initialized, userIsReady]);
 
   // The main effect that starts the session
   useEffect(() => {

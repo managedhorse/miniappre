@@ -3,13 +3,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "../context/userContext";
 
 function PlinkoIframePage() {
-  const { 
-    balance, 
-    id, 
-    loading, 
-    initialized, 
-    createPlinkoSession, 
-    endPlinkoSession 
+  const {
+    balance,
+    id,
+    loading,
+    initialized,
+    createPlinkoSession,
+    endPlinkoSession
   } = useUser();
 
   // The user must be "ready": we have an id, we've initialized, and we're not loading
@@ -18,29 +18,45 @@ function PlinkoIframePage() {
   // We'll embed the Plinko game in an iframe
   const iframeRef = useRef(null);
 
+  // Track whether we've already set up the session once
+  const didSessionStart = useRef(false);
+
   // We'll keep on-screen logs
   const [logs, setLogs] = useState([]);
 
   function logMessage(msg) {
-    setLogs(prev => [...prev, msg]);
+    setLogs((prev) => [...prev, msg]);
     console.log(msg);
   }
 
-  // Log user context on each render (optional)
+  // ----------------------------------------------------------------
+  // 1) Debug effect: logs only when ID/loading/initialized/userIsReady changes
+  //    (Removed 'balance' from dependencies to prevent excessive re-logs.)
+  // ----------------------------------------------------------------
   useEffect(() => {
     logMessage("==== On Render / Re-render (ID/Init) ====");
     logMessage(`User context -> id: ${id}, loading: ${loading}, initialized: ${initialized}`);
     logMessage(`userIsReady: ${userIsReady}`);
   }, [id, loading, initialized, userIsReady]);
 
-  // The main effect that starts the session
+  // ----------------------------------------------------------------
+  // 2) Main effect that starts a new Plinko session (runs once per mount)
+  // ----------------------------------------------------------------
   useEffect(() => {
-    // If the user isn't ready, don't create a session
+    // If user isn't ready, skip
     if (!userIsReady) {
       logMessage("User is NOT ready yet. Aborting session start.");
       return;
     }
 
+    // If we already started the session, skip
+    if (didSessionStart.current) {
+      logMessage("Session already started; skipping new event listener.");
+      return;
+    }
+    didSessionStart.current = true;
+
+    // Now we can safely proceed
     const iframe = iframeRef.current;
     if (!iframe) {
       logMessage("ERROR: iframeRef is null; cannot create session.");
@@ -51,11 +67,11 @@ function PlinkoIframePage() {
 
     let sessionId = null;
 
-    // This function actually creates the Plinko session doc, then sends INIT_SESSION
+    // Actually create the Plinko session doc, then send INIT_SESSION
     async function startSession() {
       try {
         logMessage("Attempting to create a new Plinko session in Firestore...");
-        sessionId = await createPlinkoSession(); // Single doc creation
+        sessionId = await createPlinkoSession();
         logMessage(`Session created with ID: ${sessionId}`);
 
         const initMsg = {
@@ -107,15 +123,19 @@ function PlinkoIframePage() {
 
     window.addEventListener("message", handleMessage);
 
-    // Cleanup function to remove event listeners
+    // Cleanup function to remove event listeners when component unmounts
     return () => {
       iframe.removeEventListener("load", onIframeLoad);
       window.removeEventListener("message", handleMessage);
     };
-  // << Important: We remove 'balance' from dependencies. 
-  }, [userIsReady, id, createPlinkoSession, endPlinkoSession]); 
 
-  // If user isn't ready, show loading...
+    // We intentionally do not include 'balance' in dependencies to avoid
+    // re-starting the session whenever balance changes.
+  }, [userIsReady, id, createPlinkoSession, endPlinkoSession]);
+
+  // ----------------------------------------------------------------
+  // Rendering:
+  // ----------------------------------------------------------------
   if (!userIsReady) {
     return (
       <div style={{ padding: "1rem" }}>
@@ -135,7 +155,16 @@ function PlinkoIframePage() {
   // Otherwise, render logs + iframe
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      <div style={{ padding: "0.5rem", backgroundColor: "#fff", color: "#000", maxHeight: "200px", overflowY: "auto", borderBottom: "1px solid #ccc" }}>
+      <div
+        style={{
+          padding: "0.5rem",
+          backgroundColor: "#fff",
+          color: "#000",
+          maxHeight: "200px",
+          overflowY: "auto",
+          borderBottom: "1px solid #ccc"
+        }}
+      >
         <h3 style={{ margin: 0 }}>Debug / Errors</h3>
         {logs.map((msg, i) => (
           <p key={i} style={{ margin: 0, padding: 0, color: "red", fontSize: "0.9rem" }}>

@@ -93,6 +93,28 @@ useEffect(() => {
     localStorage.setItem(unsavedEarningsKey, "0");
   }
 }, []);
+
+useEffect(() => {
+  if (!id) return;       // Make sure we have a user ID.
+  
+  const stored = localStorage.getItem('plinko_unapplied');
+  if (!stored) return;   // If nothing stored, we're done.
+
+  const spins = JSON.parse(stored);
+  if (!Array.isArray(spins) || spins.length === 0) return;
+
+  const totalProfit = spins.reduce((acc, s) => acc + (s.spinProfit || 0), 0);
+  if (totalProfit !== 0) {
+    const updatedBalance = balance + totalProfit;
+    updateDoc(doc(db, 'telegramUsers', id), { balance: updatedBalance })
+      .then(() => {
+        setBalance(updatedBalance);
+        localStorage.removeItem('plinko_unapplied');
+        console.log(`Applied ${totalProfit} from localStorage to user ${id}.`);
+      })
+      .catch(err => console.error('Error applying plinko netProfit:', err));
+  }
+}, [id, balance]);
   
   const refillEnergy = () => {
     if (isRefilling) return;
@@ -1017,7 +1039,7 @@ useEffect(() => {
       leaderboard,
       rankUser,
       createPlinkoSession,
-    endPlinkoSession
+      endPlinkoSession,
       }}>
       {children}
     </UserContext.Provider>

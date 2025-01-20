@@ -1,6 +1,6 @@
 //userContext.jsx:
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc, updateDoc, addDoc, where, serverTimestamp, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
 
@@ -93,28 +93,6 @@ useEffect(() => {
     localStorage.setItem(unsavedEarningsKey, "0");
   }
 }, []);
-
-useEffect(() => {
-  if (!id) return;       // Make sure we have a user ID.
-  
-  const stored = localStorage.getItem('plinko_unapplied');
-  if (!stored) return;   // If nothing stored, we're done.
-
-  const spins = JSON.parse(stored);
-  if (!Array.isArray(spins) || spins.length === 0) return;
-
-  const totalProfit = spins.reduce((acc, s) => acc + (s.spinProfit || 0), 0);
-  if (totalProfit !== 0) {
-    const updatedBalance = balance + totalProfit;
-    updateDoc(doc(db, 'telegramUsers', id), { balance: updatedBalance })
-      .then(() => {
-        setBalance(updatedBalance);
-        localStorage.removeItem('plinko_unapplied');
-        console.log(`Applied ${totalProfit} from localStorage to user ${id}.`);
-      })
-      .catch(err => console.error('Error applying plinko netProfit:', err));
-  }
-}, [id, balance]);
   
   const refillEnergy = () => {
     if (isRefilling) return;
@@ -874,26 +852,6 @@ useEffect(() => {
   useEffect(() => {
     fetchReferrals();
   }, []);
-  async function getActivePlinkoSession() {
-    // Look for a session doc in "plinkoSessions" subcollection
-    // that is active and not expired
-    const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
-    const now = new Date();
-  
-    const q = query(
-      sessionsColl,
-      where("active", "==", true),
-      where("sessionExpiresAt", ">", now) // i.e. not expired
-    );
-  
-    const snap = await getDocs(q);
-    if (snap.empty) {
-      return null;
-    }
-    // If multiple, pick the first or do some logic
-    const docSnap = snap.docs[0];
-    return { id: docSnap.id, ...docSnap.data() };
-  }
 
   async function createPlinkoSession() {
     try {
@@ -945,7 +903,7 @@ async function endPlinkoSession(sessionId, netProfit) {
 useEffect(() => {
   async function cleanupSessions() {
     if (!id) return;
-
+    
     const now = new Date();
     const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
     const q = query(
@@ -960,14 +918,15 @@ useEffect(() => {
         active: false,
         netProfit: 0
       });
+      // Optionally adjust user’s Firestore balance if needed
     });
   }
 
-  cleanupSessions(); // once on mount
-  const interval = setInterval(cleanupSessions, 30 * 1000); // every 30s
+  // For example, run this once every 30 seconds or on app start:
+  cleanupSessions();
+  const interval = setInterval(cleanupSessions, 30 * 1000);
   return () => clearInterval(interval);
 }, [id]);
-
   return (
     <UserContext.Provider value={{
       balance,
@@ -1058,8 +1017,7 @@ useEffect(() => {
       leaderboard,
       rankUser,
       createPlinkoSession,
-      endPlinkoSession,
-      getActivePlinkoSession
+    endPlinkoSession
       }}>
       {children}
     </UserContext.Provider>

@@ -114,13 +114,20 @@ function PlinkoIframePage() {
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-      {/* Button to open transfer modal */}
+      {/* Styled Transfer Balance button */}
       <button 
         style={{
           position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 10
+          top: "10px",
+          right: "10px",
+          zIndex: 10,
+          backgroundColor: "#4CAF50",
+          color: "#fff",
+          padding: "10px 20px",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "16px"
         }}
         onClick={() => setModalOpen(true)}
       >
@@ -148,10 +155,17 @@ function PlinkoIframePage() {
             zIndex: 100
           }}
         >
-          <div style={{ backgroundColor: "#fff", padding: "20px", borderRadius: "8px", minWidth: "300px" }}>
-            <h2>Transfer Balance</h2>
-            <div>
-              <label>
+          <div style={{ 
+            backgroundColor: "#fff", 
+            color: "#000",
+            padding: "20px", 
+            borderRadius: "8px", 
+            minWidth: "300px", 
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)" 
+          }}>
+            <h2 style={{ marginBottom: "10px" }}>Transfer Balance</h2>
+            <div style={{ marginBottom: "10px" }}>
+              <label style={{ marginRight: "10px" }}>
                 <input 
                   type="radio" 
                   name="direction" 
@@ -161,7 +175,6 @@ function PlinkoIframePage() {
                 />
                 Transfer to Plinko
               </label>
-              <br/>
               <label>
                 <input 
                   type="radio" 
@@ -173,20 +186,48 @@ function PlinkoIframePage() {
                 Withdraw to Main App
               </label>
             </div>
-            <div style={{ marginTop: "10px" }}>
+            <div style={{ marginBottom: "20px" }}>
               <input 
                 type="number" 
                 placeholder="Amount" 
                 value={transferAmount}
                 onChange={(e) => setTransferAmount(e.target.value)}
-                style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
+                style={{ 
+                  width: "100%", 
+                  padding: "10px", 
+                  boxSizing: "border-box", 
+                  fontSize: "16px" 
+                }}
               />
             </div>
-            <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={() => setModalOpen(false)} style={{ marginRight: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button 
+                onClick={() => setModalOpen(false)} 
+                style={{
+                  backgroundColor: "#f44336",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  marginRight: "10px",
+                  fontSize: "16px"
+                }}
+              >
                 Cancel
               </button>
-              <button onClick={handleTransfer}>
+              <button 
+                onClick={handleTransfer}
+                style={{
+                  backgroundColor: "#4CAF50",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "16px"
+                }}
+              >
                 Confirm
               </button>
             </div>

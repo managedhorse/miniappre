@@ -7,10 +7,9 @@ function PlinkoIframePage() {
     loading,
     initialized,
     balance,
-    // Our new helper
     createPlinkoSession,
     endPlinkoSession,
-    getActivePlinkoSession // <--- new function in userContext
+    getActivePlinkoSession
   } = useUser();
 
   // Must be "ready"
@@ -25,14 +24,24 @@ function PlinkoIframePage() {
     console.log(msg);
   }
 
+  // Debug user context values
+  useEffect(() => {
+    console.log("== PlinkoIframePage ==");
+    console.log("id:", id);
+    console.log("initialized:", initialized);
+    console.log("loading:", loading);
+    console.log("balance:", balance);
+  }, [id, initialized, loading, balance]);
+
   useEffect(() => {
     if (!userIsReady) {
       log("Not ready yet, skipping session creation");
       return;
     }
-
-    // If we already started once (in the same React mount), skip
-    if (sessionStartedRef.current) return;
+    if (sessionStartedRef.current) {
+      log("Session is already started, skipping...");
+      return;
+    }
     sessionStartedRef.current = true;
 
     async function initSession() {
@@ -41,43 +50,47 @@ function PlinkoIframePage() {
         return;
       }
 
-      // 1) Attempt to find an active, unexpired session
-      const existing = await getActivePlinkoSession();
-      let sessionId = existing?.id;
+      try {
+        const existing = await getActivePlinkoSession();
+        let sessionId = existing?.id;
 
-      if (sessionId) {
-        log("Found existing active session, reusing sessionId=" + sessionId);
-      } else {
-        log("No active session found. Creating new plinko session doc...");
-        sessionId = await createPlinkoSession();
-        log("Created new session: " + sessionId);
+        if (sessionId) {
+          log("Found existing active session, reusing sessionId=" + sessionId);
+        } else {
+          log("No active session found. Creating new plinko session doc...");
+          sessionId = await createPlinkoSession();
+          log("Created new session: " + sessionId);
+        }
+
+        const initMsg = {
+          type: "INIT_SESSION",
+          userId: id,
+          sessionId,
+          sessionBalance: balance
+        };
+        log("Posting INIT_SESSION to iframe: " + JSON.stringify(initMsg));
+        iframeRef.current.contentWindow?.postMessage(
+          initMsg,
+          "https://plinko-game-main-two.vercel.app"
+        );
+      } catch (err) {
+        log("Error in initSession: " + err.message);
       }
-
-      // 2) Send INIT_SESSION to the iframe
-      const initMsg = {
-        type: "INIT_SESSION",
-        userId: id,
-        sessionId,
-        sessionBalance: balance // snapshot from userContext
-      };
-      log("Posting INIT_SESSION to iframe: " + JSON.stringify(initMsg));
-      iframeRef.current.contentWindow?.postMessage(
-        initMsg,
-        "https://plinko-game-main-two.vercel.app"
-      );
     }
 
     initSession();
   }, [userIsReady]);
 
-  // Listen for END_SESSION from child
   useEffect(() => {
     function handleMessage(event) {
-      if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+      // Only accept messages from the correct origin
+      if (!event.origin.includes("plinko-game-main-two.vercel.app")) {
+        return;
+      }
       const { type, netProfit, sessionId: childSessionId } = event.data || {};
 
       if (type === "END_SESSION") {
-        log("END_SESSION => netProfit=" + netProfit);
+        log(`END_SESSION => netProfit=${netProfit}, sessionId=${childSessionId}`);
         endPlinkoSession(childSessionId, netProfit)
           .then(() => {
             log("Session ended and netProfit applied to user balance.");
@@ -85,19 +98,33 @@ function PlinkoIframePage() {
           .catch((err) => log("Error ending session: " + err.message));
       }
     }
+
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [endPlinkoSession]);
 
   if (!userIsReady) {
-    return <div>Loading user...</div>;
+    return (
+      <div>
+        <h3>Loading user data ...</h3>
+      </div>
+    );
   }
 
   return (
     <div style={{ height: "100vh", width: "100%" }}>
-      <div style={{ borderBottom: "1px solid #ccc", maxHeight: "200px", overflowY: "auto" }}>
+      <div
+        style={{
+          borderBottom: "1px solid #ccc",
+          maxHeight: "200px",
+          overflowY: "auto",
+          padding: "0.5rem"
+        }}
+      >
         {logs.map((msg, i) => (
-          <p style={{ margin: 0, color: "red" }} key={i}>{msg}</p>
+          <p style={{ margin: 0, color: "red" }} key={i}>
+            {msg}
+          </p>
         ))}
       </div>
       <iframe

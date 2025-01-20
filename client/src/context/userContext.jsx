@@ -853,80 +853,10 @@ useEffect(() => {
     fetchReferrals();
   }, []);
 
-  async function createPlinkoSession() {
-    try {
-      // use userContext's `balance` RIGHT NOW as the snapshot
-      const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
-      const sessionDoc = await addDoc(sessionsColl, {
-        userId: id,
-        initialBalance: balance,  // snapshot
-        netProfit: 0,
-        active: true,
-        createdAt: serverTimestamp(),
-        // optional: expires at in 1 minute
-        sessionExpiresAt: new Date(Date.now() + 60 * 1000)
-      });
-      return sessionDoc.id;
-    } catch (err) {
-      console.error("Error creating plinko session:", err);
-      throw err;
-    }
-  }
+ 
 
-// 2) End a Plinko session with netProfit
-async function endPlinkoSession(sessionId, netProfit) {
-  try {
-    if (!id) throw new Error("User not logged in.");
 
-    // Mark session doc inactive
-    const sessionRef = doc(db, "telegramUsers", id, "plinkoSessions", sessionId);
-    await updateDoc(sessionRef, {
-      netProfit,
-      active: false
-    });
 
-    // Update user’s main balance
-    const updatedBalance = balance + netProfit;
-    await updateDoc(doc(db, "telegramUsers", id), {
-      balance: updatedBalance
-    });
-
-    // Also update local state
-    setBalance(updatedBalance);
-
-    console.log("endPlinkoSession complete. New balance:", updatedBalance);
-  } catch (err) {
-    console.error("Error ending plinko session:", err);
-    throw err;
-  }
-}
-useEffect(() => {
-  async function cleanupSessions() {
-    if (!id) return;
-    
-    const now = new Date();
-    const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
-    const q = query(
-      sessionsColl,
-      where("active", "==", true),
-      where("sessionExpiresAt", "<=", now)
-    );
-    const snap = await getDocs(q);
-
-    snap.forEach(async (docSnap) => {
-      await updateDoc(docSnap.ref, {
-        active: false,
-        netProfit: 0
-      });
-      // Optionally adjust user’s Firestore balance if needed
-    });
-  }
-
-  // For example, run this once every 30 seconds or on app start:
-  cleanupSessions();
-  const interval = setInterval(cleanupSessions, 30 * 1000);
-  return () => clearInterval(interval);
-}, [id]);
   return (
     <UserContext.Provider value={{
       balance,
@@ -1016,8 +946,6 @@ useEffect(() => {
       setOpenInfoTwo,
       leaderboard,
       rankUser,
-      createPlinkoSession,
-    endPlinkoSession
       }}>
       {children}
     </UserContext.Provider>

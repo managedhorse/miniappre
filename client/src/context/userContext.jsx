@@ -1,6 +1,6 @@
 //userContext.jsx:
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, where, serverTimestamp, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
 
@@ -874,6 +874,26 @@ useEffect(() => {
   useEffect(() => {
     fetchReferrals();
   }, []);
+  async function getActivePlinkoSession() {
+    // Look for a session doc in "plinkoSessions" subcollection
+    // that is active and not expired
+    const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
+    const now = new Date();
+  
+    const q = query(
+      sessionsColl,
+      where("active", "==", true),
+      where("sessionExpiresAt", ">", now) // i.e. not expired
+    );
+  
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      return null;
+    }
+    // If multiple, pick the first or do some logic
+    const docSnap = snap.docs[0];
+    return { id: docSnap.id, ...docSnap.data() };
+  }
 
   async function createPlinkoSession() {
     try {
@@ -925,7 +945,7 @@ async function endPlinkoSession(sessionId, netProfit) {
 useEffect(() => {
   async function cleanupSessions() {
     if (!id) return;
-    
+
     const now = new Date();
     const sessionsColl = collection(db, "telegramUsers", id, "plinkoSessions");
     const q = query(
@@ -940,15 +960,14 @@ useEffect(() => {
         active: false,
         netProfit: 0
       });
-      // Optionally adjust user’s Firestore balance if needed
     });
   }
 
-  // For example, run this once every 30 seconds or on app start:
-  cleanupSessions();
-  const interval = setInterval(cleanupSessions, 30 * 1000);
+  cleanupSessions(); // once on mount
+  const interval = setInterval(cleanupSessions, 30 * 1000); // every 30s
   return () => clearInterval(interval);
 }, [id]);
+
   return (
     <UserContext.Provider value={{
       balance,
@@ -1040,6 +1059,7 @@ useEffect(() => {
       rankUser,
       createPlinkoSession,
       endPlinkoSession,
+      getActivePlinkoSession
       }}>
       {children}
     </UserContext.Provider>

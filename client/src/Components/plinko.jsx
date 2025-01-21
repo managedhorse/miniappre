@@ -5,19 +5,49 @@ import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  const { balance, id, loading, initialized, setBalance } = useUser();
+  // Destructure plinkoBalance from useUser if provided by context
+  const { balance, plinkoBalance, id, loading, initialized, setBalance } = useUser();
 
-  // The user must be ready: we have an id, initialized, and not loading
   const userIsReady = Boolean(id && initialized && !loading);
-
-  // Reference to the iframe element
   const iframeRef = useRef(null);
 
-  // State for transfer modal
   const [modalOpen, setModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
   const [isTransferring, setIsTransferring] = useState(false);
+
+  // Function to request the child's current Plinko balance
+  function requestChildPlinkoBalance() {
+    return new Promise((resolve, reject) => {
+      const requestId = Date.now().toString();
+      function handleResponse(event) {
+        if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+        const { type, requestId: respRequestId, plinkoBalance, message } = event.data || {};
+        if (respRequestId !== requestId) return;
+        if (type === 'TRANSFER_BALANCE_RESPONSE') {
+          window.removeEventListener("message", handleResponse);
+          resolve(plinkoBalance);
+        } else if (type === 'TRANSFER_BALANCE_ERROR') {
+          window.removeEventListener("message", handleResponse);
+          reject(new Error(message));
+        }
+      }
+      window.addEventListener("message", handleResponse);
+      const iframe = iframeRef.current;
+      if (iframe) {
+        iframe.contentWindow?.postMessage(
+          { type: 'TRANSFER_BALANCE_REQUEST', requestId },
+          "https://plinko-game-main-two.vercel.app"
+        );
+      } else {
+        reject(new Error("Iframe not available"));
+      }
+      setTimeout(() => {
+        window.removeEventListener("message", handleResponse);
+        reject(new Error("Timeout waiting for response"));
+      }, 5000);
+    });
+  }
 
   useEffect(() => {
     if (!userIsReady) return;
@@ -25,29 +55,12 @@ function PlinkoIframePage() {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    // No need to send INIT_SESSION here; we'll rely on the child to request userId.
-
     function handleMessage(event) {
-      // Verify the message comes from the trusted child origin
       if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
-      
-      const { type } = event.data || {};
-
-      // If the child requests the userId, respond with the current userId
-      if (type === "REQUEST_USERID") {
-        console.log("Received REQUEST_USERID from child.");
-        if (id) {
-          console.log("Responding with USERID:", id);
-          event.source.postMessage({ type: "USERID", userId: id }, event.origin);
-        } else {
-          console.error("User ID not available to respond.");
-        }
-      }
-      // Handle additional message types from child if needed
+      // Handle additional message types as needed
     }
 
     window.addEventListener("message", handleMessage);
-
     return () => {
       window.removeEventListener("message", handleMessage);
     };
@@ -64,19 +77,34 @@ function PlinkoIframePage() {
       return;
     }
 
+    setIsTransferring(true);
+
+    let childPlinkoBalance;
+    try {
+      childPlinkoBalance = await requestChildPlinkoBalance();
+      console.log('Received plinkoBalance from child:', childPlinkoBalance);
+    } catch(err) {
+      console.error('Error getting balance from child:', err);
+      alert('Failed to retrieve game balance from Plinko app.');
+      setIsTransferring(false);
+      return;
+    }
+
     const userRef = doc(db, "telegramUsers", id.toString());
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
       alert("User record not found.");
+      setIsTransferring(false);
       return;
     }
     const data = userSnap.data();
     let currentBalance = data.balance || 0;
-    let currentPlinkoBalance = data.plinkoBalance || 0;
+    let currentPlinkoBalance = childPlinkoBalance;
 
     if (transferDirection === "toPlinko") {
       if (currentBalance < amount) {
         alert("Not enough balance to transfer.");
+        setIsTransferring(false);
         return;
       }
       currentBalance -= amount;
@@ -84,6 +112,7 @@ function PlinkoIframePage() {
     } else {
       if (currentPlinkoBalance < amount) {
         alert("Not enough Plinko balance to withdraw.");
+        setIsTransferring(false);
         return;
       }
       currentBalance += amount;
@@ -98,14 +127,15 @@ function PlinkoIframePage() {
       setModalOpen(false);
       setTransferAmount("");
       console.log("Transfer successful. New balances:", { balance: currentBalance, plinkoBalance: currentPlinkoBalance });
-      // Optionally, trigger user context update to reflect new balances
       if (setBalance) {
         setBalance(currentBalance);
       }
+      // Optionally update the context or trigger a re-fetch for plinkoBalance here
     } catch (error) {
       console.error("Error updating balances:", error);
       alert("Error processing transfer.");
     }
+    setIsTransferring(false);
   }
 
   if (!userIsReady) {
@@ -118,27 +148,25 @@ function PlinkoIframePage() {
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-      {/* Styled Transfer Balance button */}
       <button 
         style={{
           position: "absolute",
           top: "10px",
-          right: "10px",
+          left: "10px",
           zIndex: 10,
           backgroundColor: "#4CAF50",
           color: "#fff",
-          padding: "10px 20px",
+          padding: "6px 12px",
           border: "none",
           borderRadius: "4px",
           cursor: "pointer",
-          fontSize: "16px"
+          fontSize: "14px"
         }}
         onClick={() => setModalOpen(true)}
       >
         Transfer Balance
       </button>
 
-      {/* The Iframe for Plinko */}
       <iframe
         ref={iframeRef}
         src="https://plinko-game-main-two.vercel.app"
@@ -146,7 +174,6 @@ function PlinkoIframePage() {
         title="Plinko Game"
       />
 
-      {/* Transfer Modal */}
       {modalOpen && (
         <div 
           style={{
@@ -160,7 +187,7 @@ function PlinkoIframePage() {
           }}
         >
           <div style={{ 
-            backgroundColor: "#fff", 
+            backgroundColor: "pink",
             color: "#000",
             padding: "20px", 
             borderRadius: "8px", 
@@ -168,6 +195,11 @@ function PlinkoIframePage() {
             boxShadow: "0 4px 8px rgba(0,0,0,0.1)" 
           }}>
             <h2 style={{ marginBottom: "10px" }}>Transfer Balance</h2>
+            
+            {/* Display user balances from Firestore/context */}
+            <p><strong>Main Balance:</strong> {balance}</p>
+            <p><strong>Plinko Balance:</strong> {plinkoBalance}</p>
+            
             <div style={{ marginBottom: "10px" }}>
               <label style={{ marginRight: "10px" }}>
                 <input 
@@ -190,6 +222,7 @@ function PlinkoIframePage() {
                 Withdraw to Main App
               </label>
             </div>
+            
             <div style={{ marginBottom: "20px" }}>
               <input 
                 type="number" 
@@ -204,6 +237,7 @@ function PlinkoIframePage() {
                 }}
               />
             </div>
+            
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button 
                 onClick={() => setModalOpen(false)} 

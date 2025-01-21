@@ -15,6 +15,7 @@ function PlinkoIframePage() {
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
   const [isTransferring, setIsTransferring] = useState(false);
+  const [modalPlinkoBalance, setModalPlinkoBalance] = useState<number | null>(null);
 
   // Function to request the child's current Plinko balance
   function requestChildPlinkoBalance() {
@@ -160,6 +161,26 @@ function PlinkoIframePage() {
       </div>
     );
   }
+  useEffect(() => {
+    if (modalOpen && id) {
+      async function updateModalBalance() {
+        try {
+          const userRef = doc(db, "telegramUsers", id.toString());
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const latestBalance = userData.plinkoBalance || 0;
+            setModalPlinkoBalance(latestBalance);
+          } else {
+            console.error("User not found in Firestore.");
+          }
+        } catch (error) {
+          console.error("Error fetching latest plinkoBalance:", error);
+        }
+      }
+      updateModalBalance();
+    }
+  }, [modalOpen, id]);
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
@@ -189,69 +210,71 @@ function PlinkoIframePage() {
         title="Plinko Game"
       />
 
-      {modalOpen && (
-        <div 
-          style={{
-            position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100
+{modalOpen && (
+  <div 
+    style={{
+      position: "fixed",
+      top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 100
+    }}
+  >
+    <div style={{ 
+      backgroundColor: "pink",
+      color: "#000",
+      padding: "20px", 
+      borderRadius: "8px", 
+      minWidth: "300px", 
+      boxShadow: "0 4px 8px rgba(0,0,0,0.1)" 
+    }}>
+      <h2 style={{ marginBottom: "10px" }}>Transfer Balance</h2>
+      
+      {/* Display user balances */}
+      <p><strong>Main Balance:</strong> {balance}</p>
+      <p><strong>Plinko Balance:</strong> {modalPlinkoBalance !== null ? modalPlinkoBalance : "Loading..."}</p>
+      
+      <div style={{ marginBottom: "10px" }}>
+        <label style={{ marginRight: "10px" }}>
+          <input 
+            type="radio" 
+            name="direction" 
+            value="toPlinko" 
+            checked={transferDirection === "toPlinko"}
+            onChange={() => setTransferDirection("toPlinko")}
+          />
+          Transfer to Plinko
+        </label>
+        <label>
+          <input 
+            type="radio" 
+            name="direction" 
+            value="toMain" 
+            checked={transferDirection === "toMain"}
+            onChange={() => setTransferDirection("toMain")}
+          />
+          Withdraw to Main App
+        </label>
+      </div>
+      
+      <div style={{ marginBottom: "20px" }}>
+        <input 
+          type="number" 
+          placeholder="Amount" 
+          value={transferAmount}
+          onChange={(e) => setTransferAmount(e.target.value)}
+          style={{ 
+            width: "100%", 
+            padding: "10px", 
+            boxSizing: "border-box", 
+            fontSize: "16px" 
           }}
-        >
-          <div style={{ 
-            backgroundColor: "pink",
-            color: "#000",
-            padding: "20px", 
-            borderRadius: "8px", 
-            minWidth: "300px", 
-            boxShadow: "0 4px 8px rgba(0,0,0,0.1)" 
-          }}>
-            <h2 style={{ marginBottom: "10px" }}>Transfer Balance</h2>
-            
-            {/* Display user balances from Firestore/context */}
-            <p><strong>Main Balance:</strong> {balance}</p>
-            <p><strong>Plinko Balance:</strong> {plinkoBalance}</p>
-            
-            <div style={{ marginBottom: "10px" }}>
-              <label style={{ marginRight: "10px" }}>
-                <input 
-                  type="radio" 
-                  name="direction" 
-                  value="toPlinko" 
-                  checked={transferDirection === "toPlinko"}
-                  onChange={() => setTransferDirection("toPlinko")}
-                />
-                Transfer to Plinko
-              </label>
-              <label>
-                <input 
-                  type="radio" 
-                  name="direction" 
-                  value="toMain" 
-                  checked={transferDirection === "toMain"}
-                  onChange={() => setTransferDirection("toMain")}
-                />
-                Withdraw to Main App
-              </label>
-            </div>
-            
-            <div style={{ marginBottom: "20px" }}>
-              <input 
-                type="number" 
-                placeholder="Amount" 
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                style={{ 
-                  width: "100%", 
-                  padding: "10px", 
-                  boxSizing: "border-box", 
-                  fontSize: "16px" 
-                }}
-              />
-            </div>
+          // Set max attribute when withdrawing to main app
+          max={transferDirection === "toMain" && modalPlinkoBalance !== null ? modalPlinkoBalance : undefined}
+        />
+      </div>
             
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button 

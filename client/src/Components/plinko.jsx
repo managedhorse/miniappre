@@ -15,7 +15,7 @@ function PlinkoIframePage() {
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
   const [isTransferring, setIsTransferring] = useState(false);
-  const [modalPlinkoBalance, setModalPlinkoBalance] = useState<number | null>(null);
+  const [modalPlinkoBalance, setModalPlinkoBalance] = useState(null);
 
   // Function to request the child's current Plinko balance
   function requestChildPlinkoBalance() {

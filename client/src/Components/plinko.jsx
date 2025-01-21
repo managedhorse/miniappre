@@ -197,23 +197,55 @@ function PlinkoIframePage() {
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
       <button 
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          zIndex: 10,
-          backgroundColor: "#4CAF50",
-          color: "#fff",
-          padding: "6px 12px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "14px"
-        }}
-        onClick={() => setModalOpen(true)}
-      >
-        Transfer Balance
-      </button>
+  style={{
+    position: "absolute",
+    top: "10px",
+    left: "10px",
+    zIndex: 10,
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    padding: "6px 12px",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px"
+  }}
+  onClick={async () => {
+    if (!id) {
+      alert("User ID not available.");
+      return;
+    }
+
+    setIsTransferring(true); // Optionally show a loading state
+    let childPlinkoBalance;
+    try {
+      // Request the current Plinko balance from the child app
+      childPlinkoBalance = await requestChildPlinkoBalance();
+      console.log('Fetched plinkoBalance on modal open:', childPlinkoBalance);
+    } catch (err) {
+      console.error('Error fetching balance on modal open:', err);
+      alert('Failed to retrieve game balance from Plinko app.');
+      setIsTransferring(false);
+      return;
+    }
+
+    if (childPlinkoBalance !== undefined) {
+      try {
+        // Update Firestore with the latest plinkoBalance
+        const userRef = doc(db, "telegramUsers", id.toString());
+        await updateDoc(userRef, { plinkoBalance: childPlinkoBalance });
+        console.log('Updated plinkoBalance in Firestore on modal open:', childPlinkoBalance);
+      } catch (error) {
+        console.error("Error updating balance on modal open:", error);
+      }
+    }
+
+    setIsTransferring(false);
+    setModalOpen(true); // Now open the modal
+  }}
+>
+  Transfer Balance
+</button>
 
       <iframe
         ref={iframeRef}

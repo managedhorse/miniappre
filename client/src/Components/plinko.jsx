@@ -51,15 +51,30 @@ function PlinkoIframePage() {
 
   useEffect(() => {
     if (!userIsReady) return;
-
+  
     const iframe = iframeRef.current;
     if (!iframe) return;
-
+  
     function handleMessage(event) {
+      // Only process messages from the expected child origin
       if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+  
+      const { type } = event.data || {};
+  
+      // Respond to REQUEST_USERID messages
+      if (type === 'REQUEST_USERID') {
+        if (id) {
+          console.log(`Responding to REQUEST_USERID with id: ${id}`);
+          // Respond directly to the source of the message using event.source
+          event.source?.postMessage({ type: 'USERID', userId: id }, event.origin);
+        } else {
+          console.error("User ID not available to send.");
+        }
+      }
+  
       // Handle additional message types as needed
     }
-
+  
     window.addEventListener("message", handleMessage);
     return () => {
       window.removeEventListener("message", handleMessage);

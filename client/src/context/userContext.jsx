@@ -1,6 +1,6 @@
 //userContext.jsx:
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
 
@@ -354,8 +354,7 @@ useEffect(() => {
           setUnsavedEarnings(0);
           localStorage.setItem(unsavedEarningsKey, "0");
   
-          // Calculate and incorporate unsaved earnings after loading user data
-          calculateMissedEarnings();
+          
           // Read the newly calculated unsaved earnings
           const newStoredEarnings = localStorage.getItem(unsavedEarningsKey);
           const newUnsaved = newStoredEarnings ? parseFloat(newStoredEarnings) : 0;

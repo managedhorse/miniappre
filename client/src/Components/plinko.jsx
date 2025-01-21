@@ -150,6 +150,15 @@ function PlinkoIframePage() {
           );
         }
       }
+      // NEW: If transferring to Plinko, send an ADD_BALANCE message to child
+  if (transferDirection === "toPlinko") {
+    if (iframeRef.current) {
+      iframeRef.current.contentWindow?.postMessage(
+        { type: 'ADD_BALANCE', amount: amount },
+        "https://plinko-game-main-two.vercel.app"
+      );
+    }
+  }
   
       setModalOpen(false);
       setTransferAmount("");

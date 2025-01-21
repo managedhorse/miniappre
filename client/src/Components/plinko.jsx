@@ -237,6 +237,26 @@ function PlinkoIframePage() {
     }
   }, [modalOpen, id]);
 
+  useEffect(() => {
+   
+      // Show the back button when the component mounts
+      window.Telegram.WebApp.BackButton.show();
+  
+      // Attach a click event listener to handle the back navigation
+      const handleBackButtonClick = () => {
+        window.history.back();
+      };
+  
+      window.Telegram.WebApp.BackButton.onClick(handleBackButtonClick);
+  
+      // Clean up the event listener and hide the back button when the component unmounts
+      return () => {
+        window.Telegram.WebApp.BackButton.offClick(handleBackButtonClick);
+        window.Telegram.WebApp.BackButton.hide();
+      };
+  
+    }, []);
+
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
       <button 

@@ -1,49 +1,49 @@
-// PlinkoIframePage.jsx
+// plinko.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "../context/userContext";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  const { balance, id, loading, initialized, setBalance } = useUser(); // Ensure `setBalance` exists in your context
+  const { balance, id, loading, initialized, setBalance } = useUser();
+
+  // The user must be ready: we have an id, initialized, and not loading
   const userIsReady = Boolean(id && initialized && !loading);
+
+  // Reference to the iframe element
   const iframeRef = useRef(null);
 
   // State for transfer modal
   const [modalOpen, setModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
-  const [isTransferring, setIsTransferring] = useState(false); // To manage transfer state
-
-  // Ref to store pending requests
-  const pendingRequests = useRef(new Map());
+  const [isTransferring, setIsTransferring] = useState(false);
 
   useEffect(() => {
     if (!userIsReady) return;
+
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    // No need to send INIT_SESSION here; we'll rely on the child to request userId.
 
     function handleMessage(event) {
       // Verify the message comes from the trusted child origin
       if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
       
-      const { type, requestId, plinkoBalance, message } = event.data || {};
-      
-      if (type === "TRANSFER_BALANCE_RESPONSE" && requestId) {
-        const resolve = pendingRequests.current.get(requestId);
-        if (resolve) {
-          resolve({ plinkoBalance });
-          pendingRequests.current.delete(requestId);
+      const { type } = event.data || {};
+
+      // If the child requests the userId, respond with the current userId
+      if (type === "REQUEST_USERID") {
+        console.log("Received REQUEST_USERID from child.");
+        if (id) {
+          console.log("Responding with USERID:", id);
+          event.source.postMessage({ type: "USERID", userId: id }, event.origin);
+        } else {
+          console.error("User ID not available to respond.");
         }
       }
-
-      if (type === "TRANSFER_BALANCE_ERROR" && requestId) {
-        const reject = pendingRequests.current.get(requestId).reject;
-        if (reject) {
-          reject(new Error(message || "Unknown error during transfer."));
-          pendingRequests.current.delete(requestId);
-        }
-      }
-
-      // Handle other message types if necessary
+      // Handle additional message types from child if needed
     }
 
     window.addEventListener("message", handleMessage);
@@ -51,7 +51,7 @@ function PlinkoIframePage() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [userIsReady]);
+  }, [userIsReady, id]);
 
   async function handleTransfer() {
     const amount = parseFloat(transferAmount);
@@ -64,117 +64,47 @@ function PlinkoIframePage() {
       return;
     }
 
-    setIsTransferring(true);
+    const userRef = doc(db, "telegramUsers", id.toString());
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      alert("User record not found.");
+      return;
+    }
+    const data = userSnap.data();
+    let currentBalance = data.balance || 0;
+    let currentPlinkoBalance = data.plinkoBalance || 0;
+
+    if (transferDirection === "toPlinko") {
+      if (currentBalance < amount) {
+        alert("Not enough balance to transfer.");
+        return;
+      }
+      currentBalance -= amount;
+      currentPlinkoBalance += amount;
+    } else {
+      if (currentPlinkoBalance < amount) {
+        alert("Not enough Plinko balance to withdraw.");
+        return;
+      }
+      currentBalance += amount;
+      currentPlinkoBalance -= amount;
+    }
 
     try {
-      // Generate a unique requestId
-      const requestId = `transfer-${Date.now()}`;
-
-      // Create a Promise that resolves when the response is received
-      const plinkoBalance = await new Promise((resolve, reject) => {
-        // Set up a timeout in case response is not received
-        const timeout = setTimeout(() => {
-          pendingRequests.current.delete(requestId);
-          reject(new Error("Transfer request timed out."));
-        }, 5000); // 5 seconds timeout
-
-        // Store the resolve and reject functions
-        pendingRequests.current.set(requestId, { resolve, reject });
-
-        // Send the transfer request message
-        iframeRef.current?.contentWindow?.postMessage(
-          { type: "TRANSFER_BALANCE_REQUEST", requestId },
-          "https://plinko-game-main-two.vercel.app" // Replace with your Plinko app's origin
-        );
-        console.log("TRANSFER_BALANCE_REQUEST sent to Plinko app with requestId:", requestId);
+      await updateDoc(userRef, {
+        balance: currentBalance,
+        plinkoBalance: currentPlinkoBalance
       });
-
-      console.log("Received plinkoBalance from Plinko app:", plinkoBalance.plinkoBalance);
-
-      if (transferDirection === "toPlinko") {
-        // Transfer from main app to Plinko
-        const userRef = doc(db, "telegramUsers", id.toString());
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          alert("User record not found.");
-          setIsTransferring(false);
-          return;
-        }
-        const data = userSnap.data();
-        let currentBalance = data.balance || 0;
-        let currentPlinkoBalance = data.plinkoBalance || 0;
-
-        if (currentBalance < amount) {
-          alert("Not enough balance to transfer.");
-          setIsTransferring(false);
-          return;
-        }
-
-        currentBalance -= amount;
-        currentPlinkoBalance += amount;
-
-        try {
-          await updateDoc(userRef, {
-            balance: currentBalance,
-            plinkoBalance: currentPlinkoBalance
-          });
-          setModalOpen(false);
-          setTransferAmount("");
-          console.log("Transfer to Plinko successful.");
-          // Update user context here to reflect new balances
-          if (setBalance) {
-            setBalance(currentBalance); // Update main balance in context
-          }
-        } catch (error) {
-          console.error("Error updating balances:", error);
-          alert("Error processing transfer.");
-        }
-
-      } else if (transferDirection === "toMain") {
-        // Transfer from Plinko to main app
-        const userRef = doc(db, "telegramUsers", id.toString());
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          alert("User record not found.");
-          setIsTransferring(false);
-          return;
-        }
-        const data = userSnap.data();
-        let currentBalance = data.balance || 0;
-        let currentPlinkoBalance = data.plinkoBalance || 0;
-
-        if (currentPlinkoBalance < amount) {
-          alert("Not enough Plinko balance to withdraw.");
-          setIsTransferring(false);
-          return;
-        }
-
-        currentBalance += amount;
-        currentPlinkoBalance -= amount;
-
-        try {
-          await updateDoc(userRef, {
-            balance: currentBalance,
-            plinkoBalance: currentPlinkoBalance
-          });
-          setModalOpen(false);
-          setTransferAmount("");
-          console.log("Withdraw to Main App successful.");
-          // Update user context here to reflect new balances
-          if (setBalance) {
-            setBalance(currentBalance); // Update main balance in context
-          }
-        } catch (error) {
-          console.error("Error updating balances:", error);
-          alert("Error processing transfer.");
-        }
+      setModalOpen(false);
+      setTransferAmount("");
+      console.log("Transfer successful. New balances:", { balance: currentBalance, plinkoBalance: currentPlinkoBalance });
+      // Optionally, trigger user context update to reflect new balances
+      if (setBalance) {
+        setBalance(currentBalance);
       }
-
     } catch (error) {
-      console.error("Error during transfer:", error);
-      alert(error.message);
-    } finally {
-      setIsTransferring(false);
+      console.error("Error updating balances:", error);
+      alert("Error processing transfer.");
     }
   }
 

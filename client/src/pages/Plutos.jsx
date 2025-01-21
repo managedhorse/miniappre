@@ -407,6 +407,8 @@ const Plutos = () => {
       return (num / 1000000).toFixed(3).replace(".", ".") + " M";
     }
   };
+  const allowedIds = ["549073151", "642497054", "6346910100"];
+
 
   return (
     <>
@@ -441,16 +443,16 @@ const Plutos = () => {
                 <span className="text-sm font-bold slackey-regular text-white">/ {battery.energy}</span>
               </div>
             </div>
-            {id === "549073151" && (
-              <div className="flex items-center justify-center p-4">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={() => navigate("/earn/plinko")}
-                >
-                  Test Plinko
-                </button>
-              </div>
-              )}
+            {allowedIds.includes(id) && (
+        <div className="flex items-center justify-center p-4">
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={() => navigate("/earn/plinko")}
+          >
+            Test Plinko
+          </button>
+        </div>
+      )}
             {/* Daily Reward, Spinner, Leaderboard Section */}
             <div className="flex justify-between gap-2 px-4">
               {/* Daily Reward Card */}

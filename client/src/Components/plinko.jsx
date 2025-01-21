@@ -1,4 +1,3 @@
-// plinko.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "../context/userContext";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -19,36 +18,24 @@ function PlinkoIframePage() {
   const [transferDirection, setTransferDirection] = useState("toPlinko");
 
   useEffect(() => {
-    if (!userIsReady) {
-      return;
-    }
+    if (!userIsReady) return;
 
-    const iframe = iframeRef.current;
-    if (!iframe) {
-      return;
-    }
-
-    function onIframeLoad() {
-      const initMsg = {
-        type: "INIT_SESSION",
-        userId: id
-      };
-      iframe.contentWindow?.postMessage(initMsg, "https://plinko-game-main-two.vercel.app");
-    }
-
-    // Add load event listener to the iframe
-    iframe.addEventListener("load", onIframeLoad);
-
-    const handleMessage = (event) => {
-      if (!event.origin.includes("plinko-game-main-two.vercel.app")) {
-        return;
+    function handleMessage(event) {
+      // Verify the message comes from the trusted child origin
+      if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
+      
+      const { type } = event.data || {};
+      if (type === "REQUEST_USERID") {
+        if (id) {
+          event.source?.postMessage({ type: "USERID", userId: id }, event.origin);
+        }
       }
-      // Additional message handling can be added here if required
-    };
+      // Handle other message types if necessary
+    }
+
     window.addEventListener("message", handleMessage);
 
     return () => {
-      iframe.removeEventListener("load", onIframeLoad);
       window.removeEventListener("message", handleMessage);
     };
   }, [userIsReady, id]);
@@ -97,7 +84,8 @@ function PlinkoIframePage() {
       });
       setModalOpen(false);
       setTransferAmount("");
-      // Optionally, trigger user context update to reflect new balances
+      console.log("Transfer successful.");
+      // Optionally, update user context here to reflect new balances
     } catch (error) {
       console.error("Error updating balances:", error);
       alert("Error processing transfer.");

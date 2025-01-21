@@ -66,6 +66,7 @@ export const UserProvider = ({ children }) => {
   const refillSteps = timeRefill.step; // Number of increments
   const incrementValue = refiller / refillSteps; // Amount to increment each step
   const defaultEnergy = refiller; // Default energy value
+  const [plinkoBalance, setPlinkoBalance] = useState(0);
   const tapBotLevels = [
     { level: 1, cost: 1000000, tapsPerSecond: 1 },
     { level: 2, cost: 2000000, tapsPerSecond: 2 },
@@ -336,6 +337,7 @@ useEffect(() => {
           setBotLevel(userData.botLevel || 0);
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
+          setPlinkoBalance(userData.plinkoBalance || 0);
   
           const lastReferralsUpdate = localStorage.getItem("lastReferralsUpdate");
         const now = Date.now();
@@ -396,6 +398,7 @@ useEffect(() => {
           refereeId: referrerId || null,
           referrals: [],
           botLevel: 0,
+          plinkoBalance: 0,
         };
 
         await setDoc(userRef, userData);
@@ -945,6 +948,8 @@ useEffect(() => {
       setOpenInfoTwo,
       leaderboard,
       rankUser,
+      plinkoBalance,      
+      setPlinkoBalance,
       }}>
       {children}
     </UserContext.Provider>

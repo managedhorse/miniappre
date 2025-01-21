@@ -92,9 +92,9 @@ function PlinkoIframePage() {
       alert("User ID not available.");
       return;
     }
-
+  
     setIsTransferring(true);
-
+  
     let childPlinkoBalance;
     try {
       childPlinkoBalance = await requestChildPlinkoBalance();
@@ -105,7 +105,7 @@ function PlinkoIframePage() {
       setIsTransferring(false);
       return;
     }
-
+  
     const userRef = doc(db, "telegramUsers", id.toString());
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -116,7 +116,7 @@ function PlinkoIframePage() {
     const data = userSnap.data();
     let currentBalance = data.balance || 0;
     let currentPlinkoBalance = childPlinkoBalance;
-
+  
     if (transferDirection === "toPlinko") {
       if (currentBalance < amount) {
         alert("Not enough balance to transfer.");
@@ -134,12 +134,23 @@ function PlinkoIframePage() {
       currentBalance += amount;
       currentPlinkoBalance -= amount;
     }
-
+  
     try {
       await updateDoc(userRef, {
         balance: currentBalance,
         plinkoBalance: currentPlinkoBalance
       });
+  
+      // If withdrawing to main app, send a message to the child iframe to deduct the withdrawn amount
+      if (transferDirection === "toMain") {
+        if (iframeRef.current) {
+          iframeRef.current.contentWindow?.postMessage(
+            { type: 'DEDUCT_BALANCE', amount: amount },
+            "https://plinko-game-main-two.vercel.app" // Child's origin
+          );
+        }
+      }
+  
       setModalOpen(false);
       setTransferAmount("");
       console.log("Transfer successful. New balances:", { balance: currentBalance, plinkoBalance: currentPlinkoBalance });
@@ -153,6 +164,7 @@ function PlinkoIframePage() {
     }
     setIsTransferring(false);
   }
+  
 
   if (!userIsReady) {
     return (

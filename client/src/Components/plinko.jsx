@@ -1,21 +1,22 @@
+// PlinkoIframePage.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useUser } from "../context/userContext";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  const { balance, id, loading, initialized } = useUser();
-
-  // The user must be ready: we have an id, initialized, and not loading
+  const { balance, id, loading, initialized, setBalance } = useUser(); // Ensure `setBalance` exists in your context
   const userIsReady = Boolean(id && initialized && !loading);
-
-  // Reference to the iframe element
   const iframeRef = useRef(null);
 
   // State for transfer modal
   const [modalOpen, setModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
+  const [isTransferring, setIsTransferring] = useState(false); // To manage transfer state
+
+  // Ref to store pending requests
+  const pendingRequests = useRef(new Map());
 
   useEffect(() => {
     if (!userIsReady) return;
@@ -24,12 +25,24 @@ function PlinkoIframePage() {
       // Verify the message comes from the trusted child origin
       if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
       
-      const { type } = event.data || {};
-      if (type === "REQUEST_USERID") {
-        if (id) {
-          event.source?.postMessage({ type: "USERID", userId: id }, event.origin);
+      const { type, requestId, plinkoBalance, message } = event.data || {};
+      
+      if (type === "TRANSFER_BALANCE_RESPONSE" && requestId) {
+        const resolve = pendingRequests.current.get(requestId);
+        if (resolve) {
+          resolve({ plinkoBalance });
+          pendingRequests.current.delete(requestId);
         }
       }
+
+      if (type === "TRANSFER_BALANCE_ERROR" && requestId) {
+        const reject = pendingRequests.current.get(requestId).reject;
+        if (reject) {
+          reject(new Error(message || "Unknown error during transfer."));
+          pendingRequests.current.delete(requestId);
+        }
+      }
+
       // Handle other message types if necessary
     }
 
@@ -38,7 +51,7 @@ function PlinkoIframePage() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [userIsReady, id]);
+  }, [userIsReady]);
 
   async function handleTransfer() {
     const amount = parseFloat(transferAmount);
@@ -51,44 +64,117 @@ function PlinkoIframePage() {
       return;
     }
 
-    const userRef = doc(db, "telegramUsers", id.toString());
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      alert("User record not found.");
-      return;
-    }
-    const data = userSnap.data();
-    let currentBalance = data.balance || 0;
-    let currentPlinkoBalance = data.plinkoBalance || 0;
-
-    if (transferDirection === "toPlinko") {
-      if (currentBalance < amount) {
-        alert("Not enough balance to transfer.");
-        return;
-      }
-      currentBalance -= amount;
-      currentPlinkoBalance += amount;
-    } else {
-      if (currentPlinkoBalance < amount) {
-        alert("Not enough Plinko balance to withdraw.");
-        return;
-      }
-      currentBalance += amount;
-      currentPlinkoBalance -= amount;
-    }
+    setIsTransferring(true);
 
     try {
-      await updateDoc(userRef, {
-        balance: currentBalance,
-        plinkoBalance: currentPlinkoBalance
+      // Generate a unique requestId
+      const requestId = `transfer-${Date.now()}`;
+
+      // Create a Promise that resolves when the response is received
+      const plinkoBalance = await new Promise((resolve, reject) => {
+        // Set up a timeout in case response is not received
+        const timeout = setTimeout(() => {
+          pendingRequests.current.delete(requestId);
+          reject(new Error("Transfer request timed out."));
+        }, 5000); // 5 seconds timeout
+
+        // Store the resolve and reject functions
+        pendingRequests.current.set(requestId, { resolve, reject });
+
+        // Send the transfer request message
+        iframeRef.current?.contentWindow?.postMessage(
+          { type: "TRANSFER_BALANCE_REQUEST", requestId },
+          "https://plinko-game-main-two.vercel.app" // Replace with your Plinko app's origin
+        );
+        console.log("TRANSFER_BALANCE_REQUEST sent to Plinko app with requestId:", requestId);
       });
-      setModalOpen(false);
-      setTransferAmount("");
-      console.log("Transfer successful.");
-      // Optionally, update user context here to reflect new balances
+
+      console.log("Received plinkoBalance from Plinko app:", plinkoBalance.plinkoBalance);
+
+      if (transferDirection === "toPlinko") {
+        // Transfer from main app to Plinko
+        const userRef = doc(db, "telegramUsers", id.toString());
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          alert("User record not found.");
+          setIsTransferring(false);
+          return;
+        }
+        const data = userSnap.data();
+        let currentBalance = data.balance || 0;
+        let currentPlinkoBalance = data.plinkoBalance || 0;
+
+        if (currentBalance < amount) {
+          alert("Not enough balance to transfer.");
+          setIsTransferring(false);
+          return;
+        }
+
+        currentBalance -= amount;
+        currentPlinkoBalance += amount;
+
+        try {
+          await updateDoc(userRef, {
+            balance: currentBalance,
+            plinkoBalance: currentPlinkoBalance
+          });
+          setModalOpen(false);
+          setTransferAmount("");
+          console.log("Transfer to Plinko successful.");
+          // Update user context here to reflect new balances
+          if (setBalance) {
+            setBalance(currentBalance); // Update main balance in context
+          }
+        } catch (error) {
+          console.error("Error updating balances:", error);
+          alert("Error processing transfer.");
+        }
+
+      } else if (transferDirection === "toMain") {
+        // Transfer from Plinko to main app
+        const userRef = doc(db, "telegramUsers", id.toString());
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          alert("User record not found.");
+          setIsTransferring(false);
+          return;
+        }
+        const data = userSnap.data();
+        let currentBalance = data.balance || 0;
+        let currentPlinkoBalance = data.plinkoBalance || 0;
+
+        if (currentPlinkoBalance < amount) {
+          alert("Not enough Plinko balance to withdraw.");
+          setIsTransferring(false);
+          return;
+        }
+
+        currentBalance += amount;
+        currentPlinkoBalance -= amount;
+
+        try {
+          await updateDoc(userRef, {
+            balance: currentBalance,
+            plinkoBalance: currentPlinkoBalance
+          });
+          setModalOpen(false);
+          setTransferAmount("");
+          console.log("Withdraw to Main App successful.");
+          // Update user context here to reflect new balances
+          if (setBalance) {
+            setBalance(currentBalance); // Update main balance in context
+          }
+        } catch (error) {
+          console.error("Error updating balances:", error);
+          alert("Error processing transfer.");
+        }
+      }
+
     } catch (error) {
-      console.error("Error updating balances:", error);
-      alert("Error processing transfer.");
+      console.error("Error during transfer:", error);
+      alert(error.message);
+    } finally {
+      setIsTransferring(false);
     }
   }
 
@@ -206,17 +292,18 @@ function PlinkoIframePage() {
               </button>
               <button 
                 onClick={handleTransfer}
+                disabled={isTransferring}
                 style={{
-                  backgroundColor: "#4CAF50",
+                  backgroundColor: isTransferring ? "#9E9E9E" : "#4CAF50",
                   color: "#fff",
                   border: "none",
                   padding: "10px 20px",
                   borderRadius: "4px",
-                  cursor: "pointer",
+                  cursor: isTransferring ? "not-allowed" : "pointer",
                   fontSize: "16px"
                 }}
               >
-                Confirm
+                {isTransferring ? "Processing..." : "Confirm"}
               </button>
             </div>
           </div>

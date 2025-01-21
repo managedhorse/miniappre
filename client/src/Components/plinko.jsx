@@ -82,6 +82,40 @@ function PlinkoIframePage() {
     };
   }, [userIsReady, id]);
 
+  // New useEffect to fetch plinkoBalance from iframe on load and sync with Firestore
+  useEffect(() => {
+    if (!userIsReady) return;
+
+    async function fetchAndSyncPlinkoBalance() {
+      try {
+        const childPlinkoBalance = await requestChildPlinkoBalance();
+        console.log('Fetched plinkoBalance from child:', childPlinkoBalance);
+
+        // Update Firestore with the fetched plinkoBalance
+        const userRef = doc(db, "telegramUsers", id.toString());
+        await updateDoc(userRef, { plinkoBalance: childPlinkoBalance });
+        console.log('Firestore updated with plinkoBalance:', childPlinkoBalance);
+
+        // Optionally, update local storage
+        localStorage.setItem('plinkoBalance', childPlinkoBalance.toString());
+
+        // Update context or state if necessary
+        if (setBalance) {
+          // Fetch the main balance if needed
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setBalance(userData.balance || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching and syncing plinko balance:', error);
+      }
+    }
+
+    fetchAndSyncPlinkoBalance();
+  }, [userIsReady, id, setBalance]);
+
   async function handleTransfer() {
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {

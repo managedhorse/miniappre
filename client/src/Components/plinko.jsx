@@ -333,71 +333,130 @@ function PlinkoIframePage() {
     <div 
       style={{ 
         backgroundColor: "#ffe4e6", // Softer pink
-        color: "#000",
+        color: "#444",
         padding: "20px", 
         borderRadius: "12px", 
         minWidth: "320px", 
         maxWidth: "400px",
-        width: "90%",        // Let it shrink nicely on smaller screens
+        width: "90%",
         boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-        transform: "scale(0.95)",  // Start slightly scaled down
+        transform: "scale(0.95)", 
         animation: "fadeInScale 0.3s forwards",
-        position: "relative", 
-        fontFamily: "Arial, sans-serif"
+        position: "relative"
       }}
     >
       <h2 style={{ 
         marginBottom: "12px",
-        fontSize: "1.25rem",
+        fontSize: "1.4rem",
         fontWeight: "bold",
-        textAlign: "center"
+        textAlign: "center",
+        fontFamily: "Arial, sans-serif"
       }}>
         Transfer Balance
       </h2>
       
       {/* Balances */}
-      <div style={{ marginBottom: "16px" }}>
-        <p style={{ margin: "4px 0" }}>
-          <strong>Main Balance:</strong> {balance}
+      <div 
+        style={{ 
+          marginBottom: "16px", 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: "6px",
+          fontFamily: "Arial, sans-serif"
+        }}
+      >
+        <p 
+          style={{ 
+            margin: 0, 
+            fontSize: "1rem", 
+            display: "flex", 
+            justifyContent: "space-between"
+          }}
+        >
+          <strong>Main Balance:</strong> 
+          <span style={{ color: "#8B0000" }}>
+            {typeof balance === "number" ? balance.toFixed(2) : balance}
+          </span>
         </p>
-        <p style={{ margin: "4px 0" }}>
-          <strong>Plinko Balance:</strong> {modalPlinkoBalance !== null ? modalPlinkoBalance : "Loading..."}
+        <p 
+          style={{ 
+            margin: 0, 
+            fontSize: "1rem", 
+            display: "flex", 
+            justifyContent: "space-between"
+          }}
+        >
+          <strong>Plinko Balance:</strong> 
+          <span style={{ color: "#8B0000" }}>
+            {modalPlinkoBalance !== null
+              ? Number(modalPlinkoBalance).toFixed(2)
+              : "Loading..."}
+          </span>
         </p>
       </div>
 
       <hr style={{ margin: "12px 0", borderColor: "#aaa" }} />
 
-      {/* Transfer Direction */}
-      <div style={{ marginBottom: "16px", display: "flex", justifyContent: "space-around" }}>
-        <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <input 
-            type="radio" 
-            name="direction" 
-            value="toPlinko" 
-            checked={transferDirection === "toPlinko"}
-            onChange={() => setTransferDirection("toPlinko")}
-          />
-          <span>To Plinko</span>
-        </label>
-        <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <input 
-            type="radio" 
-            name="direction" 
-            value="toMain" 
-            checked={transferDirection === "toMain"}
-            onChange={() => setTransferDirection("toMain")}
-          />
-          <span>To Main</span>
-        </label>
+      {/* Transfer Direction - Custom Segmented Toggles */}
+      <div 
+        style={{ 
+          marginBottom: "16px", 
+          fontFamily: "Arial, sans-serif"
+        }}
+      >
+        <div 
+          style={{
+            display: "flex",
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            overflow: "hidden",
+            border: "1px solid #ccc"
+          }}
+        >
+          {/* TO PLINKO Toggle */}
+          <label 
+            style={{ 
+              flex: 1, 
+              textAlign: "center", 
+              padding: "10px 0", 
+              cursor: "pointer", 
+              transition: "background-color 0.2s",
+              backgroundColor: transferDirection === "toPlinko" ? "#fa8072" : "transparent",
+              color: transferDirection === "toPlinko" ? "#fff" : "#444",
+              fontWeight: transferDirection === "toPlinko" ? "bold" : "normal"
+            }}
+            onClick={() => setTransferDirection("toPlinko")}
+          >
+            To Plinko
+          </label>
+
+          {/* TO MAIN Toggle */}
+          <label 
+            style={{ 
+              flex: 1, 
+              textAlign: "center", 
+              padding: "10px 0", 
+              cursor: "pointer", 
+              transition: "background-color 0.2s",
+              backgroundColor: transferDirection === "toMain" ? "#fa8072" : "transparent",
+              color: transferDirection === "toMain" ? "#fff" : "#444",
+              fontWeight: transferDirection === "toMain" ? "bold" : "normal"
+            }}
+            onClick={() => setTransferDirection("toMain")}
+          >
+            To Main
+          </label>
+        </div>
       </div>
 
       {/* Transfer Amount */}
-      <div style={{ marginBottom: "16px" }}>
+      <div style={{ marginBottom: "16px", fontFamily: "Arial, sans-serif" }}>
         <label 
           style={{ 
             display: "block", 
             marginBottom: "8px", 
-            fontWeight: "bold" 
+            fontWeight: "bold",
+            fontSize: "0.95rem"
           }}
         >
           Amount
@@ -409,11 +468,12 @@ function PlinkoIframePage() {
           onChange={(e) => setTransferAmount(e.target.value)}
           style={{ 
             width: "100%", 
-            padding: "10px", 
+            padding: "12px", 
             boxSizing: "border-box", 
-            fontSize: "16px",
-            borderRadius: "6px",
-            border: "1px solid #ddd"
+            fontSize: "1rem",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            outline: "none"
           }}
           max={
             transferDirection === "toMain" && modalPlinkoBalance !== null 
@@ -424,7 +484,14 @@ function PlinkoIframePage() {
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+      <div 
+        style={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          gap: "8px",
+          fontFamily: "Arial, sans-serif"
+        }}
+      >
         <button 
           onClick={() => setModalOpen(false)} 
           style={{
@@ -432,7 +499,7 @@ function PlinkoIframePage() {
             color: "#fff",
             border: "none",
             padding: "10px 16px",
-            borderRadius: "4px",
+            borderRadius: "6px",
             cursor: "pointer",
             fontSize: "14px",
             transition: "background-color 0.2s"
@@ -448,7 +515,7 @@ function PlinkoIframePage() {
             color: "#fff",
             border: "none",
             padding: "10px 16px",
-            borderRadius: "4px",
+            borderRadius: "6px",
             cursor: isTransferring ? "not-allowed" : "pointer",
             fontSize: "14px",
             transition: "background-color 0.2s"
@@ -476,6 +543,7 @@ function PlinkoIframePage() {
     </style>
   </div>
 )}
+
     </div>
   );
 }

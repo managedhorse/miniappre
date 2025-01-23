@@ -127,7 +127,7 @@ const App = () => {
     <>
       <div className="flex justify-center w-full">
         <div className="flex justify-center w-full">
-          <div className="flex flex-col w-full pt-3 space-y-3">
+          <div className="flex flex-col w-full space-y-3">
             <div className="w-full pb-[60px]">
               <TonConnectUIProvider
                 manifestUrl="https://ton-connect.github.io/demo-dapp-with-wallet/tonconnect-manifest.json"

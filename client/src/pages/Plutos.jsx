@@ -17,6 +17,7 @@ import tswap from "../images/tswap.png";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique IDs
 import { useNavigate } from 'react-router-dom';
 import Splash from '../Components/Splash.jsx'; 
+import plinko from "../images/plinko.webp";
 
 // Define keyframes for slide up
 const slideUp = keyframes`
@@ -407,8 +408,6 @@ const Plutos = () => {
       return (num / 1000000).toFixed(3).replace(".", ".") + " M";
     }
   };
-  const allowedIds = ["549073151", "642497054", "6346910100"];
-
 
   return (
     <>
@@ -443,62 +442,78 @@ const Plutos = () => {
                 <span className="text-sm font-bold slackey-regular text-white">/ {battery.energy}</span>
               </div>
             </div>
-            {allowedIds.includes(id) && (
-        <div className="flex items-center justify-center p-4">
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-            onClick={() => navigate("/earn/plinko")}
-          >
-            Test Plinko
-          </button>
-        </div>
-      )}
-            {/* Daily Reward, Spinner, Leaderboard Section */}
-            <div className="flex justify-between gap-2 px-4">
-              {/* Daily Reward Card */}
-              <div
-                onClick={() => navigate("/earn/daily-reward")}
-                className="bg-activebg border-[1px] border-activeborder rounded-lg px-0 py-1.5 w-1/3 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
-                aria-label="Check Mianus - Daily Reward"
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => { if (e.key === 'Enter') navigate("/earn/daily-reward"); }}
-              >
-                <div className="dot"></div> {/* Ensure .dot class does not add extra space */}
-                <img src={dailyReward} alt="Daily Reward" className="w-10 h-10 mb-1" />
-                <p className="text-[11px] slackey-regular text-center text-white">Check Mianus</p>
-              </div>
-              {/* Spinner Card */}
-              <div
-                onClick={userIsReady ? () => navigate("/earn/lucky") : undefined}
-                className={`bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/3 relative flex flex-col items-center transition-transform transform
-                  ${userIsReady ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"}`
-                }
-                aria-label="Spin Mianus - Spinner"
-                role="button"
-                tabIndex={userIsReady ? 0 : -1}
-                onKeyPress={(e) => { 
-                  if (userIsReady && e.key === 'Enter') navigate("/earn/lucky"); 
-                }}
-              >
-                <div className="dot"></div>
-                <img src={luckyWheel} alt="Spinner" className="w-10 h-10 mb-1" />
-                <p className="text-[11px] slackey-regular text-center text-white">Spin Mianus</p>
-              </div>
-              {/* Leaderboard Card */}
-              <div
-                onClick={() => navigate("/user/leaderboard")}
-                className="bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/3 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
-                aria-label="Rank Mianus - Leaderboard"
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => { if (e.key === 'Enter') navigate("/user/leaderboard"); }}
-              >
-                <div className="dot"></div>
-                <img src={dailyCombo} alt="Leaderboard" className="w-10 h-10 mb-1" />
-                <p className="text-[11px] slackey-regular text-center text-white">Rank Mianus</p>
-              </div>
-            </div>
+          
+            {/* Daily Reward, Spinner, Plinko, Leaderboard Section */}
+<div className="flex justify-between gap-2 px-4">
+  {/* Daily Reward Card */}
+  <div
+    onClick={() => navigate("/earn/daily-reward")}
+    className="bg-activebg border-[1px] border-activeborder rounded-lg px-0 py-1.5 w-1/4 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
+    aria-label="Check Mianus - Daily Reward"
+    role="button"
+    tabIndex={0}
+    onKeyPress={(e) => {
+      if (e.key === 'Enter') navigate("/earn/daily-reward");
+    }}
+  >
+    <div className="dot"></div>
+    <img src={dailyReward} alt="Daily Reward" className="w-10 h-10 mb-1" />
+    <p className="text-[11px] slackey-regular text-center text-white">Check Mianus</p>
+  </div>
+
+  {/* Spinner Card */}
+  <div
+    onClick={userIsReady ? () => navigate("/earn/lucky") : undefined}
+    className={`bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/4 relative flex flex-col items-center transition-transform transform
+      ${userIsReady ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"}`
+    }
+    aria-label="Spin Mianus - Spinner"
+    role="button"
+    tabIndex={userIsReady ? 0 : -1}
+    onKeyPress={(e) => {
+      if (userIsReady && e.key === 'Enter') navigate("/earn/lucky");
+    }}
+  >
+    <div className="dot"></div>
+    <img src={luckyWheel} alt="Spinner" className="w-10 h-10 mb-1" />
+    <p className="text-[11px] slackey-regular text-center text-white">Spin Mianus</p>
+  </div>
+
+  {/* Plinko Card (NEW) */}
+<div
+  onClick={userIsReady ? () => navigate("/earn/plinko") : undefined}
+  className={`bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/4 relative flex flex-col items-center transition-transform transform
+    ${userIsReady ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"}`}
+  aria-label="Drop Mianus - Plinko"
+  role="button"
+  tabIndex={userIsReady ? 0 : -1}
+  onKeyPress={(e) => {
+    if (userIsReady && e.key === "Enter") {
+      navigate("/earn/plinko");
+    }
+  }}
+>
+  <div className="dot"></div>
+  <img src={plinko} alt="Plinko" className="w-10 h-10 mb-1" />
+  <p className="text-[11px] slackey-regular text-center text-white">Plink Mianus</p>
+</div>
+
+  {/* Leaderboard Card */}
+  <div
+    onClick={() => navigate("/user/leaderboard")}
+    className="bg-activebg border-[1px] border-activeborder rounded-lg px-3 py-1.5 w-1/4 relative flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
+    aria-label="Rank Mianus - Leaderboard"
+    role="button"
+    tabIndex={0}
+    onKeyPress={(e) => {
+      if (e.key === 'Enter') navigate("/user/leaderboard");
+    }}
+  >
+    <div className="dot"></div>
+    <img src={dailyCombo} alt="Leaderboard" className="w-10 h-10 mb-1" />
+    <p className="text-[11px] slackey-regular text-center text-white">Rank Mianus</p>
+  </div>
+</div>
 
             {/* Balance Section */}
             <div className="flex space-x-[2px] justify-center items-center">

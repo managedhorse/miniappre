@@ -322,29 +322,54 @@ function PlinkoIframePage() {
     style={{
       position: "fixed",
       top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       zIndex: 100
     }}
   >
-    <div style={{ 
-      backgroundColor: "pink",
-      color: "#000",
-      padding: "20px", 
-      borderRadius: "8px", 
-      minWidth: "300px", 
-      boxShadow: "0 4px 8px rgba(0,0,0,0.1)" 
-    }}>
-      <h2 style={{ marginBottom: "10px" }}>Transfer Balance</h2>
+    {/* Modal Container */}
+    <div 
+      style={{ 
+        backgroundColor: "#ffe4e6", // Softer pink
+        color: "#000",
+        padding: "20px", 
+        borderRadius: "12px", 
+        minWidth: "320px", 
+        maxWidth: "400px",
+        width: "90%",        // Let it shrink nicely on smaller screens
+        boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+        transform: "scale(0.95)",  // Start slightly scaled down
+        animation: "fadeInScale 0.3s forwards",
+        position: "relative", 
+        fontFamily: "Arial, sans-serif"
+      }}
+    >
+      <h2 style={{ 
+        marginBottom: "12px",
+        fontSize: "1.25rem",
+        fontWeight: "bold",
+        textAlign: "center"
+      }}>
+        Transfer Balance
+      </h2>
       
-      {/* Display user balances */}
-      <p><strong>Main Balance:</strong> {balance}</p>
-      <p><strong>Plinko Balance:</strong> {modalPlinkoBalance !== null ? modalPlinkoBalance : "Loading..."}</p>
-      
-      <div style={{ marginBottom: "10px" }}>
-        <label style={{ marginRight: "10px" }}>
+      {/* Balances */}
+      <div style={{ marginBottom: "16px" }}>
+        <p style={{ margin: "4px 0" }}>
+          <strong>Main Balance:</strong> {balance}
+        </p>
+        <p style={{ margin: "4px 0" }}>
+          <strong>Plinko Balance:</strong> {modalPlinkoBalance !== null ? modalPlinkoBalance : "Loading..."}
+        </p>
+      </div>
+
+      <hr style={{ margin: "12px 0", borderColor: "#aaa" }} />
+
+      {/* Transfer Direction */}
+      <div style={{ marginBottom: "16px", display: "flex", justifyContent: "space-around" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <input 
             type="radio" 
             name="direction" 
@@ -352,9 +377,9 @@ function PlinkoIframePage() {
             checked={transferDirection === "toPlinko"}
             onChange={() => setTransferDirection("toPlinko")}
           />
-          Transfer to Plinko
+          <span>To Plinko</span>
         </label>
-        <label>
+        <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <input 
             type="radio" 
             name="direction" 
@@ -362,62 +387,95 @@ function PlinkoIframePage() {
             checked={transferDirection === "toMain"}
             onChange={() => setTransferDirection("toMain")}
           />
-          Withdraw to Main App
+          <span>To Main</span>
         </label>
       </div>
-      
-      <div style={{ marginBottom: "20px" }}>
+
+      {/* Transfer Amount */}
+      <div style={{ marginBottom: "16px" }}>
+        <label 
+          style={{ 
+            display: "block", 
+            marginBottom: "8px", 
+            fontWeight: "bold" 
+          }}
+        >
+          Amount
+        </label>
         <input 
           type="number" 
-          placeholder="Amount" 
+          placeholder="Enter amount"
           value={transferAmount}
           onChange={(e) => setTransferAmount(e.target.value)}
           style={{ 
             width: "100%", 
             padding: "10px", 
             boxSizing: "border-box", 
-            fontSize: "16px" 
+            fontSize: "16px",
+            borderRadius: "6px",
+            border: "1px solid #ddd"
           }}
-          // Set max attribute when withdrawing to main app
-          max={transferDirection === "toMain" && modalPlinkoBalance !== null ? modalPlinkoBalance : undefined}
+          max={
+            transferDirection === "toMain" && modalPlinkoBalance !== null 
+              ? modalPlinkoBalance 
+              : undefined
+          }
         />
       </div>
-            
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button 
-                onClick={() => setModalOpen(false)} 
-                style={{
-                  backgroundColor: "#f44336",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                  fontSize: "16px"
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleTransfer}
-                disabled={isTransferring}
-                style={{
-                  backgroundColor: isTransferring ? "#9E9E9E" : "#4CAF50",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: isTransferring ? "not-allowed" : "pointer",
-                  fontSize: "16px"
-                }}
-              >
-                {isTransferring ? "Processing..." : "Confirm"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      {/* Action Buttons */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+        <button 
+          onClick={() => setModalOpen(false)} 
+          style={{
+            backgroundColor: "#f44336",
+            color: "#fff",
+            border: "none",
+            padding: "10px 16px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px",
+            transition: "background-color 0.2s"
+          }}
+        >
+          Cancel
+        </button>
+        <button 
+          onClick={handleTransfer}
+          disabled={isTransferring}
+          style={{
+            backgroundColor: isTransferring ? "#9E9E9E" : "#4CAF50",
+            color: "#fff",
+            border: "none",
+            padding: "10px 16px",
+            borderRadius: "4px",
+            cursor: isTransferring ? "not-allowed" : "pointer",
+            fontSize: "14px",
+            transition: "background-color 0.2s"
+          }}
+        >
+          {isTransferring ? "Processing..." : "Confirm"}
+        </button>
+      </div>
+    </div>
+
+    {/* Keyframes for fadeInScale animation */}
+    <style>
+      {`
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}
+    </style>
+  </div>
+)}
     </div>
   );
 }

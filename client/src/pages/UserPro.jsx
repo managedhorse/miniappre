@@ -7,6 +7,7 @@ import { useUser } from "../context/userContext";
 import tswap from "../images/tswap.png";
 import botr from "../images/bott.webp";
 import { IoClose } from "react-icons/io5";
+import BetMianus from "../Components/BetMianus.jsx";
 
 // Helper function to format the user's share percentage
 function formatUserShare(share) {
@@ -57,24 +58,7 @@ const Profile = () => {
     .format(dividedUsers)
     .replace(/,/g, " ");
 
-  // Define your projects with custom background and text colors
-  const projects = [
-    {
-      id: 1,
-      logo: tswap,
-      title: "To be announced",
-      subtitle: "An Agentic AI Token",
-      aboutLines: [
-        "5% of total supply to TapMianus players",
-        "Agentic AI application powered by Virtuals protocol",
-        "Token on BASE chain",
-      ],
-      siteLink: "https://app.virtuals.io/", // Replace with your actual link
-      bgColor: "#cee856", // Example background color
-      textColor: "#070e25", // Example text color
-    },
-    // Add more projects as needed
-  ];
+  
 
   return (
     <Animate>
@@ -135,54 +119,10 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Scrollable Content Area with Margin Top and Padding Bottom */}
+          {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">
-            {/* Projects Section */}
-            {projects.map((proj) => (
-              <div
-                key={proj.id}
-                className="rounded-lg p-4 mb-4"
-                style={{ backgroundColor: proj.bgColor, color: proj.textColor }}
-              >
-                {/* Logo + Title */}
-                <div className="flex items-center space-x-4 mb-3">
-                  <img
-                    src={proj.logo}
-                    alt={proj.title}
-                    className="w-[60px] h-[60px] object-contain"
-                  />
-                  <div>
-                    <h2 className="text-lg font-bold">{proj.title}</h2>
-                    <p className="text-sm slackey-regular">
-                      {proj.subtitle}
-                    </p>
-                  </div>
-                </div>
-
-                {/* About / Lines */}
-                <div className="text-sm leading-relaxed slackey-regular">
-                  {proj.aboutLines.map((line, idx) => (
-                    <p key={idx} className="mb-2">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-
-                {/* Link to Site */}
-                {proj.siteLink && (
-                  <div className="mt-3">
-                    <a
-                      href={proj.siteLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-[#ffffff1a] hover:bg-[#ffffff33] text-white px-4 py-2 rounded"
-                    >
-                      Visit Site
-                    </a>
-                  </div>
-                )}
-              </div>
-            ))}
+            {/* Instead of mapping old projects, just place BetMianus here */}
+            <BetMianus />
           </div>
         </div>
       </div>

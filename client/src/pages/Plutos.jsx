@@ -108,6 +108,14 @@ const WobbleImage = styled.img`
 
 const Plutos = () => {
 
+  // Right after function definition
+  useEffect(() => {
+    console.log("Plutos.jsx mounted. Current URL is:", window.location.href);
+    if (window.Telegram?.WebApp) {
+      console.log("Telegram Platform in Plutos.jsx:", window.Telegram.WebApp.platform);
+    }
+  }, []);
+
   // Declare state hooks first
   const [splashes, setSplashes] = useState([]); // Array to manage multiple splashes
   const [clicks, setClicks] = useState([]);   // Array of click objects

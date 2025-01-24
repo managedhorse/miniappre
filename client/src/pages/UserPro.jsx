@@ -122,7 +122,8 @@ const Profile = () => {
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">
             {/* Instead of mapping old projects, just place BetMianus here */}
-            <BetMianus />
+            <h3 className="text-md">Coming soon...</h3>
+            
           </div>
         </div>
       </div>

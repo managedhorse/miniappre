@@ -14,6 +14,20 @@ const tele = window.Telegram?.WebApp;
 const allowDesktop = true; // set to false to enforce Telegram-only mode
 
 const App = () => {
+
+
+  useEffect(() => {
+    console.log("App component mounted. Current URL is:", window.location.href);
+
+    // Check Telegram init data
+    if (window.Telegram?.WebApp) {
+      console.log("Telegram WebApp initData:", window.Telegram.WebApp.initData);
+      console.log("Telegram WebApp initDataUnsafe:", window.Telegram.WebApp.initDataUnsafe);
+      console.log("Telegram WebApp platform:", window.Telegram.WebApp.platform);
+    } else {
+      console.log("Telegram.WebApp is NOT available");
+    }
+  }, []);
   // State to determine if the app is running inside Telegram on supported platforms
   const [isTelegram, setIsTelegram] = useState(null); // null = not yet determined
 

@@ -136,6 +136,15 @@ const listTasks = [
   },
   {
     taskId: "task2",
+    title: "Subscribe Channel",
+    url: "https://t.me/tapmianus",
+    completed: false,
+    point: 50000,
+    status: "start",
+    image: telegram, // Assign telegram image
+  },
+  {
+    taskId: "task3",
     title: "Follow Twitter",
     url: "https://x.com/tapmianus",
     completed: false,
@@ -144,7 +153,7 @@ const listTasks = [
     image: twitter, // Assign twitter image
   },
   {
-    taskId: "task3",
+    taskId: "task4",
     title: "Register Boss88",
     url: "https://boss88.world/?a=x&c=89989502",
     completed: false,
@@ -153,7 +162,7 @@ const listTasks = [
     image: boss, 
   },
   {
-    taskId: "task4",
+    taskId: "task5",
     title: "Your project here",
     url: "https://t.me/tapmianus",
     completed: false,

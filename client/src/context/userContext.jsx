@@ -763,30 +763,61 @@ useEffect(() => {
       const querySnapshot = await getDocs(q);
   
       const leaderboardUsers = [];
+      let rank = 1;
+  
+      // We’ll store updates in an array so we can do them in parallel (optional).
+      const updatePromises = [];
+  
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const userId = data.userId;
         const username = data.username;
         const balance = data.balance;
-        const refBonus = data.refBonus || 0;  // Retrieve each user's refBonus
+        const refBonus = data.refBonus || 0;
         const photo_url = data.photo_url;
   
-        leaderboardUsers.push({ userId, username, balance, refBonus, photo_url });
+        // Add user to local array
+        leaderboardUsers.push({
+          userId,
+          username,
+          balance,
+          refBonus,
+          photo_url,
+          rank
+        });
+  
+        // Build an updateDoc promise to set the rank field
+        const docRef = doc(db, "telegramUsers", userId.toString());
+        const updatePromise = updateDoc(docRef, {
+          rank: rank
+        }).catch((err) => {
+          console.error("Error updating rank for user", userId, err);
+        });
+  
+        updatePromises.push(updatePromise);
+  
+        rank += 1; // increment for next user
       });
   
+      // Wait for all rank updates to Firestore to complete
+      await Promise.all(updatePromises);
+  
+      // Update local state with the newly formed array
       SetLeaderboard(leaderboardUsers);
   
-      // Optionally, set the rank of the current user
+      // Optionally set the rank of the current user (like before)
       const telegramUserid = window.Telegram.WebApp.initDataUnsafe?.user?.id;
       if (telegramUserid) {
-        const targetUserIndex = leaderboardUsers.findIndex((user) => user.userId.toString() === telegramUserid.toString());
+        const targetUserIndex = leaderboardUsers.findIndex(
+          (user) => user.userId.toString() === telegramUserid.toString()
+        );
         setRankUser(targetUserIndex + 1);
       }
-  
     } catch (e) {
       console.error("Error fetching documents: ", e);
     }
   };
+  
 
   const fetchAllUsers = async () => {
     try {

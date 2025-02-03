@@ -184,11 +184,11 @@ const Boost = () => {
   const [bot, setBot] = useState(false);
 
   const tapBotLevels = [
-    { level: 1, cost: 1000000, tapsPerSecond: 3 },
-    { level: 2, cost: 2000000, tapsPerSecond: 6 },
-    { level: 3, cost: 4000000, tapsPerSecond: 12 },
-    { level: 4, cost: 8000000, tapsPerSecond: 24 },
-    { level: 5, cost: 16000000, tapsPerSecond: 48 },
+    { level: 1, cost: 1000000, tapsPerSecond: 1 },
+    { level: 2, cost: 2000000, tapsPerSecond: 2 },
+    { level: 3, cost: 4000000, tapsPerSecond: 4 },
+    { level: 4, cost: 8000000, tapsPerSecond: 8 },
+    { level: 5, cost: 16000000, tapsPerSecond: 16 },
   ];
   // Determine the next bot level and its cost
   const nextBotLevel = (botLevel || 0) + 1;
@@ -230,6 +230,16 @@ const Boost = () => {
     } else {
       return (num / 1000000).toFixed(3).replace(".", ".") + " M";
     }
+  };
+
+  const getCurrentBotTPS = () => {
+    const currentData = tapBotLevels.find(levelData => levelData.level === botLevel);
+    return currentData ? currentData.tapsPerSecond : 0;
+  };
+  
+  const getNextBotTPS = () => {
+    const nextData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
+    return nextData ? nextData.tapsPerSecond : null;
   };
 
   const handleUpgrade = async () => {
@@ -388,27 +398,36 @@ const Boost = () => {
 
   const handleBotUpgrade = async () => {
     const nextLevelData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
-    if (!nextLevelData) return; // No further levels
+    if (!nextLevelData) return; // Already max level?
   
     const { cost } = nextLevelData;
     if ((balance + refBonus) >= cost && id) {
       const newBotLevel = (botLevel || 0) + 1;
       const userRef = doc(db, 'telegramUsers', id.toString());
       try {
-        // Update Firestore with new bot level and balance
+        // Update Firestore
         await updateDoc(userRef, {
           botLevel: newBotLevel,
           balance: balance - cost,
         });
-        // Retrieve updated data from Firestore
+  
+        // Retrieve updated data to sync local state
         const updatedDoc = await getDoc(userRef);
         if (updatedDoc.exists()) {
           const data = updatedDoc.data();
           setBalance(data.balance);
           setBotLevel(data.botLevel);
         }
+  
+        // Show success notice, then close modal after a bit
         setCongrats(true);
-        setTimeout(() => setCongrats(false), 2000);
+        setTimeout(() => {
+          setCongrats(false);
+        }, 2000);
+  
+        // Close the Bot modal
+        setBot(false);
+  
         console.log('Bot upgraded to level', newBotLevel);
       } catch (error) {
         console.error('Error upgrading bot level:', error);
@@ -901,47 +920,67 @@ const Boost = () => {
               </div>
              </div>
 
-               {/* Bot Modal */}
-            <div className={`${bot === true ? "visible" : "invisible"} absolute bottom-0 left-0 right-0 h-fit bg-[#1e2340f7] z-[100] rounded-tl-[20px] rounded-tr-[20px] flex justify-center px-4 py-5`}>
-              <div className="flex flex-col justify-between w-full py-8">
-                <button onClick={() => setBot(false)}className="flex items-center justify-center absolute right-8 top-8 text-center rounded-[12px] font-medium text-[16px]">
-                  <IoClose size={24} className="text-[#9a96a6]"/>
-                </button>
+                          {/* Bot Modal */}
+              <div className={`${bot ? "visible" : "invisible"} ...`}>
+                <div className="flex flex-col justify-between w-full py-8">
+                  <button 
+                    onClick={() => setBot(false)}
+                    className="flex items-center justify-center absolute right-8 top-8 ..."
+                  >
+                    <IoClose size={24} className="text-[#9a96a6]" />
+                  </button>
 
-                <div className="flex flex-col items-center justify-center w-full">
                   <div className="flex flex-col items-center justify-center w-full">
                     <div className="flex items-center justify-center">
                       <img alt="Bot Mianus" src={botr} className="w-[100px]" />
                     </div>
-                    <h3 className="font-semibold slackey-regular text-[32px] py-4">Bot Mianus</h3>
+                    <h3 className="font-semibold slackey-regular text-[32px] py-4">
+                      Bot Mianus
+                    </h3>
                     <p className="pb-6 text-[#9a96a6] slackey-regular text-[16px] text-center">
-                      Tap Bot will tap when your juice is full<br />Max duration is 12 hours
+                      Tap Bot will tap indefinitely on your behalf.
                     </p>
+
+                    {/* Show current and next taps/sec */}
+                    <div className="pb-4 text-[#9a96a6] text-center">
+                      <p>
+                        Current TPS: {getCurrentBotTPS() || 0}
+                      </p>
+                      {nextBotData && (
+                        <p>
+                          Next Level TPS: {nextBotData.tapsPerSecond}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex items-center flex-1 space-x-2">
                       <div className="">
                         <img src={coinsmall} className="w-[25px]" alt="coin" />
                       </div>
                       <div className="font-bold text-[26px] slackey-regular flex items-center">
-                        {formatNumber(nextBotUpgradeCost)} 
+                        {formatNumber(nextBotUpgradeCost)}
                         <span className="text-[16px] font-medium slackey-regular text-[#9a96a6] pl-2">
                           | Level {nextBotData?.level}
                         </span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-center w-full pt-4 pb-6">
-                  <button
-                    onClick={handleBotUpgrade}
-                    disabled={!hasSufficientBalanceForBotUpgrade}
-                    className={`${!hasSufficientBalanceForBotUpgrade ? 'bg-btn2 text-[#979797] slackey-regular' : 'bg-gradient-to-b gradient from-[#ffba4c] to-[#aa6900]'} w-full py-5 px-3 flex items-center justify-center text-center rounded-[12px] slackey-regular font-semibold text-[22px]`}
-                  >
-                    {hasSufficientBalanceForBotUpgrade ? 'Buy Bot Upgrade' : 'Insufficient Mianus'}
-                  </button>
+                  <div className="flex justify-center w-full pt-4 pb-6">
+                    <button
+                      onClick={handleBotUpgrade}
+                      disabled={!hasSufficientBalanceForBotUpgrade}
+                      className={
+                        !hasSufficientBalanceForBotUpgrade
+                          ? "bg-btn2 text-[#979797] slackey-regular w-full py-5 ..."
+                          : "bg-gradient-to-b gradient from-[#ffba4c] to-[#aa6900] w-full py-5 ..."
+                      }
+                    >
+                      {hasSufficientBalanceForBotUpgrade ? "Buy Bot Upgrade" : "Insufficient Mianus"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
             <div className={`${congrats === true ? "visible bottom-6" : "invisible bottom-[-10px]"} z-[60] ease-in duration-300 w-full fixed left-0 right-0 px-4`}>
               <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px]">
               <IoCheckmarkCircle size={24} className=""/>

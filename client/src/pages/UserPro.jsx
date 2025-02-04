@@ -131,7 +131,7 @@ function formatUsdRange(minValue, maxValue) {
 
     {/* Row 3: your airdrop est. value */}
     <div className="flex items-center justify-between mt-2">
-      <span>Your Airdrop est. Value:</span>
+      <span>Est. Value:</span>
       <span>{formatUsdRange(minUserUsd, maxUserUsd)}</span>
     </div>
   </div>

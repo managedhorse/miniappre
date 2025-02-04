@@ -161,15 +161,6 @@ const listTasks = [
     status: "start",
     image: boss, 
   },
-  {
-    taskId: "task5",
-    title: "Your project here",
-    url: "https://t.me/tapmianus",
-    completed: false,
-    point: 50000,
-    status: "start",
-    image: website, 
-  },
 ];
 
   useEffect(() => {

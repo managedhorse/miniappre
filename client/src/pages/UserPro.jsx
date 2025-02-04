@@ -118,7 +118,7 @@ function formatUsdRange(minValue, maxValue) {
     <div className="flex items-center justify-between text-lg font-semibold">
       <span>Total supply:</span>
       <div className="flex items-center space-x-2">
-        <span>{formatNumber(totalCount)} Mianus</span>
+        <span>{formatNumber(totalCount)}</span>
         <img src={coinsmall} alt="Coin smail" className="w-6 h-6" />
       </div>
     </div>

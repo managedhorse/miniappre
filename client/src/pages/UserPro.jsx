@@ -58,7 +58,31 @@ const Profile = () => {
     .format(dividedUsers)
     .replace(/,/g, " ");
 
-  
+  // Calculate userFraction and userAirdropFraction
+const userFraction = totalCount !== 0 ? (balance + refBonus) / totalCount : 0;
+const userAirdropFraction = 0.20 * userFraction; // user fraction of the 20% pool
+
+// Market cap range
+const minMarketCap = 3000000; // $3M
+const maxMarketCap = 5000000; // $5M
+
+// The user's share in USD range
+const minUserUsd = userAirdropFraction * minMarketCap;
+const maxUserUsd = userAirdropFraction * maxMarketCap;
+
+function formatUsdRange(minValue, maxValue) {
+  const formatUsd = (val) => {
+    if (val >= 1_000_000) {
+      return (val / 1_000_000).toFixed(2).replace(/\.00$/, "") + "M";
+    } else if (val >= 1000) {
+      return Math.round(val / 1000) + "k";
+    } else {
+      return Math.round(val).toString();
+    }
+  };
+
+  return `${formatUsd(minValue)} - ${formatUsd(maxValue)} USD`;
+}
 
   return (
     <Animate>
@@ -88,36 +112,35 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Airdrop Box with Margin Bottom */}
           <div className="flex slackey-regular justify-between gap-2 px-4 mt-4 mb-2">
-            <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full flex items-center justify-between">
-              <div>
-                <h3 className="text-md">Total Mianus</h3>
-                <div className="flex items-center w-full pt-1 space-x-2">
-                  <div className="p-1">
-                    <img
-                      src={coinsmall}
-                      alt="Coin smail"
-                      className="w-6 h-6 mx-auto"
-                    />
-                  </div>
-                  <p className="text-sm">
-                    {formatNumber(totalCount)}
-                  </p>
-                </div>
-              </div>
-
-              {/* “Your part” on the same line, right side */}
-              <div className="flex items-end">
-                <h3 className="text-md">You have:&nbsp;</h3>
-                <div className="flex items-center w-full pt-1 space-x-2">
-                  <p className="text-sm">
-                    {userShareDisplay}%
-                  </p>
-                </div>
-              </div>
-            </div>
+  <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full">
+    {/* First row: total supply */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="text-md">Total supply:</h3>
+        <div className="flex items-center pt-1 space-x-2">
+          <div className="p-1">
+            <img src={coinsmall} alt="Coin smail" className="w-6 h-6 mx-auto" />
           </div>
+          <p className="text-sm">{formatNumber(totalCount)} Mianus</p>
+        </div>
+      </div>
+      <div className="flex items-center">
+        <h3 className="text-md">Your part:&nbsp;</h3>
+        <p className="text-sm">{userShareDisplay}%</p>
+      </div>
+    </div>
+
+    {/* Second row: your airdrop est. value */}
+    <div className="pt-3">
+      <h3 className="text-md">Your Airdrop est. Value:</h3>
+      <p className="text-sm">
+        {/* e.g. "300k - 500k USD" */}
+        {formatUsdRange(minUserUsd, maxUserUsd)}
+      </p>
+    </div>
+  </div>
+</div>
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">

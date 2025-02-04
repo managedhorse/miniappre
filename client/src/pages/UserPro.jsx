@@ -113,31 +113,26 @@ function formatUsdRange(minValue, maxValue) {
           </div>
 
           <div className="flex slackey-regular justify-between gap-2 px-4 mt-4 mb-2">
-  <div className="bg-[#ffffff1a] rounded-lg px-4 py-2 w-full">
-    {/* First row: total supply */}
-    <div className="flex items-center justify-between">
-      <div>
-        <h3 className="text-md">Total supply:</h3>
-        <div className="flex items-center pt-1 space-x-2">
-          <div className="p-1">
-            <img src={coinsmall} alt="Coin smail" className="w-6 h-6 mx-auto" />
-          </div>
-          <p className="text-sm">{formatNumber(totalCount)} Mianus</p>
-        </div>
-      </div>
-      <div className="flex items-center">
-        <h3 className="text-md">Your part:&nbsp;</h3>
-        <p className="text-sm">{userShareDisplay}%</p>
+  <div className="bg-[#ffffff1a] rounded-lg px-4 py-3 w-full">
+    {/* Row 1: total supply */}
+    <div className="flex items-center justify-between text-lg font-semibold">
+      <span>Total supply:</span>
+      <div className="flex items-center space-x-2">
+        <span>{formatNumber(totalCount)} Mianus</span>
+        <img src={coinsmall} alt="Coin smail" className="w-6 h-6" />
       </div>
     </div>
 
-    {/* Second row: your airdrop est. value */}
-    <div className="pt-3">
-      <h3 className="text-md">Your Airdrop est. Value:</h3>
-      <p className="text-sm">
-        {/* e.g. "300k - 500k USD" */}
-        {formatUsdRange(minUserUsd, maxUserUsd)}
-      </p>
+    {/* Row 2: your part */}
+    <div className="flex items-center justify-between mt-2">
+      <span>Your part:</span>
+      <span>{userShareDisplay}%</span>
+    </div>
+
+    {/* Row 3: your airdrop est. value */}
+    <div className="flex items-center justify-between mt-2">
+      <span>Your Airdrop est. Value:</span>
+      <span>{formatUsdRange(minUserUsd, maxUserUsd)}</span>
     </div>
   </div>
 </div>

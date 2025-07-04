@@ -8,6 +8,8 @@ import tswap from "../images/tswap.png";
 import botr from "../images/bott.webp";
 import { IoClose } from "react-icons/io5";
 import BetMianus from "../Components/BetMianus.jsx";
+import CoinExplainer from "../Components/CoinExplainer.jsx";
+
 
 // Helper function to format the user's share percentage
 function formatUserShare(share) {
@@ -139,8 +141,7 @@ function formatUsdRange(minValue, maxValue) {
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">
-            {/* Instead of mapping old projects, just place BetMianus here */}
-            <h3 className="text-md">Coming soon...</h3>
+            <CoinExplainer />
             
           </div>
         </div>

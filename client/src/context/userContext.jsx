@@ -84,16 +84,19 @@ export const UserProvider = ({ children }) => {
 
   // New effect to read stored unsaved earnings on mount
 useEffect(() => {
-  const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-  const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+   // only apply leftover earnings after we've fetched the real user ID & balance
+   if (!id) return;
 
-  if (unsaved > 0) {
-    setBalance(prevBalance => prevBalance + unsaved);
-    setTapBalance(prevTapBalance => prevTapBalance + unsaved);
-    setUnsavedEarnings(0);
-    localStorage.setItem(unsavedEarningsKey, "0");
-  }
-}, []);
+   const storedEarnings = localStorage.getItem(unsavedEarningsKey);
+   const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
+
+   if (unsaved > 0) {
+     setBalance(prev => prev + unsaved);
+     setTapBalance(prev => prev + unsaved);
+     setUnsavedEarnings(0);
+     localStorage.setItem(unsavedEarningsKey, "0");
+   }
+ }, [id]);
   
   const refillEnergy = () => {
     if (isRefilling) return;

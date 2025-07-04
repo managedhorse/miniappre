@@ -82,7 +82,7 @@ const Footer = () => {
         <div className="w-[30px] h-[30px] flex items-center justify-center">
           <img src={stats} className="w-full h-full object-contain" alt="Wallet" />
         </div>
-        <span className="slackey-regular font-medium mt-1">Wallet</span>
+        <span className="slackey-regular font-medium mt-1">Airdrop</span>
       </NavLink>
     </div>
   );

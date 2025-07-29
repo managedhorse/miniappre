@@ -9,10 +9,10 @@ import ref from "../images/ref.webp";
 import coinsmall from "../images/coinsmall.webp";
 
 const friendsRewards = [
-  { title: 'Invite 3 buddys', referralsRequired: 2, bonusAward: 50000 },
-  { title: 'Invite 5 buddys', referralsRequired: 5, bonusAward: 150000 },
-  { title: 'Invite 10 buddys', referralsRequired: 10, bonusAward: 250000 },
-  { title: 'Invite 20 buddys', referralsRequired: 20, bonusAward: 500000 },
+  { title: 'Invite 2 buddys', referralsRequired: 2, bonusAward: 500000 },
+  { title: 'Invite 5 buddys', referralsRequired: 5, bonusAward: 1500000 },
+  { title: 'Invite 10 buddys', referralsRequired: 10, bonusAward: 2500000 },
+  { title: 'Invite 20 buddys', referralsRequired: 20, bonusAward: 5000000 },
 ];
 
 const ReferralRewards = () => {

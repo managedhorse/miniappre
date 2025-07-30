@@ -14,10 +14,7 @@ const CoinExplainer = () => {
   return (
     <div
       className="p-6 rounded-md text-center bg-cover bg-center"
-      style={{
-        backgroundImage: `url(${GrassBg})`,
-        fontFamily: "'Slackey Regular', cursive"
-      }}
+      style={{ backgroundImage: `url(${GrassBg})` }}
     >
       {/* Glowing main image */}
       <MotionImage
@@ -31,21 +28,20 @@ const CoinExplainer = () => {
             "drop-shadow(0px 0px 2px rgba(255,255,255,0.8))"
           ]
         }}
-        transition={{
-          duration: 1.5,
-          ease: "easeInOut",
-          repeat: Infinity
-        }}
+        transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
       />
 
-      <h2 className="text-2xl font-bold mb-4" style={textStyle}>
+      <h2
+        className="slackey-regular text-[24px] font-bold mb-4"
+        style={textStyle}
+      >
         Bet Mianus Platform
       </h2>
-      <p className="mb-4" style={textStyle}>
+      <p className="slackey-regular text-[24px] mb-4" style={textStyle}>
         Provably fair crypto gaming with instant deposits and withdrawals.
       </p>
       <ul
-        className="list-disc list-inside space-y-2 text-left max-w-md mx-auto"
+        className="slackey-regular text-[24px] list-disc list-inside space-y-2 text-left max-w-md mx-auto"
         style={textStyle}
       >
         <li>Play Slots, Table Games, Crypto Games and Sports Betting</li>

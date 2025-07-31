@@ -1,28 +1,19 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Button } from "@chakra-ui/react";
 import MianusHero from "../images/mianushero.webp";
 import GrassBg from "../images/grassbg.webp";
 
 const MotionImage = motion.img;
 
-const basePinkGradient = "linear(to-r, #FFCFEF, #FFCFEF)";
-const buttonHoverStyle = {
-  transitionProperty: "transform, background-image",
-  transitionDuration: "0.2s, 0.8s",
-  transitionTimingFunction: "ease-in-out, ease-in-out",
-  _hover: {
-    transform: "translateY(-3px)",
-    bgGradient: "linear(to-r, #FF6F91, #FFBC42)",
-    color: "#FFFFFF",
-    border: "2px solid #2A3335",
-  },
+const textStyle = {
+  textShadow: [
+    "-1px  0   0px rgba(255,0,0,1)",  // left
+    " 1px  0   0px rgba(255,0,0,1)",  // right
+    " 0   -1px 0px rgba(255,0,0,1)",  // above
+    " 0    1px 0px rgba(255,0,0,1)"   // below
+  ].join(", ")
 };
 
-// Sharp, equally-distributed red glow
-const textStyle = {
-  textShadow: "0px 0px 2px rgba(255,0,0,1)",
-};
 
 const CoinExplainer = () => (
   <div
@@ -30,7 +21,10 @@ const CoinExplainer = () => (
     style={{ backgroundImage: `url(${GrassBg})` }}
   >
     {/* Title */}
-    <h2 className="slackey-regular text-[20px] font-bold mb-2" style={textStyle}>
+    <h2
+      className="slackey-regular text-[20px] font-bold mb-2"
+      style={textStyle}
+    >
       BET MIANUS
     </h2>
 
@@ -43,7 +37,7 @@ const CoinExplainer = () => (
     <MotionImage
       src={MianusHero}
       alt="Bet Mianus Hero"
-      className="mx-auto max-h-[212px] md:max-h-[297px] object-contain rounded-md mb-2"
+      className="mx-auto max-h-[212px] md:max-h-[297px] object-contain rounded-md mb-4"
       animate={{
         filter: [
           "drop-shadow(0px 0px 2px rgba(255,255,255,0.8))",
@@ -54,31 +48,41 @@ const CoinExplainer = () => (
       transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
     />
 
-    {/* Visit Site button */}
-    <Button
-      {...buttonHoverStyle}
-      as="a"
+    {/* Visit Site button emulating Chakra styles */}
+    <a
       href="https://betmian.us"
-      fontFamily="Slackey, cursive"
-      fontSize="18px"
-      bgGradient={basePinkGradient}
-      border="2px solid #2A3335"
-      color="#FFFFFF"
-      textShadow="2px 2px #2A3335"
-      rounded="md"
-      px="6"
-      py="4"
-      mb="4"
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`
+        slackey-regular
+        text-[18px]
+        inline-block
+        px-6 py-4
+        bg-gradient-to-r from-[#FFCFEF] to-[#FFCFEF]
+        border-2 border-[#2A3335]
+        text-white
+        rounded-md
+        transition-transform transition-[background-image]
+        duration-200 ease-in-out
+      `}
+      style={{ textShadow: "2px 2px #2A3335" }}
+      onMouseEnter={e => {
+        e.currentTarget.style.backgroundImage = "linear-gradient(to right, #FF6F91, #FFBC42)";
+        e.currentTarget.style.transform = "translateY(-3px)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.backgroundImage = "linear-gradient(to right, #FFCFEF, #FFCFEF)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
     >
       Visit Site
-    </Button>
+    </a>
 
     {/* Closing text */}
-    <p className="slackey-regular text-[16px]" style={textStyle}>
+    <p className="slackey-regular text-[16px] mt-4" style={textStyle}>
       Stake $Mianus tokens to share 100% of gross gaming revenue.
     </p>
   </div>
 );
 
 export default CoinExplainer;
-

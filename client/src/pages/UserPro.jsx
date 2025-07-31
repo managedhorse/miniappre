@@ -114,9 +114,9 @@ function formatUsdRange(minValue, maxValue) {
             </div>
           </div>
 
-          <div className="px-4 mt-4 mb-2">
+          <div className="px-4 mt-2 mb-1">
   <div className="bg-white rounded-2xl p-6 shadow-lg">
-    <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
+    <div className="grid grid-cols-3 gap-x-4 gap-y-2 items-center">
       {/* Airdrop */}
       <span className="slackey-regular text-sm text-gray-800">
         Airdrop

@@ -117,22 +117,22 @@ function formatUsdRange(minValue, maxValue) {
           <div className="px-4 mt-4 mb-2">
   <div className="bg-white rounded-2xl p-6 shadow-lg">
     <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
-      {/* Total Supply */}
+      {/* Airdrop */}
       <span className="slackey-regular text-sm text-gray-800">
         Airdrop
       </span>
-      <div className="col-span-2 flex items-center space-x-2">
-        <span className="slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
+      <div className="col-span-2 flex items-center space-x-2 justify-end">
+        <span className="slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap text-right">
           {formatNumber(totalCount)}
         </span>
         <img src={coinsmall} alt="Coin" className="w-6 h-6" />
       </div>
 
-      {/* Your Part */}
+      {/* You Hold */}
       <span className="slackey-regular text-sm text-gray-800">
         You Hold
       </span>
-      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
+      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap text-right">
         {userShareDisplay}%
       </span>
 
@@ -140,12 +140,13 @@ function formatUsdRange(minValue, maxValue) {
       <span className="slackey-regular text-sm text-gray-800">
         Est. Value
       </span>
-      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
+      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap text-right">
         {formatUsdRange(minUserUsd, maxUserUsd)}
       </span>
     </div>
   </div>
 </div>
+
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">

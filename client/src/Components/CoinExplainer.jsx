@@ -5,15 +5,17 @@ import GrassBg from "../images/grassbg.webp";
 
 const MotionImage = motion.img;
 
-const textStyle = {
-  textShadow: [
-    "-1px  0   0px rgba(255,0,0,1)",  // left
-    " 1px  0   0px rgba(255,0,0,1)",  // right
-    " 0   -1px 0px rgba(255,0,0,1)",  // above
-    " 0    1px 0px rgba(255,0,0,1)"   // below
-  ].join(", ")
-};
+// Sharp black shadow on all four sides
+const linkTextShadow = [
+  "-1px  0   0px black",  // left
+  " 1px  0   0px black",  // right
+  " 0   -1px 0px black",  // above
+  " 0    1px 0px black"   // below
+].join(", ");
 
+const textStyle = {
+  textShadow: "0 0 2px rgba(255,0,0,1)" // stays red for headings/body
+};
 
 const CoinExplainer = () => (
   <div
@@ -33,7 +35,7 @@ const CoinExplainer = () => (
       Provably fair crypto gaming
     </p>
 
-    {/* Glowing main image (15% smaller) */}
+    {/* Glowing main image */}
     <MotionImage
       src={MianusHero}
       alt="Bet Mianus Hero"
@@ -48,7 +50,7 @@ const CoinExplainer = () => (
       transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
     />
 
-    {/* Visit Site button emulating Chakra styles */}
+    {/* Visit Site button (emulated Chakra) */}
     <a
       href="https://betmian.us"
       target="_blank"
@@ -57,7 +59,7 @@ const CoinExplainer = () => (
         slackey-regular
         text-[18px]
         inline-block
-        px-6 py-4
+        px-6 py-2           /* reduced vertical padding */
         bg-gradient-to-r from-[#FFCFEF] to-[#FFCFEF]
         border-2 border-[#2A3335]
         text-white
@@ -65,14 +67,14 @@ const CoinExplainer = () => (
         transition-transform transition-[background-image]
         duration-200 ease-in-out
       `}
-      style={{ textShadow: "2px 2px #2A3335" }}
+      style={{ textShadow: linkTextShadow }}
       onMouseEnter={e => {
         e.currentTarget.style.backgroundImage = "linear-gradient(to right, #FF6F91, #FFBC42)";
         e.currentTarget.style.transform = "translateY(-3px)";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.backgroundImage = "linear-gradient(to right, #FFCFEF, #FFCFEF)";
-        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.transform = "none";
       }}
     >
       Visit Site

@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { useUser } from "../context/userContext";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
 import pointerImage from "../images/pointer.webp";
+import grassBg from "../images/grassbg.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
 
@@ -15,20 +16,11 @@ function formatNumber(num) {
 
 /** Weighted slices with new 50× jackpot and preserving EV */
 const baseSlices = [
-  // 63 Lose slices (0×)
   ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#F8AAFF" }),
-
-  // 24 slices at 1.2×
   ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),
-
-  // 4 slices at 1.5×
   ...Array(4).fill({ label: "1.5×", multiplier: 1.5, color: "#FACC15" }),
-
-  // 6 slices at 3×
-  ...Array(6).fill({ label: "3×", multiplier: 3, color: "#F472B6" }),
-
-  // 1 slice at 50× jackpot
-  ...Array(1).fill({ label: "50×", multiplier: 50, color: "#A78BFA" }),
+  ...Array(6).fill({ label: "3×",   multiplier: 3,   color: "#F472B6" }),
+  ...Array(1).fill({ label: "50×",  multiplier: 50,  color: "#A78BFA" }),
 ];
 
 function shuffleArray(arr) {
@@ -41,10 +33,10 @@ function shuffleArray(arr) {
 }
 
 function createWheelItems() {
-  return shuffleArray(baseSlices).map((slice) => ({
+  return shuffleArray(baseSlices).map(slice => ({
     label: slice.label,
     backgroundColor: slice.color,
-    color: slice.multiplier === 0 ? "#FFFFFF" : "#000000", // white on dark “Lose”
+    color: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
     value: { multiplier: slice.multiplier },
   }));
 }
@@ -54,7 +46,6 @@ export default function LuckyWheel() {
   const userIsReady = Boolean(id && initialized && !loading);
   const totalBalance = balance + refBonus;
 
-  // STORE raw string so placeholder shows; parse below
   const [betAmount, setBetAmount] = useState("");
   const numericBet = parseInt(betAmount, 10) || 0;
 
@@ -68,14 +59,10 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Keep a ref of the latest balance for async callbacks
   const balanceRef = useRef(balance);
   useEffect(() => { balanceRef.current = balance; }, [balance]);
-
-  // Store the bet we used so we can reference it onRest
   const betRef = useRef(0);
 
-  // Initialize the wheel
   const [wheelReady, setWheelReady] = useState(false);
   useEffect(() => {
     if (!containerRef.current) return;
@@ -91,41 +78,33 @@ export default function LuckyWheel() {
       itemLabelFontSizeMax: 14,
       isInteractive: false,
       onRest: handleWheelRest,
+      itemLabelRadius: 0.95,
     });
     setWheelReady(true);
     return () => {
       setWheelReady(false);
-      if (wheelRef.current) {
-        wheelRef.current.remove();
-        wheelRef.current = null;
-      }
+      wheelRef.current?.remove();
+      wheelRef.current = null;
     };
   }, [items]);
 
   function handleWheelRest(e) {
     setIsSpinning(false);
-    // support both spin-wheel versions
-    const idx =
-      typeof e.currentIndex === "number"
-        ? e.currentIndex
-        : typeof e.index === "number"
-        ? e.index
-        : null;
-    if (idx === null) {
-      console.warn("Wheel stopped but no index provided:", e);
-      return;
-    }
+    const idx = typeof e.currentIndex === "number"
+      ? e.currentIndex
+      : typeof e.index === "number"
+      ? e.index
+      : null;
+    if (idx === null) return;
 
     const curBalance = balanceRef.current;
     const betUsed = betRef.current;
     const { multiplier } = items[idx].value || {};
 
     if (!multiplier) {
-      // lose
       setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
       setFloatingText(`-${formatNumber(betUsed)}`);
     } else {
-      // win
       const winnings = Math.floor(betUsed * multiplier);
       const newBal = curBalance + winnings;
       updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
@@ -173,7 +152,6 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
-  // Pointer arrow over the wheel
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -189,7 +167,6 @@ export default function LuckyWheel() {
     />
   );
 
-  // Telegram back button
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
@@ -207,7 +184,11 @@ export default function LuckyWheel() {
           Balance: {formatNumber(totalBalance)} Mianus
         </div>
 
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg w-full max-w-[420px] shadow-lg p-4">
+        {/* Panel with grass background */}
+        <div
+          className="rounded-lg w-full max-w-[420px] shadow-lg p-4 border border-gray-700 bg-cover bg-center"
+          style={{ backgroundImage: `url(${grassBg})` }}
+        >
           <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
             Spin Mianus
           </h2>

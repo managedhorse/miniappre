@@ -41,6 +41,7 @@ function createWheelItems() {
   return shuffled.map((slice) => ({
     label: slice.label,
     backgroundColor: slice.color,
+    textColor: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
     value: { multiplier: slice.multiplier },
   }));
 }
@@ -65,7 +66,7 @@ export default function LuckyWheel() {
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
 
-  const [betAmount, setBetAmount] = useState(10000);
+  const [betAmount, setBetAmount] = useState("");
   const [isSpinning, setIsSpinning] = useState(false);
   const [floatingText, setFloatingText] = useState("");
   const [resultMessage, setResultMessage] = useState("");
@@ -149,18 +150,17 @@ export default function LuckyWheel() {
   }
 
   async function handleSpin() {
-    // 1. Basic checks:
-    if (!wheelReady) return;            // If wheel not fully init’d
-    if (!userIsReady) return;          // If user data not ready
-    if (isSpinning) return;            // already spinning
-    if (balance < 50000) return;       // min 50k
-    if (betAmount < 10000) return;     // min bet 10k
-    if (betAmount > balance) return;   // can't bet more than you have
+    const numericBet = parseInt(betAmount, 10) || 0;
+    // now use numericBet instead of betAmount everywhere:
+    if (!wheelReady || !userIsReady || isSpinning) return;
+    if (totalBalance < 50000) return;
+    if (numericBet < 10000) return;
+    if (numericBet > totalBalance) return;
 
     setIsSpinning(true);
 
     // 2. Subtract the bet from the user
-    const newBal = balance - betAmount;
+    const newBal = totalBalance - numericBet;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
       setBalance(newBal);
@@ -172,7 +172,7 @@ export default function LuckyWheel() {
     }
 
     // 3. Store the bet in a ref so onRest can retrieve it
-    betRef.current = betAmount;
+    betRef.current = numericBet;
 
     // 4. spin to random index
     if (wheelRef.current) {
@@ -253,10 +253,10 @@ export default function LuckyWheel() {
           <div className="flex items-center space-x-2 w-full">
             <input
               type="number"
-              placeholder="Enter bet (≥ 10,000)"
+              placeholder="Enter amount"
               className="flex-1 py-1 px-2 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
               value={betAmount}
-              onChange={(e) => setBetAmount(Number(e.target.value))}
+              onChange={e => setBetAmount(e.target.value)}
             />
 
             <button

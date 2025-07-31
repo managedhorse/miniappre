@@ -4,6 +4,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useUser } from "../context/userContext";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import pointerImage from "../images/pointer.webp";
 import grassBg from "../images/grassbg.webp";
 import congratspic from "../images/celebrate.gif";
@@ -14,7 +15,42 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Weighted slices with new 50× jackpot and preserving EV */
+/** Plunger component */
+function Plunger({ onPull, disabled }) {
+  // y: 0 (rest) → 200 (fully pulled)
+  const y = useMotionValue(0);
+  // map pull distance → 0–100 power
+  const power = useTransform(y, [0, 200], [0, 100]);
+
+  function handleDragEnd() {
+    if (!disabled) {
+      const p = Math.round(power.get());
+      onPull(p);
+    }
+    // spring back
+    animate(y, 0, { type: "spring", stiffness: 500, damping: 30 });
+  }
+
+  return (
+    <motion.div
+      style={{
+        y,
+        width: "32px",
+        height: "100px",
+        background: "linear-gradient(to bottom, #FF6F91, #FFBC42)",
+        borderRadius: "8px",
+        touchAction: "none",
+        cursor: disabled ? "not-allowed" : "grab",
+      }}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 200 }}
+      onDragEnd={handleDragEnd}
+      whileTap={{ cursor: "grabbing" }}
+    />
+  );
+}
+
+/** Weighted slices with new 50× jackpot */
 const baseSlices = [
   ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#F8AAFF" }),
   ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),
@@ -60,15 +96,16 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Keep a ref of the latest balance for async use
+  // Keep a ref of the latest balance
   const balanceRef = useRef(balance);
   useEffect(() => {
     balanceRef.current = balance;
   }, [balance]);
 
-  // Store the stake for use in onRest
+  // Store the stake for onRest
   const betRef = useRef(0);
 
+  // Init the wheel
   const [wheelReady, setWheelReady] = useState(false);
   useEffect(() => {
     if (!containerRef.current) return;
@@ -94,10 +131,9 @@ export default function LuckyWheel() {
     };
   }, [items]);
 
+  // Single consolidated balance update
   async function handleWheelRest(e) {
     setIsSpinning(false);
-
-    // Determine index for both versions of spin-wheel
     const idx = typeof e.currentIndex === "number"
       ? e.currentIndex
       : typeof e.index === "number"
@@ -111,12 +147,10 @@ export default function LuckyWheel() {
 
     let newBal;
     if (!multiplier) {
-      // LOSE: subtract stake
       newBal = curBal - betUsed;
       setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
       setFloatingText(`-${formatNumber(betUsed)}`);
     } else {
-      // WIN: stake + profit
       const winnings = Math.floor(betUsed * multiplier);
       newBal = curBal + winnings;
       setResultMessage(`Congratulations! You won ×${multiplier}!`);
@@ -125,7 +159,6 @@ export default function LuckyWheel() {
       setTimeout(() => setShowCongratsGif(false), 3000);
     }
 
-    // Single database & state update
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
       setBalance(newBal);
@@ -134,12 +167,12 @@ export default function LuckyWheel() {
       console.error("Error updating balance after spin:", err);
     }
 
-    // Clear messages
     setTimeout(() => setFloatingText(""), 2500);
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }
 
+  // Trigger spin after plunger pull
   function handleSpinWithPower(pwr) {
     if (!wheelReady || !userIsReady || isSpinning) return;
     if (totalBalance < 50000) return;
@@ -148,7 +181,6 @@ export default function LuckyWheel() {
     setIsSpinning(true);
     betRef.current = numericBet;
 
-    // Map power → duration & revolutions
     const minDur = 2000, maxDur = 8000;
     const minRevs = 1,    maxRevs = 5;
     const duration    = minDur + ((maxDur - minDur) * pwr) / 100;
@@ -166,7 +198,7 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
-  // Pointer arrow
+  // Pointer arrow over wheel
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -182,7 +214,7 @@ export default function LuckyWheel() {
     />
   );
 
-  // Telegram back button
+  // Telegram Back button
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
@@ -205,7 +237,7 @@ export default function LuckyWheel() {
           </span>
         </div>
 
-        {/* Panel with grass background */}
+        {/* GrassBG Panel */}
         <div
           className="rounded-lg w-full max-w-[420px] shadow-lg p-4 border border-gray-700 bg-cover bg-center"
           style={{ backgroundImage: `url(${grassBg})` }}
@@ -223,20 +255,9 @@ export default function LuckyWheel() {
               onChange={e => setBetAmount(e.target.value)}
             />
 
-            <div className="flex-1 mt-4">
-              <label className="slackey-regular text-white mb-1 block">
-                Pull to spin:
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={power}
-                onChange={e => setPower(Number(e.target.value))}
-                disabled={!canSpin}
-                onMouseUp={() => handleSpinWithPower(power)}
-                className="w-full"
-              />
+            <div className="flex flex-col items-center mt-4">
+              <span className="slackey-regular text-white mb-1">Pull to spin</span>
+              <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
             </div>
           </div>
 

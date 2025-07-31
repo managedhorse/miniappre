@@ -16,7 +16,7 @@ function formatNumber(num) {
 /** Weighted slices with new 50× jackpot and preserving EV */
 const baseSlices = [
   // 63 Lose slices (0×)
-  ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#2D2D2D" }),
+  ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#F8AAFF" }),
 
   // 24 slices at 1.2×
   ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),

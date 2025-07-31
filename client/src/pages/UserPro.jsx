@@ -114,27 +114,34 @@ function formatUsdRange(minValue, maxValue) {
             </div>
           </div>
 
-          <div className="flex slackey-regular justify-between gap-2 px-4 mt-4 mb-2">
-  <div className="bg-[#ffffff1a] rounded-lg px-4 py-3 w-full">
-    {/* Row 1: total supply */}
-    <div className="flex items-center justify-between text-lg font-semibold">
-      <span>Total supply:</span>
-      <div className="flex items-center space-x-2">
-        <span>{formatNumber(totalCount)}</span>
-        <img src={coinsmall} alt="Coin smail" className="w-6 h-6" />
+          <div className="px-4 mt-4 mb-2">
+  <div className="
+      bg-white bg-opacity-20 backdrop-blur-md 
+      rounded-2xl 
+      p-6 
+      shadow-lg
+    ">
+    <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
+      {/* Total Supply */}
+      <span className="slackey-regular text-sm text-white">Total Supply</span>
+      <div className="col-span-2 flex items-center space-x-2">
+        <span className="slackey-regular text-2xl font-bold text-white">
+          {formatNumber(totalCount)}
+        </span>
+        <img src={coinsmall} alt="Coin" className="w-6 h-6" />
       </div>
-    </div>
 
-    {/* Row 2: your part */}
-    <div className="flex items-center justify-between mt-2">
-      <span>Your part:</span>
-      <span>{userShareDisplay}%</span>
-    </div>
+      {/* Your Part */}
+      <span className="slackey-regular text-sm text-white">Your Part</span>
+      <span className="col-span-2 slackey-regular text-2xl font-bold text-white">
+        {userShareDisplay}%
+      </span>
 
-    {/* Row 3: your airdrop est. value */}
-    <div className="flex items-center justify-between mt-2">
-      <span>Est. Value:</span>
-      <span>{formatUsdRange(minUserUsd, maxUserUsd)}</span>
+      {/* Est. Value */}
+      <span className="slackey-regular text-sm text-white">Est. Value</span>
+      <span className="col-span-2 slackey-regular text-2xl font-bold text-white">
+        {formatUsdRange(minUserUsd, maxUserUsd)}
+      </span>
     </div>
   </div>
 </div>

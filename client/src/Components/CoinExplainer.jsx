@@ -6,7 +6,7 @@ import GrassBg from "../images/grassbg.webp";
 const MotionImage = motion.img;
 
 const textStyle = {
-  textShadow: "3px 3px 8px rgba(255,0,0,0.9)"
+  textShadow: "2px 2px 0 rgba(255,0,0,1)"
 };
 
 const CoinExplainer = () => {
@@ -22,14 +22,6 @@ const CoinExplainer = () => {
       >
         Bet Mianus Platform
       </h2>
-
-      {/* Intro text */}
-      <p
-        className="slackey-regular text-[16px] mb-4"
-        style={textStyle}
-      >
-        Provably fair crypto gaming with instant deposits & withdrawals across ETH, TRON, BSC, SOL & BASE.
-      </p>
 
       {/* Glowing main image in middle (15% smaller) */}
       <MotionImage
@@ -54,14 +46,6 @@ const CoinExplainer = () => {
       >
         Visit Site
       </a>
-
-      {/* Closing text */}
-      <p
-        className="slackey-regular text-[16px] mt-2"
-        style={textStyle}
-      >
-        Stake $Mianus tokens to share 100% of gross gaming revenue. No KYC – start playing now.
-      </p>
     </div>
   );
 };

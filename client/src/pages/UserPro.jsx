@@ -116,30 +116,27 @@ function formatUsdRange(minValue, maxValue) {
 
           <div className="px-4 mt-4 mb-2">
   <div className="
-      bg-white bg-opacity-20 backdrop-blur-md 
+      bg-white 
       rounded-2xl 
       p-6 
       shadow-lg
     ">
     <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
-      {/* Total Supply */}
-      <span className="slackey-regular text-sm text-white">Total Supply</span>
+      <span className="slackey-regular text-sm text-gray-800">Total Supply</span>
       <div className="col-span-2 flex items-center space-x-2">
-        <span className="slackey-regular text-2xl font-bold text-white">
+        <span className="slackey-regular text-2xl font-bold text-gray-900">
           {formatNumber(totalCount)}
         </span>
         <img src={coinsmall} alt="Coin" className="w-6 h-6" />
       </div>
 
-      {/* Your Part */}
-      <span className="slackey-regular text-sm text-white">Your Part</span>
-      <span className="col-span-2 slackey-regular text-2xl font-bold text-white">
+      <span className="slackey-regular text-sm text-gray-800">Your Part</span>
+      <span className="col-span-2 slackey-regular text-2xl font-bold text-gray-900">
         {userShareDisplay}%
       </span>
 
-      {/* Est. Value */}
-      <span className="slackey-regular text-sm text-white">Est. Value</span>
-      <span className="col-span-2 slackey-regular text-2xl font-bold text-white">
+      <span className="slackey-regular text-sm text-gray-800">Est. Value</span>
+      <span className="col-span-2 slackey-regular text-2xl font-bold text-gray-900">
         {formatUsdRange(minUserUsd, maxUserUsd)}
       </span>
     </div>

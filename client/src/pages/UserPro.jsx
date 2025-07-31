@@ -119,7 +119,7 @@ function formatUsdRange(minValue, maxValue) {
     <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
       {/* Total Supply */}
       <span className="slackey-regular text-sm text-gray-800">
-        Total Supply
+        Max Supply
       </span>
       <div className="col-span-2 flex items-center space-x-2">
         <span className="slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
@@ -130,7 +130,7 @@ function formatUsdRange(minValue, maxValue) {
 
       {/* Your Part */}
       <span className="slackey-regular text-sm text-gray-800">
-        Your Part
+        You Hold
       </span>
       <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
         {userShareDisplay}%

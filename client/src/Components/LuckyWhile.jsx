@@ -9,11 +9,10 @@ import grassBg from "../images/grassbg.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
 
-/** Helper to format 1234 => '1,234'. */
+/** Helper to format 1234 → "1,234" */
 function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
-
 
 /** Weighted slices with new 50× jackpot and preserving EV */
 const baseSlices = [
@@ -61,8 +60,13 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
+  // Keep a ref of the latest balance for async use
   const balanceRef = useRef(balance);
-  useEffect(() => { balanceRef.current = balance; }, [balance]);
+  useEffect(() => {
+    balanceRef.current = balance;
+  }, [balance]);
+
+  // Store the stake for use in onRest
   const betRef = useRef(0);
 
   const [wheelReady, setWheelReady] = useState(false);
@@ -90,8 +94,10 @@ export default function LuckyWheel() {
     };
   }, [items]);
 
-  function handleWheelRest(e) {
+  async function handleWheelRest(e) {
     setIsSpinning(false);
+
+    // Determine index for both versions of spin-wheel
     const idx = typeof e.currentIndex === "number"
       ? e.currentIndex
       : typeof e.index === "number"
@@ -99,61 +105,58 @@ export default function LuckyWheel() {
       : null;
     if (idx === null) return;
 
-    const curBalance = balanceRef.current;
+    const curBal  = balanceRef.current;
     const betUsed = betRef.current;
     const { multiplier } = items[idx].value || {};
 
+    let newBal;
     if (!multiplier) {
+      // LOSE: subtract stake
+      newBal = curBal - betUsed;
       setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
       setFloatingText(`-${formatNumber(betUsed)}`);
     } else {
+      // WIN: stake + profit
       const winnings = Math.floor(betUsed * multiplier);
-      const newBal = curBalance + winnings;
-      updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
-      setBalance(newBal);
-      balanceRef.current = newBal;
-
+      newBal = curBal + winnings;
       setResultMessage(`Congratulations! You won ×${multiplier}!`);
       setFloatingText(`+${formatNumber(winnings)}`);
       setShowCongratsGif(true);
       setTimeout(() => setShowCongratsGif(false), 3000);
     }
 
+    // Single database & state update
+    try {
+      await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
+      setBalance(newBal);
+      balanceRef.current = newBal;
+    } catch (err) {
+      console.error("Error updating balance after spin:", err);
+    }
+
+    // Clear messages
     setTimeout(() => setFloatingText(""), 2500);
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }
 
- async function handleSpinWithPower(power) {
-  const numericBet = parseInt(betAmount, 10) || 0;
-  if (!wheelReady || !userIsReady || isSpinning) return;
-  if (totalBalance < 50000) return;
-  if (numericBet < 10000 || numericBet > totalBalance) return;
+  function handleSpinWithPower(pwr) {
+    if (!wheelReady || !userIsReady || isSpinning) return;
+    if (totalBalance < 50000) return;
+    if (numericBet < 10000 || numericBet > totalBalance) return;
 
-  setIsSpinning(true);
-  // subtract bet
-  const newBal = totalBalance - numericBet;
-  try {
-    await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
-    setBalance(newBal);
-    balanceRef.current = newBal;
-  } catch {
-    setIsSpinning(false);
-    return;
+    setIsSpinning(true);
+    betRef.current = numericBet;
+
+    // Map power → duration & revolutions
+    const minDur = 2000, maxDur = 8000;
+    const minRevs = 1,    maxRevs = 5;
+    const duration    = minDur + ((maxDur - minDur) * pwr) / 100;
+    const revolutions = minRevs + ((maxRevs - minRevs) * pwr) / 100;
+
+    const randomIndex = Math.floor(Math.random() * items.length);
+    wheelRef.current.spinToItem(randomIndex, duration, true, revolutions, 1);
   }
-
-  // store for onRest
-  betRef.current = numericBet;
-
-  // map power→duration & revolutions
-  const minDur = 2000, maxDur = 8000;
-  const minRevs = 1,    maxRevs = 5;
-  const duration = minDur + ((maxDur - minDur) * power) / 100;
-  const revolutions = minRevs + ((maxRevs - minRevs) * power) / 100;
-
-  const randomIndex = Math.floor(Math.random() * items.length);
-  wheelRef.current.spinToItem(randomIndex, duration, true, revolutions, 1);
-}
 
   const canSpin =
     !isSpinning &&
@@ -163,6 +166,7 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
+  // Pointer arrow
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -178,6 +182,7 @@ export default function LuckyWheel() {
     />
   );
 
+  // Telegram back button
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
@@ -209,7 +214,7 @@ export default function LuckyWheel() {
             Spin Mianus
           </h2>
 
-          <div className="flex items-center space-x-2 w-full">
+          <div className="flex items-start space-x-2">
             <input
               type="number"
               placeholder="Enter amount"
@@ -217,21 +222,22 @@ export default function LuckyWheel() {
               value={betAmount}
               onChange={e => setBetAmount(e.target.value)}
             />
-            <div className="mt-4">
-     <label className="slackey-regular text-white mb-1 block">
-       Pull to spin:
-     </label>
-     <input
-       type="range"
-       min={0}
-       max={100}
-       value={power}
-       onChange={e => setPower(Number(e.target.value))}
-       disabled={!canSpin}
-       onMouseUp={() => handleSpinWithPower(power)}
-       className="w-full"
-     />
-   </div>
+
+            <div className="flex-1 mt-4">
+              <label className="slackey-regular text-white mb-1 block">
+                Pull to spin:
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={power}
+                onChange={e => setPower(Number(e.target.value))}
+                disabled={!canSpin}
+                onMouseUp={() => handleSpinWithPower(power)}
+                className="w-full"
+              />
+            </div>
           </div>
 
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">

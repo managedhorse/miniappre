@@ -20,7 +20,7 @@ const CoinExplainer = () => {
         className="slackey-regular text-[20px] font-bold mb-2"
         style={textStyle}
       >
-        Bet Mianus Platform
+        BET MIANUS
       </h2>
 
       {/* Glowing main image in middle (15% smaller) */}

@@ -148,10 +148,9 @@ function formatUsdRange(minValue, maxValue) {
 </div>
 
 
-          {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto no-scrollbar mt-2 pb-20 px-4">
+          {/* Non-scrolling Content Area */}
+          <div className="flex-1 overflow-hidden mt-2 pb-20 px-4">
             <CoinExplainer />
-            
           </div>
         </div>
       </div>

@@ -31,7 +31,7 @@ const CoinExplainer = () => (
   >
     {/* Title */}
     <h2
-      className="slackey-regular text-[32px] font-bold mb-2"
+      className="slackey-regular text-[32px] font-bold mb-1"
       style={textStyle}
     >
       BET MIANUS

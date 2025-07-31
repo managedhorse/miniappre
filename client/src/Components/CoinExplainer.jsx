@@ -5,8 +5,9 @@ import GrassBg from "../images/grassbg.webp";
 
 const MotionImage = motion.img;
 
+// Sharp red drop-shadow with zero blur
 const textStyle = {
-  textShadow: "2px 2px 0 rgba(255,0,0,1)"
+  textShadow: "2px 2px 0px rgba(255,0,0,1)"
 };
 
 const CoinExplainer = () => {
@@ -23,7 +24,12 @@ const CoinExplainer = () => {
         BET MIANUS
       </h2>
 
-      {/* Glowing main image in middle (15% smaller) */}
+      {/* Intro text */}
+      <p className="slackey-regular text-[16px] mb-4" style={textStyle}>
+        Provably fair crypto gaming
+      </p>
+
+      {/* Glowing main image */}
       <MotionImage
         src={MianusHero}
         alt="Bet Mianus Hero"
@@ -38,14 +44,19 @@ const CoinExplainer = () => {
         transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
       />
 
-      {/* Visit Site link */}
-      <a
-        href="https://betmian.us"
-        className="slackey-regular text-[16px] underline mb-4 inline-block"
+      {/* Visit Site button */}
+      <button
+        onClick={() => window.open("https://betmian.us", "_blank")}
+        className="slackey-regular text-[16px] py-2 px-4 bg-red-600 text-white rounded-md mb-4 inline-block"
         style={textStyle}
       >
         Visit Site
-      </a>
+      </button>
+
+      {/* Closing text */}
+      <p className="slackey-regular text-[16px]" style={textStyle}>
+        Stake $Mianus tokens to share 100% of gross gaming revenue.
+      </p>
     </div>
   );
 };

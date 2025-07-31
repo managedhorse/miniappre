@@ -90,7 +90,7 @@ const CoinExplainer = () => (
 
     {/* Closing text */}
     <p className="slackey-regular text-[16px] mt-2" style={textStyle}>
-      Stake $Mianus tokens & share 100% of GGR.
+      Stake $Mianus & share 100% of GGR.
     </p>
   </div>
 );

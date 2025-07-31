@@ -14,6 +14,7 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
+
 /** Weighted slices with new 50× jackpot and preserving EV */
 const baseSlices = [
   ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#F8AAFF" }),
@@ -42,6 +43,7 @@ function createWheelItems() {
 }
 
 export default function LuckyWheel() {
+  const [power, setPower] = useState(0);
   const { balance, refBonus, setBalance, id, loading, initialized } = useUser();
   const userIsReady = Boolean(id && initialized && !loading);
   const totalBalance = balance + refBonus;
@@ -122,27 +124,36 @@ export default function LuckyWheel() {
     setTimeout(() => setShowResult(false), 5000);
   }
 
-  async function handleSpin() {
-    if (!wheelReady || !userIsReady || isSpinning) return;
-    if (totalBalance < 50000) return;
-    if (numericBet < 10000 || numericBet > totalBalance) return;
+ async function handleSpinWithPower(power) {
+  const numericBet = parseInt(betAmount, 10) || 0;
+  if (!wheelReady || !userIsReady || isSpinning) return;
+  if (totalBalance < 50000) return;
+  if (numericBet < 10000 || numericBet > totalBalance) return;
 
-    setIsSpinning(true);
-    const newBal = totalBalance - numericBet;
-    try {
-      await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
-      setBalance(newBal);
-      balanceRef.current = newBal;
-    } catch (err) {
-      console.error("Error subtracting bet:", err);
-      setIsSpinning(false);
-      return;
-    }
-
-    betRef.current = numericBet;
-    const randomIndex = Math.floor(Math.random() * items.length);
-    wheelRef.current.spinToItem(randomIndex, 4000, true, 2, 1);
+  setIsSpinning(true);
+  // subtract bet
+  const newBal = totalBalance - numericBet;
+  try {
+    await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
+    setBalance(newBal);
+    balanceRef.current = newBal;
+  } catch {
+    setIsSpinning(false);
+    return;
   }
+
+  // store for onRest
+  betRef.current = numericBet;
+
+  // map power→duration & revolutions
+  const minDur = 2000, maxDur = 8000;
+  const minRevs = 1,    maxRevs = 5;
+  const duration = minDur + ((maxDur - minDur) * power) / 100;
+  const revolutions = minRevs + ((maxRevs - minRevs) * power) / 100;
+
+  const randomIndex = Math.floor(Math.random() * items.length);
+  wheelRef.current.spinToItem(randomIndex, duration, true, revolutions, 1);
+}
 
   const canSpin =
     !isSpinning &&
@@ -180,8 +191,13 @@ export default function LuckyWheel() {
   return (
     <Animate>
       <div className="grid place-items-center px-3 pt-3 pb-[90px] relative">
-        <div className="text-white mb-2 text-center">
-          Balance: {formatNumber(totalBalance)} Mianus
+        <div className="mb-2 text-center">
+          <span className="slackey-regular text-[24px] text-white">
+            Balance:
+          </span>{" "}
+          <span className="text-white">
+            {formatNumber(totalBalance)} Mianus
+          </span>
         </div>
 
         {/* Panel with grass background */}
@@ -201,15 +217,21 @@ export default function LuckyWheel() {
               value={betAmount}
               onChange={e => setBetAmount(e.target.value)}
             />
-            <button
-              onClick={handleSpin}
-              disabled={!canSpin}
-              className={`px-4 py-2 text-white rounded-md font-semibold transition-colors duration-300 ${
-                canSpin ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Spin
-            </button>
+            <div className="mt-4">
+     <label className="slackey-regular text-white mb-1 block">
+       Pull to spin:
+     </label>
+     <input
+       type="range"
+       min={0}
+       max={100}
+       value={power}
+       onChange={e => setPower(Number(e.target.value))}
+       disabled={!canSpin}
+       onMouseUp={() => handleSpinWithPower(power)}
+       className="w-full"
+     />
+   </div>
           </div>
 
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">

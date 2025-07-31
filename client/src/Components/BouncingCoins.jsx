@@ -19,7 +19,7 @@ const BouncingCoins = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[400px] overflow-hidden">
+    <div className="relative w-full h-[250px] overflow-hidden">
       {coins.map((coin) => (
         <img
         key={coin.id}

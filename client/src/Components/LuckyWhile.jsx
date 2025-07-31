@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Wheel } from "spin-wheel";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase"; 
+import { db } from "../firebase";
 import { useUser } from "../context/userContext";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
-import pointerImage from "../images/pointer.webp";  
+import pointerImage from "../images/pointer.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
 
@@ -41,49 +41,48 @@ function createWheelItems() {
   return shuffled.map((slice) => ({
     label: slice.label,
     backgroundColor: slice.color,
-    textColor: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
+    // Use `color` so spin-wheel draws the label in this fill color:
+    color: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
     value: { multiplier: slice.multiplier },
   }));
 }
 
 export default function LuckyWheel() {
-  const { 
-    balance, 
-    refBonus, 
-    setBalance, 
-    id,             // from userContext
-    loading,        // from userContext, might indicate data fetch
-    initialized     // from userContext, or we can add a custom flag
+  const {
+    balance,
+    refBonus,
+    setBalance,
+    id,
+    loading,
+    initialized,
   } = useUser();
 
-  // Wait for user data in context? If not "initialized," or no "id," 
-  // we can interpret that as “not ready”.
   const userIsReady = Boolean(id && initialized && !loading);
-
   const totalBalance = balance + refBonus;
   const [items] = useState(createWheelItems);
 
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
 
+  // Keep raw string so placeholder shows; derive numericBet for logic:
   const [betAmount, setBetAmount] = useState("");
+  const numericBet = parseInt(betAmount, 10) || 0;
+
   const [isSpinning, setIsSpinning] = useState(false);
   const [floatingText, setFloatingText] = useState("");
   const [resultMessage, setResultMessage] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Because the spin library is asynchronous, we keep refs for current
-  // balance & bet so we can read them reliably when the spin stops.
+  // Refs for async callbacks:
   const balanceRef = useRef(balance);
-  useEffect(() => { balanceRef.current = balance; }, [balance]);
-
+  useEffect(() => {
+    balanceRef.current = balance;
+  }, [balance]);
   const betRef = useRef(0);
 
-  // We'll also track whether the wheel is fully "mounted."
-  // That way, we only let the user spin if the wheel is set up.
+  // Track wheel readiness:
   const [wheelReady, setWheelReady] = useState(false);
-
   useEffect(() => {
     if (!containerRef.current) return;
     wheelRef.current = new Wheel(containerRef.current, {
@@ -96,12 +95,10 @@ export default function LuckyWheel() {
       pointerAngle: 0,
       rotationResistance: -35,
       itemLabelFontSizeMax: 14,
-      isInteractive: false,     // no manual flicking
-      onRest: handleWheelRest,  // callback
+      isInteractive: false,
+      onRest: handleWheelRest,
     });
-    // Mark the wheel as "ready" once it’s constructed
     setWheelReady(true);
-
     return () => {
       setWheelReady(false);
       if (wheelRef.current) {
@@ -117,82 +114,60 @@ export default function LuckyWheel() {
 
     const curBalance = balanceRef.current;
     const betUsed = betRef.current;
-
     const winningItem = items[e.currentIndex];
     const { multiplier } = winningItem.value || {};
 
-    if (!multiplier || multiplier === 0) {
-      // lose
+    if (!multiplier) {
       setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
       setFloatingText(`-${formatNumber(betUsed)}`);
-      setTimeout(() => setFloatingText(""), 2500);
     } else {
-      // e.g. user bet 10,000 => multiplier=1.2 => they gain 12000 minus the bet they already paid?
-      // Actually: If we interpret "1.2×" as net multiplier, we might do betUsed * multiplier
-      // If the user has already subtracted the bet, then the “profit” is betUsed * multiplier
-      const winnings = Math.floor(betUsed * multiplier); 
+      const winnings = Math.floor(betUsed * multiplier);
       const newBal = curBalance + winnings;
-
-      updateDoc(doc(db, "telegramUsers", id), { balance: newBal })
-        .catch(err => console.error("Error updating Firestore after spin:", err));
-
+      updateDoc(doc(db, "telegramUsers", id), { balance: newBal }).catch(console.error);
       setBalance(newBal);
       balanceRef.current = newBal;
-
       setResultMessage(`Congratulations! You won × ${multiplier}!`);
       setFloatingText(`+${formatNumber(winnings)}`);
       setShowCongratsGif(true);
-      setTimeout(() => setFloatingText(""), 2500);
+      // Hide the GIF after 3s:
+      setTimeout(() => setShowCongratsGif(false), 3000);
     }
 
+    // Clear floating text after 2.5s, hide result after 5s
+    setTimeout(() => setFloatingText(""), 2500);
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }
 
   async function handleSpin() {
-    const numericBet = parseInt(betAmount, 10) || 0;
-    // now use numericBet instead of betAmount everywhere:
     if (!wheelReady || !userIsReady || isSpinning) return;
     if (totalBalance < 50000) return;
-    if (numericBet < 10000) return;
-    if (numericBet > totalBalance) return;
+    if (numericBet < 10000 || numericBet > totalBalance) return;
 
     setIsSpinning(true);
-
-    // 2. Subtract the bet from the user
     const newBal = totalBalance - numericBet;
     try {
       await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
       setBalance(newBal);
       balanceRef.current = newBal;
-    } catch (error) {
-      console.error("Error subtracting bet:", error);
+    } catch (err) {
+      console.error("Error subtracting bet:", err);
       setIsSpinning(false);
       return;
     }
 
-    // 3. Store the bet in a ref so onRest can retrieve it
     betRef.current = numericBet;
-
-    // 4. spin to random index
-    if (wheelRef.current) {
-      const randomIndex = Math.floor(Math.random() * items.length);
-      wheelRef.current.spinToItem(
-        randomIndex,
-        4000, // 4s spin
-        true, // center on slice
-        2,    // revolve 2 times
-        1     // clockwise
-      );
-    }
+    const randomIndex = Math.floor(Math.random() * items.length);
+    wheelRef.current?.spinToItem(randomIndex, 4000, true, 2, 1);
   }
 
-  const canSpin = !isSpinning 
-                  && wheelReady
-                  && userIsReady
-                  && balance >= 50000
-                  && betAmount >= 10000
-                  && betAmount <= balance;
+  const canSpin =
+    !isSpinning &&
+    wheelReady &&
+    userIsReady &&
+    totalBalance >= 50000 &&
+    numericBet >= 10000 &&
+    numericBet <= totalBalance;
 
   function renderPointer() {
     return (
@@ -211,35 +186,19 @@ export default function LuckyWheel() {
     );
   }
 
-  const handleCongratsAnimationEnd = () => {
-    setShowCongratsGif(false);
-  };
-
   useEffect(() => {
-   
-      // Show the back button when the component mounts
-      window.Telegram.WebApp.BackButton.show();
-  
-      // Attach a click event listener to handle the back navigation
-      const handleBackButtonClick = () => {
-        window.history.back();
-      };
-  
-      window.Telegram.WebApp.BackButton.onClick(handleBackButtonClick);
-  
-      // Clean up the event listener and hide the back button when the component unmounts
-      return () => {
-        window.Telegram.WebApp.BackButton.offClick(handleBackButtonClick);
-        window.Telegram.WebApp.BackButton.hide();
-      };
-  
-    }, []);
+    window.Telegram.WebApp.BackButton.show();
+    const onBack = () => window.history.back();
+    window.Telegram.WebApp.BackButton.onClick(onBack);
+    return () => {
+      window.Telegram.WebApp.BackButton.offClick(onBack);
+      window.Telegram.WebApp.BackButton.hide();
+    };
+  }, []);
 
   return (
     <Animate>
       <div className="grid place-items-center px-3 pt-3 pb-[90px] relative">
-
-        {/* Show total user balance + bonus */}
         <div className="text-white mb-2 text-center">
           Balance: {formatNumber(totalBalance)} Mianus
         </div>
@@ -249,38 +208,32 @@ export default function LuckyWheel() {
             Spin Mianus
           </h2>
 
-          {/* Bet input & spin button */}
           <div className="flex items-center space-x-2 w-full">
             <input
               type="number"
               placeholder="Enter amount"
               className="flex-1 py-1 px-2 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
               value={betAmount}
-              onChange={e => setBetAmount(e.target.value)}
+              onChange={(e) => setBetAmount(e.target.value)}
             />
-
             <button
               onClick={handleSpin}
               disabled={!canSpin}
               className={`px-4 py-2 text-white rounded-md font-semibold transition-colors duration-300 ${
-                canSpin
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-gray-500 cursor-not-allowed"
+                canSpin ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
               }`}
             >
               Spin
             </button>
           </div>
 
-          {/* Warnings or instructions */}
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">
             {(!wheelReady || !userIsReady) && <p>Please wait...</p>}
-            {balance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
-            {betAmount < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
-            {betAmount > balance && <p>Bet cannot exceed your balance.</p>}
+            {totalBalance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
+            {numericBet < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
+            {numericBet > totalBalance && <p>Bet cannot exceed your balance.</p>}
           </div>
 
-          {/* Actual wheel container */}
           <div
             className="relative mx-auto mt-3"
             style={{
@@ -297,7 +250,6 @@ export default function LuckyWheel() {
                 position: "relative",
                 width: "100%",
                 height: "100%",
-                margin: "0 auto",
                 overflow: "hidden",
               }}
             />
@@ -305,58 +257,30 @@ export default function LuckyWheel() {
           </div>
         </div>
 
-        {/* ephemeral floating text (e.g. “+12000” or “-10000”) */}
         {floatingText && (
-          <div
-            className="absolute flex justify-center items-center top-[50%] left-[50%]
-                      transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          >
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
               {floatingText}
             </div>
           </div>
         )}
 
-        {/* Toastlike result message at bottom */}
         {showResult && (
-          <div
-            className="fixed left-0 right-0 mx-auto bottom-[80px]
-                      flex justify-center z-[9999] px-4"
-          >
+          <div className="fixed left-0 right-0 bottom-[80px] mx-auto flex justify-center px-4 z-[9999]">
             <div
-              className={`flex items-center space-x-2 px-4 py-2
-                          bg-[#121620ef] rounded-[8px] shadow-lg
-                          text-sm w-fit
-                          ${
-                            resultMessage.includes("lost")
-                              ? "text-red-400"
-                              : "text-[#54d192]"
-                          }`}
+              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-[8px] shadow-lg text-sm w-fit ${
+                resultMessage.includes("lost") ? "text-red-400" : "text-[#54d192]"
+              }`}
             >
-              {resultMessage.includes("lost") ? (
-                <IoCloseCircle size={24} />
-              ) : (
-                <IoCheckmarkCircle size={24} />
-              )}
-              <span className="font-medium slackey-regular">
-                {resultMessage}
-              </span>
+              {resultMessage.includes("lost") ? <IoCloseCircle size={24} /> : <IoCheckmarkCircle size={24} />}
+              <span className="font-medium slackey-regular">{resultMessage}</span>
             </div>
           </div>
         )}
 
-        {/* Confetti GIF when user wins */}
-        {showCongratsGif && !resultMessage.includes("lost") && (
-          <div
-            className="absolute top-[20%] left-0 right-0 
-                      flex justify-center pointer-events-none select-none"
-          >
-            <img
-              src={congratspic}
-              alt="congrats"
-              className="w-[160px] animate-fade-in-once"
-              onAnimationEnd={handleCongratsAnimationEnd}
-            />
+        {showCongratsGif && (
+          <div className="absolute top-[20%] left-0 right-0 flex justify-center pointer-events-none select-none">
+            <img src={congratspic} alt="congrats" className="w-[160px]" />
           </div>
         )}
       </div>

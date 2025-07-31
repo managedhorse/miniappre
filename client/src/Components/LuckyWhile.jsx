@@ -13,13 +13,18 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Weighted slices. */
+/** Weighted slices with new colors */
 const baseSlices = [
-  ...Array(25).fill({ label: "Lose", multiplier: 0, color: "#D30000" }),
-  ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#FFD700" }),
-  ...Array(4).fill({ label: "1.5×", multiplier: 1.5, color: "#FFA500" }),
-  ...Array(6).fill({ label: "3×",   multiplier: 3,   color: "#1E90FF" }),
-  ...Array(1).fill({ label: "10×",  multiplier: 10,  color: "#800080" }),
+  // Lose slices: dark charcoal
+  ...Array(25).fill({ label: "Lose", multiplier: 0, color: "#2D2D2D" }),
+  // 1.2× slices: mint green
+  ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),
+  // 1.5× slices: amber
+  ...Array(4).fill({ label: "1.5×", multiplier: 1.5, color: "#FACC15" }),
+  // 3× slices: pink
+  ...Array(6).fill({ label: "3×",   multiplier: 3,   color: "#F472B6" }),
+  // 10× slice: violet
+  ...Array(1).fill({ label: "10×",  multiplier: 10,  color: "#A78BFA" }),
 ];
 
 function shuffleArray(arr) {
@@ -239,7 +244,7 @@ export default function LuckyWheel() {
           Balance: {formatNumber(totalBalance)} Mianus
         </div>
 
-        <div className="bg-activebg border border-activeborder rounded-lg w-full max-w-[420px] shadow-lg p-4">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg w-full max-w-[420px] shadow-lg p-4">
           <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
             Spin Mianus
           </h2>

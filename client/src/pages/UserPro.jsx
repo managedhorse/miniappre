@@ -115,28 +115,32 @@ function formatUsdRange(minValue, maxValue) {
           </div>
 
           <div className="px-4 mt-4 mb-2">
-  <div className="
-      bg-white 
-      rounded-2xl 
-      p-6 
-      shadow-lg
-    ">
+  <div className="bg-white rounded-2xl p-6 shadow-lg">
     <div className="grid grid-cols-3 gap-x-4 gap-y-3 items-center">
-      <span className="slackey-regular text-sm text-gray-800">Total Supply</span>
+      {/* Total Supply */}
+      <span className="slackey-regular text-sm text-gray-800">
+        Total Supply
+      </span>
       <div className="col-span-2 flex items-center space-x-2">
-        <span className="slackey-regular text-2xl font-bold text-gray-900">
+        <span className="slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
           {formatNumber(totalCount)}
         </span>
         <img src={coinsmall} alt="Coin" className="w-6 h-6" />
       </div>
 
-      <span className="slackey-regular text-sm text-gray-800">Your Part</span>
-      <span className="col-span-2 slackey-regular text-2xl font-bold text-gray-900">
+      {/* Your Part */}
+      <span className="slackey-regular text-sm text-gray-800">
+        Your Part
+      </span>
+      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
         {userShareDisplay}%
       </span>
 
-      <span className="slackey-regular text-sm text-gray-800">Est. Value</span>
-      <span className="col-span-2 slackey-regular text-2xl font-bold text-gray-900">
+      {/* Est. Value */}
+      <span className="slackey-regular text-sm text-gray-800">
+        Est. Value
+      </span>
+      <span className="col-span-2 slackey-regular text-xl font-bold text-gray-900 whitespace-nowrap">
         {formatUsdRange(minUserUsd, maxUserUsd)}
       </span>
     </div>

@@ -13,13 +13,22 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Weighted slices with new colors */
+/** Weighted slices with new 50× jackpot and preserving EV */
 const baseSlices = [
-  ...Array(25).fill({ label: "Lose", multiplier: 0, color: "#2D2D2D" }),
+  // 63 Lose slices (0×)
+  ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#2D2D2D" }),
+
+  // 24 slices at 1.2×
   ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),
+
+  // 4 slices at 1.5×
   ...Array(4).fill({ label: "1.5×", multiplier: 1.5, color: "#FACC15" }),
-  ...Array(6).fill({ label: "3×",   multiplier: 3,   color: "#F472B6" }),
-  ...Array(1).fill({ label: "10×",  multiplier: 10,  color: "#A78BFA" }),
+
+  // 6 slices at 3×
+  ...Array(6).fill({ label: "3×", multiplier: 3, color: "#F472B6" }),
+
+  // 1 slice at 50× jackpot
+  ...Array(1).fill({ label: "50×", multiplier: 50, color: "#A78BFA" }),
 ];
 
 function shuffleArray(arr) {

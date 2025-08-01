@@ -44,7 +44,7 @@ function Plunger({ onPull, disabled }) {
           src={pullerImage}
           alt="knob"
           className="absolute left-0 w-8 h-8"
-          style={{ 
+          style={{
             y,
             filter: disabled ? "grayscale(100%)" : "none"
           }}
@@ -104,7 +104,7 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // keep current balance in a ref for callbacks
+  // keep current balance in a ref
   const balanceRef = useRef(balance);
   useEffect(() => { balanceRef.current = balance }, [balance]);
 
@@ -127,10 +127,7 @@ export default function LuckyWheel() {
       onRest: handleWheelRest,
       itemLabelRadius: 0.95,
     });
-    return () => {
-      wheelRef.current?.remove();
-      wheelRef.current = null;
-    };
+    return () => wheelRef.current?.remove();
   }, [items]);
 
   // onRest handler
@@ -188,9 +185,7 @@ export default function LuckyWheel() {
     wheelRef.current.spinToItem(idx, duration, true, revolutions, 1);
   }
 
-  const canSpin = !isSpinning &&
-                  numericBet >= 10000 &&
-                  numericBet <= totalBalance;
+  const canSpin = !isSpinning && numericBet >= 10000 && numericBet <= totalBalance;
 
   // pointer always centered
   const renderPointer = () => (
@@ -219,95 +214,104 @@ export default function LuckyWheel() {
   }, []);
 
   return (
-    <Animate>
+    <>
+      {/* Fixed full-screen background */}
       <div
-        className="w-full h-screen overflow-auto bg-cover bg-center flex flex-col items-center pt-6 pb-6"
+        className="fixed inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${grassBg})` }}
-      >
-        {/* Balance */}
-        <div className="mb-4 text-center">
-          <span className="slackey-regular text-[26px] text-white">
-            Balance:{" "}
-          </span>
-          <span className="slackey-regular text-[26px] text-yellow-300">
-            {formatNumber(totalBalance)} Mianus
-          </span>
-        </div>
+      />
 
-        {/* Bet */}
-        <div className="w-11/12 max-w-sm mb-4">
-          <input
-            type="number"
-            placeholder="Enter amount"
-            className="w-full py-2 px-3 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
-            value={betAmount}
-            onChange={e => setBetAmount(e.target.value)}
-          />
-        </div>
+      <Animate>
+        <div className="relative z-10 w-full min-h-screen overflow-auto flex flex-col items-center pt-6 pb-6">
+          {/* Balance */}
+          <div className="mb-4 text-center">
+            <span className="slackey-regular text-[26px] text-white">
+              Balance:{" "}
+            </span>
+            <span className="slackey-regular text-[26px] text-yellow-300">
+              {formatNumber(totalBalance)} Mianus
+            </span>
+          </div>
 
-        {/* Wheel + Plunger side-by-side */}
-        <div className="flex items-start justify-start space-x-2">
-          {/* Wheel container */}
-          <div
-            className="relative mr-2"
-            style={{
-              width: "80vw",
-              height: "80vw",
-              maxWidth: 360,
-              maxHeight: 360,
-              overflow: "visible",
-            }}
-          >
-            <div
-              ref={containerRef}
-              style={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
-              }}
+          {/* Bet */}
+          <div className="w-11/12 max-w-sm mb-4">
+            <input
+              type="number"
+              placeholder="Enter amount"
+              className="w-full py-2 px-3 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
+              value={betAmount}
+              onChange={e => setBetAmount(e.target.value)}
             />
-            {renderPointer()}
           </div>
 
-          {/* Plunger */}
-          <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
-        </div>
-
-        {/* Floating text */}
-        {floatingText && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
-              {floatingText}
-            </div>
-          </div>
-        )}
-
-        {/* Result toast */}
-        {showResult && (
-          <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
+          {/* Wheel + Plunger side-by-side */}
+          <div className="flex items-start justify-start space-x-2">
+            {/* Wheel container */}
             <div
-              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
-                resultMessage.includes("lost") ? "text-red-400" : "text-green-300"
-              }`}
+              className="relative mr-2"
+              style={{
+                width: "80vw",
+                height: "80vw",
+                maxWidth: 360,
+                maxHeight: 360,
+                overflow: "visible",
+              }}
             >
-              {resultMessage.includes("lost")
-                ? <IoCloseCircle size={24}/>
-                : <IoCheckmarkCircle size={24}/>}
-              <span className="font-medium slackey-regular">
-                {resultMessage}
-              </span>
+              <div
+                ref={containerRef}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                  overflow: "hidden",
+                }}
+              />
+              {renderPointer()}
             </div>
-          </div>
-        )}
 
-        {/* Congrats GIF */}
-        {showCongratsGif && (
-          <div className="absolute top-1/4 inset-x-0 flex justify-center pointer-events-none select-none">
-            <img src={congratspic} alt="congrats" className="w-40" />
+            {/* Plunger */}
+            <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
           </div>
-        )}
-      </div>
-    </Animate>
+
+          {/* Floating text */}
+          {floatingText && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
+                {floatingText}
+              </div>
+            </div>
+          )}
+
+          {/* Result toast */}
+          {showResult && (
+            <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
+              <div
+                className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
+                  resultMessage.includes("lost")
+                    ? "text-red-400"
+                    : "text-green-300"
+                }`}
+              >
+                {resultMessage.includes("lost") ? (
+                  <IoCloseCircle size={24} />
+                ) : (
+                  <IoCheckmarkCircle size={24} />
+                )}
+                <span className="font-medium slackey-regular">
+                  {resultMessage}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Congrats GIF */}
+          {showCongratsGif && (
+            <div className="absolute top-1/4 inset-x-0 flex justify-center pointer-events-none select-none">
+              <img src={congratspic} alt="congrats" className="w-40" />
+            </div>
+          )}
+        </div>
+      </Animate>
+    </>
   );
 }

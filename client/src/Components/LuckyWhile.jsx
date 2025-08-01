@@ -43,9 +43,11 @@ function Plunger({ onPull, disabled }) {
         <motion.img
           src={pullerImage}
           alt="knob"
-          
           className="absolute left-0 w-8 h-8"
-          style={{ y,filter: disabled ? "grayscale(100%)" : "none" }}
+          style={{ 
+            y,
+            filter: disabled ? "grayscale(100%)" : "none"
+          }}
           drag="y"
           dragConstraints={{ top: 0, bottom: maxY }}
           onDragEnd={handleDragEnd}
@@ -102,17 +104,13 @@ export default function LuckyWheel() {
   const [showResult, setShowResult] = useState(false);
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
-  // Keep a ref of the latest balance
+  // keep current balance in a ref for callbacks
   const balanceRef = useRef(balance);
-  useEffect(() => {
-    balanceRef.current = balance;
-  }, [balance]);
+  useEffect(() => { balanceRef.current = balance }, [balance]);
 
-  // Store the stake for onRest
   const betRef = useRef(0);
 
-  // Initialize the wheel
-  const [wheelReady, setWheelReady] = useState(false);
+  // init wheel
   useEffect(() => {
     if (!containerRef.current) return;
     wheelRef.current = new Wheel(containerRef.current, {
@@ -129,15 +127,13 @@ export default function LuckyWheel() {
       onRest: handleWheelRest,
       itemLabelRadius: 0.95,
     });
-    setWheelReady(true);
     return () => {
-      setWheelReady(false);
       wheelRef.current?.remove();
       wheelRef.current = null;
     };
   }, [items]);
 
-  // Single consolidated balance update
+  // onRest handler
   async function handleWheelRest(e) {
     setIsSpinning(false);
     const idx = typeof e.currentIndex === "number"
@@ -149,7 +145,7 @@ export default function LuckyWheel() {
 
     const curBal  = balanceRef.current;
     const betUsed = betRef.current;
-    const { multiplier } = items[idx].value || {};
+    const { multiplier } = items[idx].value;
 
     let newBal;
     if (!multiplier) {
@@ -170,7 +166,7 @@ export default function LuckyWheel() {
       setBalance(newBal);
       balanceRef.current = newBal;
     } catch (err) {
-      console.error("Error updating balance after spin:", err);
+      console.error("Update failed:", err);
     }
 
     setTimeout(() => setFloatingText(""), 2500);
@@ -178,33 +174,25 @@ export default function LuckyWheel() {
     setTimeout(() => setShowResult(false), 5000);
   }
 
-  // Fire the spin from plunger
+  // fire spin
   function handleSpinWithPower(pwr) {
-    if (!wheelReady || !userIsReady || isSpinning) return;
-    if (totalBalance < 50000) return;
+    if (!userIsReady || isSpinning) return;
     if (numericBet < 10000 || numericBet > totalBalance) return;
 
     setIsSpinning(true);
     betRef.current = numericBet;
 
-    const minDur = 2000, maxDur = 8000;
-    const minRevs = 1,    maxRevs = 5;
-    const duration    = minDur + ((maxDur - minDur) * pwr) / 100;
-    const revolutions = minRevs + ((maxRevs - minRevs) * pwr) / 100;
-
-    const randomIndex = Math.floor(Math.random() * items.length);
-    wheelRef.current.spinToItem(randomIndex, duration, true, revolutions, 1);
+    const duration    = 2000 + (6000 * pwr) / 100;
+    const revolutions = 1 + (4 * pwr) / 100;
+    const idx         = Math.floor(Math.random() * items.length);
+    wheelRef.current.spinToItem(idx, duration, true, revolutions, 1);
   }
 
-  const canSpin =
-    !isSpinning &&
-    wheelReady &&
-    userIsReady &&
-    totalBalance >= 50000 &&
-    numericBet >= 10000 &&
-    numericBet <= totalBalance;
+  const canSpin = !isSpinning &&
+                  numericBet >= 10000 &&
+                  numericBet <= totalBalance;
 
-  // Pointer arrow always centered
+  // pointer always centered
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -222,25 +210,21 @@ export default function LuckyWheel() {
     />
   );
 
-  // Telegram back button
+  // telegram back
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
     window.Telegram.WebApp.BackButton.onClick(onBack);
-    return () => {
-      window.Telegram.WebApp.BackButton.offClick(onBack);
-      window.Telegram.WebApp.BackButton.hide();
-    };
+    return () => window.Telegram.WebApp.BackButton.hide();
   }, []);
 
   return (
     <Animate>
-      {/* Full-screen grass BG */}
       <div
         className="w-full h-screen overflow-auto bg-cover bg-center flex flex-col items-center pt-6 pb-6"
         style={{ backgroundImage: `url(${grassBg})` }}
       >
-        {/* Balance display */}
+        {/* Balance */}
         <div className="mb-4 text-center">
           <span className="slackey-regular text-[26px] text-white">
             Balance:{" "}
@@ -250,7 +234,7 @@ export default function LuckyWheel() {
           </span>
         </div>
 
-        {/* Bet input */}
+        {/* Bet */}
         <div className="w-11/12 max-w-sm mb-4">
           <input
             type="number"
@@ -259,24 +243,18 @@ export default function LuckyWheel() {
             value={betAmount}
             onChange={e => setBetAmount(e.target.value)}
           />
-          <div className="mt-1 text-sm text-red-400 min-h-[1em]">
-            {(!wheelReady || !userIsReady) && <p>Please wait...</p>}
-            {totalBalance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
-            {numericBet < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
-            {numericBet > totalBalance && <p>Bet cannot exceed your balance.</p>}
-          </div>
         </div>
 
-        {/* Wheel + Plunger */}
-        <div className="flex items-start justify-center space-x-1 flex-wrap">
-          {/* Wheel */}
+        {/* Wheel + Plunger side-by-side */}
+        <div className="flex items-start justify-start space-x-2">
+          {/* Wheel container */}
           <div
-            className="relative"
+            className="relative mr-2"
             style={{
-              width: "83vw",
-              height: "83vw",
-              maxWidth: 388,
-              maxHeight: 388,
+              width: "80vw",
+              height: "80vw",
+              maxWidth: 360,
+              maxHeight: 360,
               overflow: "visible",
             }}
           >
@@ -309,16 +287,16 @@ export default function LuckyWheel() {
         {showResult && (
           <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
             <div
-              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm w-fit ${
+              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
                 resultMessage.includes("lost") ? "text-red-400" : "text-green-300"
               }`}
             >
-              {resultMessage.includes("lost") ? (
-                <IoCloseCircle size={24} />
-              ) : (
-                <IoCheckmarkCircle size={24} />
-              )}
-              <span className="font-medium slackey-regular">{resultMessage}</span>
+              {resultMessage.includes("lost")
+                ? <IoCloseCircle size={24}/>
+                : <IoCheckmarkCircle size={24}/>}
+              <span className="font-medium slackey-regular">
+                {resultMessage}
+              </span>
             </div>
           </div>
         )}

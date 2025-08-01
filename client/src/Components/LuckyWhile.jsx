@@ -6,6 +6,7 @@ import { useUser } from "../context/userContext";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import pointerImage from "../images/pointer.webp";
+import pullerImage from "../images/puller.webp";
 import grassBg from "../images/grassbg.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
@@ -15,7 +16,7 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Plunger component with a vertical track and circular knob */
+/** Plunger component with a vertical track and image knob */
 function Plunger({ onPull, disabled }) {
   const trackHeight = 200;
   const knobSize = 32;
@@ -34,22 +35,23 @@ function Plunger({ onPull, disabled }) {
 
   return (
     <div className="flex flex-col items-center select-none">
-      <div className="relative w-8" style={{ height: trackHeight }}>
+      <span className="slackey-regular text-white mb-1 text-xs">Pull to spin</span>
+      <div className="relative" style={{ width: knobSize, height: trackHeight }}>
         {/* Track */}
         <div className="absolute inset-x-0 mx-auto w-2 h-full bg-gray-600 rounded-full" />
         {/* Knob */}
-        <motion.div
-          style={{ y }}
-          className={`absolute left-0 w-8 h-8 rounded-full ${
-            disabled ? "bg-gray-400" : "bg-pink-500"
-          }`}
+        <motion.img
+          src={pullerImage}
+          alt="knob"
+          
+          className="absolute left-0 w-8 h-8"
+          style={{ y,filter: disabled ? "grayscale(100%)" : "none" }}
           drag="y"
           dragConstraints={{ top: 0, bottom: maxY }}
           onDragEnd={handleDragEnd}
           whileTap={{ cursor: disabled ? "not-allowed" : "grabbing" }}
         />
       </div>
-      <span className="slackey-regular text-white mt-2 text-xs">Pull to spin</span>
     </div>
   );
 }
@@ -202,7 +204,7 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
-  // Pointer arrow always centred
+  // Pointer arrow always centered
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -266,15 +268,15 @@ export default function LuckyWheel() {
         </div>
 
         {/* Wheel + Plunger */}
-        <div className="flex items-start justify-center space-x-2 flex-wrap">
+        <div className="flex items-start justify-center space-x-1 flex-wrap">
           {/* Wheel */}
           <div
             className="relative"
             style={{
-              width: "75vw",
-              height: "75vw",
-              maxWidth: 360,
-              maxHeight: 360,
+              width: "83vw",
+              height: "83vw",
+              maxWidth: 388,
+              maxHeight: 388,
               overflow: "visible",
             }}
           >

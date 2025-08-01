@@ -270,16 +270,16 @@ export default function LuckyWheel() {
             {numericBet > totalBalance && <p>Bet cannot exceed your balance.</p>}
           </div>
 
-          {/* Wheel + Plunger: stack on mobile, row on md+ */}
-          <div className="flex flex-col md:flex-row items-center justify-center mt-4 md:space-x-4 space-y-4 md:space-y-0">
+          {/* Wheel + Plunger row */}
+          <div className="flex items-start justify-center space-x-2 mt-4">
             {/* Wheel */}
             <div
-              className="relative flex-shrink-0"
+              className="relative"
               style={{
-                width: "60vw",
-                height: "60vw",
-                maxWidth: "360px",
-                maxHeight: "360px",
+                width: "80vw",
+                height: "80vw",
+                maxWidth: 360,
+                maxHeight: 360,
                 overflow: "visible",
               }}
             >

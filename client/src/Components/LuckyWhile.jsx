@@ -271,7 +271,7 @@ export default function LuckyWheel() {
           </div>
 
           {/* Wheel + Plunger row */}
-          <div className="flex items-start justify-center space-x-2 mt-4">
+          <div className="flex items-start justify-center space-x-1 mt-4">
             {/* Wheel */}
             <div
               className="relative"

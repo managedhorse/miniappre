@@ -15,38 +15,42 @@ function formatNumber(num) {
   return num.toLocaleString("en-US");
 }
 
-/** Plunger component */
+/** Plunger component with a vertical track and circular knob */
 function Plunger({ onPull, disabled }) {
-  // y: 0 (rest) → 200 (fully pulled)
+  const trackHeight = 200;
+  const knobSize = 32;
+  const maxY = trackHeight - knobSize;
+
   const y = useMotionValue(0);
-  // map pull distance → 0–100 power
-  const power = useTransform(y, [0, 200], [0, 100]);
+  const power = useTransform(y, [0, maxY], [0, 100]);
 
   function handleDragEnd() {
     if (!disabled) {
       const p = Math.round(power.get());
       onPull(p);
     }
-    // spring back
     animate(y, 0, { type: "spring", stiffness: 500, damping: 30 });
   }
 
   return (
-    <motion.div
-      style={{
-        y,
-        width: "32px",
-        height: "100px",
-        background: "linear-gradient(to bottom, #FF6F91, #FFBC42)",
-        borderRadius: "8px",
-        touchAction: "none",
-        cursor: disabled ? "not-allowed" : "grab",
-      }}
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 200 }}
-      onDragEnd={handleDragEnd}
-      whileTap={{ cursor: "grabbing" }}
-    />
+    <div className="flex flex-col items-center select-none">
+      <div className="relative w-8" style={{ height: trackHeight }}>
+        {/* Track */}
+        <div className="absolute inset-x-0 mx-auto w-2 h-full bg-gray-600 rounded-full" />
+        {/* Knob */}
+        <motion.div
+          style={{ y }}
+          className={`absolute left-0 w-8 h-8 rounded-full ${
+            disabled ? "bg-gray-400" : "bg-pink-500"
+          }`}
+          drag="y"
+          dragConstraints={{ top: 0, bottom: maxY }}
+          onDragEnd={handleDragEnd}
+          whileTap={{ cursor: disabled ? "not-allowed" : "grabbing" }}
+        />
+      </div>
+      <span className="slackey-regular text-white mt-2">Pull to spin</span>
+    </div>
   );
 }
 
@@ -105,7 +109,7 @@ export default function LuckyWheel() {
   // Store the stake for onRest
   const betRef = useRef(0);
 
-  // Init the wheel
+  // Initialize the wheel
   const [wheelReady, setWheelReady] = useState(false);
   useEffect(() => {
     if (!containerRef.current) return;
@@ -172,7 +176,7 @@ export default function LuckyWheel() {
     setTimeout(() => setShowResult(false), 5000);
   }
 
-  // Trigger spin after plunger pull
+  // Fire the spin from plunger
   function handleSpinWithPower(pwr) {
     if (!wheelReady || !userIsReady || isSpinning) return;
     if (totalBalance < 50000) return;
@@ -198,7 +202,7 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
-  // Pointer arrow over wheel
+  // Pointer arrow
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -214,7 +218,7 @@ export default function LuckyWheel() {
     />
   );
 
-  // Telegram Back button
+  // Telegram back button
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
@@ -228,6 +232,7 @@ export default function LuckyWheel() {
   return (
     <Animate>
       <div className="grid place-items-center px-3 pt-3 pb-[90px] relative">
+        {/* Balance display */}
         <div className="mb-2 text-center">
           <span className="slackey-regular text-[24px] text-white">
             Balance:
@@ -237,7 +242,7 @@ export default function LuckyWheel() {
           </span>
         </div>
 
-        {/* GrassBG Panel */}
+        {/* Main panel */}
         <div
           className="rounded-lg w-full max-w-[420px] shadow-lg p-4 border border-gray-700 bg-cover bg-center"
           style={{ backgroundImage: `url(${grassBg})` }}
@@ -246,21 +251,18 @@ export default function LuckyWheel() {
             Spin Mianus
           </h2>
 
-          <div className="flex items-start space-x-2">
+          {/* Bet input */}
+          <div className="mb-2">
             <input
               type="number"
               placeholder="Enter amount"
-              className="flex-1 py-1 px-2 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
+              className="w-full py-1 px-2 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
               value={betAmount}
               onChange={e => setBetAmount(e.target.value)}
             />
-
-            <div className="flex flex-col items-center mt-4">
-              <span className="slackey-regular text-white mb-1">Pull to spin</span>
-              <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
-            </div>
           </div>
 
+          {/* Validation messages */}
           <div className="mt-2 text-sm text-red-400 min-h-[20px]">
             {(!wheelReady || !userIsReady) && <p>Please wait...</p>}
             {totalBalance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
@@ -268,29 +270,37 @@ export default function LuckyWheel() {
             {numericBet > totalBalance && <p>Bet cannot exceed your balance.</p>}
           </div>
 
-          <div
-            className="relative mx-auto mt-3"
-            style={{
-              width: "80vw",
-              height: "80vw",
-              maxWidth: "360px",
-              maxHeight: "360px",
-              overflow: "visible",
-            }}
-          >
+          {/* Wheel + Plunger row */}
+          <div className="flex items-start justify-center space-x-6 mt-4">
+            {/* Wheel */}
             <div
-              ref={containerRef}
+              className="relative"
               style={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
+                width: "80vw",
+                height: "80vw",
+                maxWidth: 360,
+                maxHeight: 360,
+                overflow: "visible",
               }}
-            />
-            {renderPointer()}
+            >
+              <div
+                ref={containerRef}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                  overflow: "hidden",
+                }}
+              />
+              {renderPointer()}
+            </div>
+
+            {/* Plunger */}
+            <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
           </div>
         </div>
 
+        {/* Floating text */}
         {floatingText && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
@@ -299,6 +309,7 @@ export default function LuckyWheel() {
           </div>
         )}
 
+        {/* Result toast */}
         {showResult && (
           <div className="fixed left-0 right-0 bottom-[80px] mx-auto flex justify-center px-4 z-[9999]">
             <div
@@ -316,6 +327,7 @@ export default function LuckyWheel() {
           </div>
         )}
 
+        {/* Congrats GIF */}
         {showCongratsGif && (
           <div className="absolute top-[20%] left-0 right-0 flex justify-center pointer-events-none select-none">
             <img src={congratspic} alt="congrats" className="w-[160px]" />

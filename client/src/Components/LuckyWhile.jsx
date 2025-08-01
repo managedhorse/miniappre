@@ -49,7 +49,7 @@ function Plunger({ onPull, disabled }) {
           whileTap={{ cursor: disabled ? "not-allowed" : "grabbing" }}
         />
       </div>
-      <span className="slackey-regular text-white mt-2">Pull to spin</span>
+      <span className="slackey-regular text-white mt-2 text-xs">Pull to spin</span>
     </div>
   );
 }
@@ -202,7 +202,7 @@ export default function LuckyWheel() {
     numericBet >= 10000 &&
     numericBet <= totalBalance;
 
-  // Pointer arrow
+  // Pointer arrow always centred
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -210,8 +210,10 @@ export default function LuckyWheel() {
       style={{
         position: "absolute",
         top: "-15px",
-        left: "50%",
-        transform: "translateX(-50%) rotate(-45deg)",
+        left: 0,
+        right: 0,
+        margin: "0 auto",
+        transform: "rotate(-45deg)",
         width: "40px",
         zIndex: 1000,
       }}
@@ -231,73 +233,65 @@ export default function LuckyWheel() {
 
   return (
     <Animate>
-      <div className="grid place-items-center px-3 pt-3 pb-[90px] relative">
+      {/* Full-screen grass BG */}
+      <div
+        className="w-full h-screen overflow-auto bg-cover bg-center flex flex-col items-center pt-6 pb-6"
+        style={{ backgroundImage: `url(${grassBg})` }}
+      >
         {/* Balance display */}
-        <div className="mb-2 text-center">
-          <span className="slackey-regular text-[24px] text-white">
-            Balance:
-          </span>{" "}
-          <span className="text-white">
+        <div className="mb-4 text-center">
+          <span className="slackey-regular text-[26px] text-white">
+            Balance:{" "}
+          </span>
+          <span className="slackey-regular text-[26px] text-yellow-300">
             {formatNumber(totalBalance)} Mianus
           </span>
         </div>
 
-        {/* Main panel */}
-        <div
-          className="rounded-lg w-full max-w-[420px] shadow-lg p-4 border border-gray-700 bg-cover bg-center"
-          style={{ backgroundImage: `url(${grassBg})` }}
-        >
-          <h2 className="text-white slackey-regular text-[20px] font-medium text-center mb-2">
-            Spin Mianus
-          </h2>
-
-          {/* Bet input */}
-          <div className="mb-2">
-            <input
-              type="number"
-              placeholder="Enter amount"
-              className="w-full py-1 px-2 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
-              value={betAmount}
-              onChange={e => setBetAmount(e.target.value)}
-            />
-          </div>
-
-          {/* Validation messages */}
-          <div className="mt-2 text-sm text-red-400 min-h-[20px]">
+        {/* Bet input */}
+        <div className="w-11/12 max-w-sm mb-4">
+          <input
+            type="number"
+            placeholder="Enter amount"
+            className="w-full py-2 px-3 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
+            value={betAmount}
+            onChange={e => setBetAmount(e.target.value)}
+          />
+          <div className="mt-1 text-sm text-red-400 min-h-[1em]">
             {(!wheelReady || !userIsReady) && <p>Please wait...</p>}
             {totalBalance < 50000 && <p>You need ≥ 50,000 Mianus to play.</p>}
             {numericBet < 10000 && <p>Minimum bet is 10,000 Mianus.</p>}
             {numericBet > totalBalance && <p>Bet cannot exceed your balance.</p>}
           </div>
+        </div>
 
-          {/* Wheel + Plunger row */}
-          <div className="flex items-start justify-center space-x-1 mt-4">
-            {/* Wheel */}
+        {/* Wheel + Plunger */}
+        <div className="flex items-start justify-center space-x-2 flex-wrap">
+          {/* Wheel */}
+          <div
+            className="relative"
+            style={{
+              width: "75vw",
+              height: "75vw",
+              maxWidth: 360,
+              maxHeight: 360,
+              overflow: "visible",
+            }}
+          >
             <div
-              className="relative"
+              ref={containerRef}
               style={{
-                width: "80vw",
-                height: "80vw",
-                maxWidth: 360,
-                maxHeight: 360,
-                overflow: "visible",
+                position: "relative",
+                width: "100%",
+                height: "100%",
+                overflow: "hidden",
               }}
-            >
-              <div
-                ref={containerRef}
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "100%",
-                  overflow: "hidden",
-                }}
-              />
-              {renderPointer()}
-            </div>
-
-            {/* Plunger */}
-            <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
+            />
+            {renderPointer()}
           </div>
+
+          {/* Plunger */}
+          <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
         </div>
 
         {/* Floating text */}
@@ -311,10 +305,10 @@ export default function LuckyWheel() {
 
         {/* Result toast */}
         {showResult && (
-          <div className="fixed left-0 right-0 bottom-[80px] mx-auto flex justify-center px-4 z-[9999]">
+          <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
             <div
-              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-[8px] shadow-lg text-sm w-fit ${
-                resultMessage.includes("lost") ? "text-red-400" : "text-[#54d192]"
+              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm w-fit ${
+                resultMessage.includes("lost") ? "text-red-400" : "text-green-300"
               }`}
             >
               {resultMessage.includes("lost") ? (
@@ -329,8 +323,8 @@ export default function LuckyWheel() {
 
         {/* Congrats GIF */}
         {showCongratsGif && (
-          <div className="absolute top-[20%] left-0 right-0 flex justify-center pointer-events-none select-none">
-            <img src={congratspic} alt="congrats" className="w-[160px]" />
+          <div className="absolute top-1/4 inset-x-0 flex justify-center pointer-events-none select-none">
+            <img src={congratspic} alt="congrats" className="w-40" />
           </div>
         )}
       </div>

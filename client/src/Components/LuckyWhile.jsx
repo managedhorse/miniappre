@@ -72,7 +72,7 @@ function shuffleArray(arr) {
 }
 
 function createWheelItems() {
-  return shuffleArray(baseSlices).map(slice => ({
+  return shuffleArray(baseSlices).map((slice) => ({
     label: slice.label,
     backgroundColor: slice.color,
     color: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
@@ -99,8 +99,20 @@ export default function LuckyWheel() {
   const [showCongratsGif, setShowCongratsGif] = useState(false);
 
   const balanceRef = useRef(balance);
-  useEffect(() => { balanceRef.current = balance; }, [balance]);
+  useEffect(() => {
+    balanceRef.current = balance;
+  }, [balance]);
   const betRef = useRef(0);
+
+  // helpers to double or half the current bet
+  const handleDouble = () => {
+    const current = parseInt(betAmount, 10) || 0;
+    setBetAmount(String(current * 2));
+  };
+  const handleHalf = () => {
+    const current = parseInt(betAmount, 10) || 0;
+    setBetAmount(String(Math.floor(current / 2)));
+  };
 
   // initialize wheel
   useEffect(() => {
@@ -127,18 +139,19 @@ export default function LuckyWheel() {
 
   async function handleWheelRest(e) {
     setIsSpinning(false);
-    const idx = typeof e.currentIndex === "number"
-      ? e.currentIndex
-      : typeof e.index === "number"
-      ? e.index
-      : null;
+    const idx =
+      typeof e.currentIndex === "number"
+        ? e.currentIndex
+        : typeof e.index === "number"
+        ? e.index
+        : null;
     if (idx === null) return;
 
     const curBal = balanceRef.current;
     const betUsed = betRef.current;
     const { multiplier } = items[idx].value;
-
     let newBal;
+
     if (!multiplier) {
       newBal = curBal - betUsed;
       setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
@@ -178,9 +191,8 @@ export default function LuckyWheel() {
     wheelRef.current.spinToItem(idx, duration, true, revolutions, 1);
   }
 
-  const canSpin = !isSpinning &&
-                  numericBet >= 10000 &&
-                  numericBet <= totalBalance;
+  const canSpin =
+    !isSpinning && numericBet >= 10000 && numericBet <= totalBalance;
 
   const renderPointer = () => (
     <img
@@ -212,7 +224,7 @@ export default function LuckyWheel() {
       <div className="relative w-full h-screen">
         {/* pinned grass background */}
         <div
-          className="fixed inset-0 bg-top  bg-no-repeat"
+          className="fixed inset-0 bg-top bg-cover bg-no-repeat"
           style={{ backgroundImage: `url(${grassBg})` }}
         />
 
@@ -230,7 +242,7 @@ export default function LuckyWheel() {
 
           {/* Bet input */}
           <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
-            <div className="relative">
+            <div className="relative flex items-center">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
                 💰
               </span>
@@ -238,7 +250,7 @@ export default function LuckyWheel() {
                 type="number"
                 placeholder="Enter bet amount"
                 className="
-                  w-full pl-5 pr-4 py-2
+                  w-full pl-5 pr-20 py-2
                   rounded-xl bg-gradient-to-br from-gray-800 to-gray-900
                   text-yellow-300 font-bold text-lg
                   placeholder-yellow-600
@@ -248,8 +260,26 @@ export default function LuckyWheel() {
                   transition-transform transform hover:scale-105
                 "
                 value={betAmount}
-                onChange={e => setBetAmount(e.target.value)}
+                onChange={(e) => setBetAmount(e.target.value)}
               />
+
+              {/* double/half controls */}
+              <div className="absolute right-3 flex space-x-2">
+                <button
+                  type="button"
+                  onClick={handleHalf}
+                  className="px-2 py-1 bg-gray-700 text-white rounded-md text-sm"
+                >
+                  ½
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDouble}
+                  className="px-2 py-1 bg-gray-700 text-white rounded-md text-sm"
+                >
+                  2×
+                </button>
+              </div>
             </div>
           </div>
 
@@ -293,12 +323,16 @@ export default function LuckyWheel() {
             <div className="absolute inset-x-0 bottom-6 flex justify-center px-4 z-50">
               <div
                 className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
-                  resultMessage.includes("lost") ? "text-red-400" : "text-green-300"
+                  resultMessage.includes("lost")
+                    ? "text-red-400"
+                    : "text-green-300"
                 }`}
               >
-                {resultMessage.includes("lost")
-                  ? <IoCloseCircle size={24}/>
-                  : <IoCheckmarkCircle size={24}/>}
+                {resultMessage.includes("lost") ? (
+                  <IoCloseCircle size={24} />
+                ) : (
+                  <IoCheckmarkCircle size={24} />
+                )}
                 <span className="font-medium slackey-regular">
                   {resultMessage}
                 </span>

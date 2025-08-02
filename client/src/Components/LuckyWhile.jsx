@@ -106,9 +106,11 @@ export default function LuckyWheel() {
 
   // helpers to double or half the current bet
   const handleDouble = () => {
-    const current = parseInt(betAmount, 10) || 0;
-    setBetAmount(String(current * 2));
-  };
+   const current = parseInt(betAmount, 10) || 0;
+   // don't allow doubling past your balance
+   const doubled = current * 2;
+   setBetAmount(String(Math.min(doubled, totalBalance)));
+ };
   const handleHalf = () => {
     const current = parseInt(betAmount, 10) || 0;
     setBetAmount(String(Math.floor(current / 2)));
@@ -194,6 +196,10 @@ export default function LuckyWheel() {
   const canSpin =
     !isSpinning && numericBet >= 10000 && numericBet <= totalBalance;
 
+const isTooLow  = numericBet > 0 && numericBet < 10000;
+const isTooHigh = numericBet > totalBalance;
+const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
+
   const renderPointer = () => (
     <img
       src={pointerImage}
@@ -254,12 +260,12 @@ export default function LuckyWheel() {
                 placeholder="Min Bet 10,000"
                 min="10000"
                 max={totalBalance}                           /* ① HTML-level max */
-                className="w-full pl-5 pr-20 py-2 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 text-yellow-300 font-bold text-lg placeholder-yellow-600 border-2 border-yellow-500 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.7)] transition-transform transform hover:scale-105"
+                className="w-full pl-5 pr-20 py-2 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 text-yellow-300 font-bold text-lg placeholder-yellow-600 border-2 ${isTooLow || isTooHigh ? 'border-red-500' : 'border-yellow-500'} focus:outline-none focus:${isTooLow||isTooHigh ? 'border-red-400 ring-red-400' : 'border-yellow-400 ring-yellow-400'} shadow-[0_0_10px_rgba(255,215,0,0.7)] transition-transform transform hover:scale-105"
                 value={betAmount}
                 onChange={(e) => {
                   const raw = parseInt(e.target.value, 10) || 0;
                   // ② clamp between your floor (10k) and your totalBalance
-                  const clamped = Math.max(10000, Math.min(raw, totalBalance));
+                  const clamped = Math.min(raw, totalBalance);
                   setBetAmount(String(clamped));
                 }}
               />
@@ -281,6 +287,15 @@ export default function LuckyWheel() {
                   2×
                 </button>
               </div>
+              {/* error message */}
+{isTooLow && (
+  <p className="mt-1 text-sm text-red-400">Minimum bet is 10,000</p>
+)}
+{isTooHigh && (
+  <p className="mt-1 text-sm text-red-400">
+    You only have {formatNumber(totalBalance)} Mianus
+  </p>
+)}
             </div>
           </div>
 

@@ -192,7 +192,7 @@ export default function LuckyWheel() {
         left: 0,
         right: 0,
         margin: "0 auto",
-        transform: "rotate(-45deg)",
+        transform: "translateX(-2px) rotate(-45deg)",
         width: "40px",
         zIndex: 1000,
       }}
@@ -212,7 +212,7 @@ export default function LuckyWheel() {
       <div className="relative w-full h-screen">
         {/* pinned grass background */}
         <div
-          className="fixed inset-0 bg-top bg-cover bg-no-repeat"
+          className="fixed inset-0 bg-top  bg-no-repeat"
           style={{ backgroundImage: `url(${grassBg})` }}
         />
 

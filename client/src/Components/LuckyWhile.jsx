@@ -273,7 +273,7 @@ export default function LuckyWheel() {
         </div>
 
         {/* Wheel + Plunger side-by-side (40px gap below bet) */}
-        <div className="flex items-start justify-start space-x-2 mt-[40px]">
+        <div className="flex items-start justify-start space-x-1 mt-[40px]">
           {/* Wheel container */}
           <div
             className="relative mr-1"

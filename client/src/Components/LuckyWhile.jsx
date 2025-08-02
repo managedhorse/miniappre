@@ -204,7 +204,7 @@ export default function LuckyWheel() {
         left: 0,
         right: 0,
         margin: "0 auto",
-        transform: "rotate(-45deg)",
+        transform: "translateX(-1px) rotate(-45deg)",
         width: "40px",
         zIndex: 1000,
       }}
@@ -320,7 +320,7 @@ export default function LuckyWheel() {
 
           {/* Result toast */}
           {showResult && (
-            <div className="absolute inset-x-0 bottom-6 flex justify-center px-4 z-50">
+            <div className="absolute inset-x-0 bottom-[96px] flex justify-center px-4 z-50">
               <div
                 className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
                   resultMessage.includes("lost")

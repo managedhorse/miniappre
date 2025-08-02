@@ -221,7 +221,7 @@ export default function LuckyWheel() {
     <Animate>
       {/* full-viewport, pinned BG */}
       <div
-        className="fixed inset-0 bg-fixed bg-top bg-cover overflow-y-auto"
+        className="fixed inset-0 h-full bg-fixed bg-top bg-cover overflow-y-auto"
         style={{
           backgroundImage: `url(${grassBg})`,
           width: "100vw",

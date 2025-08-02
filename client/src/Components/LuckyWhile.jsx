@@ -188,7 +188,7 @@ export default function LuckyWheel() {
       alt="pointer"
       style={{
         position: "absolute",
-        top: "-10px",
+        top: "-25px",
         left: 0,
         right: 0,
         margin: "0 auto",

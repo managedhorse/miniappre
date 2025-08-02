@@ -14,29 +14,7 @@ const tele = window.Telegram?.WebApp;
 const allowDesktop = true; // set to false to enforce Telegram-only mode
 
 const App = () => {
-  // --- BEGIN: fix for keyboard / footer shifting background ---
-  useEffect(() => {
-    const setVh = () => {
-      // prefer visualViewport height if available
-      const vh = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight;
-      document.documentElement.style.setProperty(
-        "--vh",
-        `${vh * 0.01}px`
-      );
-    };
 
-    setVh();
-    window.addEventListener("resize", setVh);
-    window.visualViewport?.addEventListener("resize", setVh);
-
-    return () => {
-      window.removeEventListener("resize", setVh);
-      window.visualViewport?.removeEventListener("resize", setVh);
-    };
-  }, []);
-  // --- END: fix for keyboard / footer shifting background ---
 
   useEffect(() => {
     console.log("App component mounted. Current URL is:", window.location.href);
@@ -50,7 +28,6 @@ const App = () => {
       console.log("Telegram.WebApp is NOT available");
     }
   }, []);
-
   // State to determine if the app is running inside Telegram on supported platforms
   const [isTelegram, setIsTelegram] = useState(null); // null = not yet determined
 

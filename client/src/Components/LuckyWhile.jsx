@@ -44,7 +44,7 @@ function Plunger({ onPull, disabled }) {
           src={pullerImage}
           alt="knob"
           className="absolute left-0 w-8 h-8"
-          style={{ 
+          style={{
             y,
             filter: disabled ? "grayscale(100%)" : "none"
           }}
@@ -220,9 +220,14 @@ export default function LuckyWheel() {
 
   return (
     <Animate>
+      {/* full‐viewport, pinned BG */}
       <div
-        className="fixed inset-x-0 top-0 h-screen bg-fixed bg-top bg-cover"
-        style={{ backgroundImage: `url(${grassBg})` }}
+        className="fixed inset-0 bg-fixed bg-top bg-cover overflow-y-auto"
+        style={{
+          backgroundImage: `url(${grassBg})`,
+          width: "100vw",
+          height: "100vh",
+        }}
       >
         {/* Balance */}
         <div className="mb-4 text-center">
@@ -234,45 +239,43 @@ export default function LuckyWheel() {
           </span>
         </div>
 
-        {/* Bet */}
-<div className="w-4/5 max-w-sm mb-4 mr-4">
-  <div className="relative">
-    {/* Optional coin icon inside the input */}
-    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
-      💰
-    </span>
+        {/* Bet (20px right margin) */}
+        <div className="w-4/5 max-w-sm mb-4 mr-5">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
+              💰
+            </span>
+            <input
+              type="number"
+              placeholder="Enter bet amount"
+              className="
+                w-full
+                pl-10
+                pr-4
+                py-2
+                rounded-xl
+                bg-gradient-to-br from-gray-800 to-gray-900
+                text-yellow-300
+                font-bold
+                text-lg
+                placeholder-yellow-600
+                border-2 border-yellow-500
+                focus:outline-none
+                focus:border-yellow-400
+                focus:ring-2 focus:ring-yellow-400
+                shadow-[0_0_10px_rgba(255,215,0,0.7)]
+                transition-transform transform
+                hover:scale-105
+              "
+              value={betAmount}
+              onChange={e => setBetAmount(e.target.value)}
+            />
+          </div>
+        </div>
 
-    <input
-      type="number"
-      placeholder="Enter bet amount"
-      className="
-        w-full
-        pl-10              /* space for the icon */
-        pr-4
-        py-2
-        rounded-xl
-        bg-gradient-to-br from-gray-800 to-gray-900
-        text-yellow-300
-        font-bold
-        text-lg
-        placeholder-yellow-600
-        border-2 border-yellow-500
-        focus:outline-none
-        focus:border-yellow-400
-        focus:ring-2 focus:ring-yellow-400
-        shadow-[0_0_10px_rgba(255,215,0,0.7)]
-        transition-transform transform
-        hover:scale-105
-      "
-      value={betAmount}
-      onChange={e => setBetAmount(e.target.value)}
-    />
-  </div>
-</div>
-
-        {/* Wheel + Plunger side-by-side */}
-        <div className="flex items-start justify-start space-x-1 mt-6">
-          {/* Wheel container */}
+        {/* Wheel + Plunger (20px gap from bet) */}
+        <div className="flex items-start justify-start space-x-1 mt-5">
+          {/* Wheel */}
           <div
             className="relative mr-1"
             style={{

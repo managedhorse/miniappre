@@ -250,7 +250,7 @@ export default function LuckyWheel() {
               placeholder="Enter bet amount"
               className="
                 w-full
-                pl-10
+                pl-5
                 pr-4
                 py-2
                 rounded-xl
@@ -274,7 +274,7 @@ export default function LuckyWheel() {
         </div>
 
         {/* Wheel + Plunger (20px gap from bet) */}
-        <div className="flex items-start justify-start space-x-1 mt-15">
+        <div className="flex items-start justify-start space-x-10 mt-10">
           {/* Wheel */}
           <div
             className="relative mr-1"

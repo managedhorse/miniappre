@@ -1,3 +1,4 @@
+//Components/Footer.jsx
 import React from "react";
 import ref from "../images/ref.webp";
 import boost from "../images/shop.webp";

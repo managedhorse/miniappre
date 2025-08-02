@@ -224,9 +224,12 @@ export default function LuckyWheel() {
       <div className="relative w-full h-screen">
         {/* pinned grass background */}
         <div
-          className="fixed inset-0 bg-top bg-cover bg-no-repeat"
-          style={{ backgroundImage: `url(${grassBg})` }}
-        />
+   className="fixed inset-0 bg-top bg-no-repeat"
+   style={{
+     backgroundImage: `url(${grassBg})`,
+     backgroundSize: '100% auto'
+   }}
+ />
 
         {/* scrollable game UI */}
         <div className="absolute inset-0 overflow-y-auto flex flex-col items-center pt-6 pb-6">

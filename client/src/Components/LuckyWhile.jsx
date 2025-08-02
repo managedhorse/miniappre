@@ -192,7 +192,7 @@ export default function LuckyWheel() {
         left: 0,
         right: 0,
         margin: "0 auto",
-        transform: "translateX(-1px) rotate(-45deg)",
+        transform: "rotate(-45deg)",
         width: "40px",
         zIndex: 1000,
       }}

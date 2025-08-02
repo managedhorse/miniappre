@@ -240,7 +240,7 @@ export default function LuckyWheel() {
         </div>
 
         {/* Bet (20px right margin) */}
-        <div className="w-4/5 max-w-sm mb-4 mr-5">
+        <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
               💰
@@ -274,7 +274,7 @@ export default function LuckyWheel() {
         </div>
 
         {/* Wheel + Plunger (20px gap from bet) */}
-        <div className="flex items-start justify-start space-x-1 mt-5">
+        <div className="flex items-start justify-start space-x-1 mt-15">
           {/* Wheel */}
           <div
             className="relative mr-1"

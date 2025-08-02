@@ -19,6 +19,15 @@ import LuckyWhile from "./Components/LuckyWhile.jsx";
 import DailyReward from "./Components/DailyReward.jsx";
 import Plinko from "./Components/plinko.jsx";
 
+function updateVh() {
+  document.documentElement.style.setProperty(
+    "--vh",
+    `${window.innerHeight * 0.01}px`
+  );
+}
+updateVh();
+window.addEventListener("resize", updateVh);
+
 const router = createHashRouter([
   {
     path: "/",

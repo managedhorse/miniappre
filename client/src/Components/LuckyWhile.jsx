@@ -219,13 +219,13 @@ export default function LuckyWheel() {
 
   return (
     <Animate>
-      {/* full-viewport, pinned BG */}
+      {/* full-viewport, pinned BG using calc(var(--vh)*100) */}
       <div
-        className="fixed inset-0 h-full bg-fixed bg-top bg-cover overflow-y-auto"
+        className="fixed inset-0 bg-fixed bg-top bg-cover overflow-y-auto"
         style={{
           backgroundImage: `url(${grassBg})`,
           width: "100vw",
-          
+          height: "calc(var(--vh) * 100)"
         }}
       >
         {/* Balance */}

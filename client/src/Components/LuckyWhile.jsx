@@ -258,8 +258,7 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
               <input
                type="number"
                 placeholder="Min Bet 10,000"
-                min="10000"
-                max={totalBalance}                           /* ① HTML-level max */
+               
                 className={`
      w-full pl-5 pr-20 py-2
      rounded-xl bg-gradient-to-br from-gray-800 to-gray-900
@@ -273,10 +272,10 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
    `}
                 value={betAmount}
                 onChange={(e) => {
-                  const raw = parseInt(e.target.value, 10) || 0;
-                  // ② clamp between your floor (10k) and your totalBalance
-                  const clamped = Math.min(raw, totalBalance);
-                  setBetAmount(String(clamped));
+              // Let them type anything; we'll show an error if it's out of range
+              // strip out any non-digits so leading zeros, etc. don’t confuse parseInt
+              const raw = e.target.value.replace(/\D/g, "");
+              setBetAmount(raw);
                 }}
               />
 
@@ -299,15 +298,17 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
               </div>
               
             </div>
-            {/* error message */}
-{isTooLow && (
-  <p className="mt-1 text-sm text-red-400">Minimum bet is 10,000</p>
-)}
-{isTooHigh && (
-  <p className="mt-1 text-sm text-red-400">
-    You only have {formatNumber(totalBalance)} Mianus
-  </p>
-)}
+            {/* reserve a 20px-high slot for error text */}
+<div className="mt-1 h-[20px] text-center">
+  {isTooLow && (
+    <p className="text-sm text-red-400">Minimum bet is 10,000</p>
+  )}
+  {isTooHigh && (
+    <p className="text-sm text-red-400">
+      You only have {formatNumber(totalBalance)} Mianus
+    </p>
+  )}
+</div>
           </div>
 
           {/* Wheel + Plunger */}

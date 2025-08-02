@@ -188,11 +188,11 @@ export default function LuckyWheel() {
       alt="pointer"
       style={{
         position: "absolute",
-        top: "-15px",
+        top: "-10px",
         left: 0,
         right: 0,
         margin: "0 auto",
-        transform: "translateX(-2px) rotate(-45deg)",
+        transform: "translateX(-1px) rotate(-45deg)",
         width: "40px",
         zIndex: 1000,
       }}

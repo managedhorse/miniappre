@@ -227,7 +227,7 @@ export default function LuckyWheel() {
    className="fixed inset-0 bg-top bg-no-repeat"
    style={{
      backgroundImage: `url(${grassBg})`,
-     backgroundSize: '100% auto'
+     backgroundSize: '130% auto'
    }}
  />
 
@@ -250,20 +250,18 @@ export default function LuckyWheel() {
                 💰
               </span>
               <input
-                type="number"
-                placeholder="Enter bet amount"
-                className="
-                  w-full pl-5 pr-20 py-2
-                  rounded-xl bg-gradient-to-br from-gray-800 to-gray-900
-                  text-yellow-300 font-bold text-lg
-                  placeholder-yellow-600
-                  border-2 border-yellow-500
-                  focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400
-                  shadow-[0_0_10px_rgba(255,215,0,0.7)]
-                  transition-transform transform hover:scale-105
-                "
+               type="number"
+                placeholder="Min Bet 10,000"
+                min="10000"
+                max={totalBalance}                           /* ① HTML-level max */
+                className="w-full pl-5 pr-20 py-2 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 text-yellow-300 font-bold text-lg placeholder-yellow-600 border-2 border-yellow-500 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.7)] transition-transform transform hover:scale-105"
                 value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
+                onChange={(e) => {
+                  const raw = parseInt(e.target.value, 10) || 0;
+                  // ② clamp between your floor (10k) and your totalBalance
+                  const clamped = Math.max(10000, Math.min(raw, totalBalance));
+                  setBetAmount(String(clamped));
+                }}
               />
 
               {/* double/half controls */}

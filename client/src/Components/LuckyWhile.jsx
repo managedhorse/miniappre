@@ -226,24 +226,49 @@ export default function LuckyWheel() {
       >
         {/* Balance */}
         <div className="mb-4 text-center">
-          <span className="slackey-regular text-[26px] text-white">
+          <span className="slackey-regular text-[22px] text-white">
             Balance:{" "}
           </span>
-          <span className="slackey-regular text-[26px] text-yellow-300">
+          <span className="slackey-regular text-[22px] text-yellow-300">
             {formatNumber(totalBalance)} Mianus
           </span>
         </div>
 
         {/* Bet */}
-        <div className="w-4/5 max-w-sm mb-4 mr-4">
-          <input
-            type="number"
-            placeholder="Enter amount"
-            className="w-full py-2 px-3 rounded-md bg-white text-black border border-gray-300 focus:outline-none focus:border-blue-500"
-            value={betAmount}
-            onChange={e => setBetAmount(e.target.value)}
-          />
-        </div>
+<div className="w-4/5 max-w-sm mb-4 mr-4">
+  <div className="relative">
+    {/* Optional coin icon inside the input */}
+    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
+      💰
+    </span>
+
+    <input
+      type="number"
+      placeholder="Enter bet amount"
+      className="
+        w-full
+        pl-10              /* space for the icon */
+        pr-4
+        py-2
+        rounded-xl
+        bg-gradient-to-br from-gray-800 to-gray-900
+        text-yellow-300
+        font-bold
+        text-lg
+        placeholder-yellow-600
+        border-2 border-yellow-500
+        focus:outline-none
+        focus:border-yellow-400
+        focus:ring-2 focus:ring-yellow-400
+        shadow-[0_0_10px_rgba(255,215,0,0.7)]
+        transition-transform transform
+        hover:scale-105
+      "
+      value={betAmount}
+      onChange={e => setBetAmount(e.target.value)}
+    />
+  </div>
+</div>
 
         {/* Wheel + Plunger side-by-side */}
         <div className="flex items-start justify-start space-x-1 mt-6">

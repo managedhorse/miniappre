@@ -220,120 +220,115 @@ export default function LuckyWheel() {
   return (
     <Animate>
       {/* full-viewport, pinned BG */}
-      <div
-        className="fixed inset-0 h-full bg-fixed bg-top bg-cover overflow-y-auto"
-        style={{
-          backgroundImage: `url(${grassBg})`,
-          width: "100vw",
-          
-        }}
-      >
-        {/* Balance */}
-        <div className="mb-4 text-center">
-          <span className="slackey-regular text-[22px] text-white">
-            Balance:{" "}
-          </span>
-          <span className="slackey-regular text-[22px] text-yellow-300">
-            {formatNumber(totalBalance)} Mianus
-          </span>
-        </div>
+      <div className="relative w-full h-screen">
+        {/* pinned‐fixed grass image */}
+        <div
+          className="absolute inset-0 bg-top bg-cover bg-fixed"
+          style={{ backgroundImage: `url(${grassBg})` }}
+        />
 
-        {/* Bet (20px right margin) */}
-        <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
-              💰
+        {/* scrollable UI overlay */}
+        <div className="relative z-10 flex flex-col items-center pt-6 pb-6 overflow-y-auto h-full">
+          {/* Balance */}
+          <div className="mb-4 text-center">
+            <span className="slackey-regular text-[22px] text-white">
+              Balance:{" "}
             </span>
-            <input
-              type="number"
-              placeholder="Enter bet amount"
-              className="
-                w-full
-                pl-5
-                pr-4
-                py-2
-                rounded-xl
-                bg-gradient-to-br from-gray-800 to-gray-900
-                text-yellow-300
-                font-bold
-                text-lg
-                placeholder-yellow-600
-                border-2 border-yellow-500
-                focus:outline-none
-                focus:border-yellow-400
-                focus:ring-2 focus:ring-yellow-400
-                shadow-[0_0_10px_rgba(255,215,0,0.7)]
-                transition-transform transform
-                hover:scale-105
-              "
-              value={betAmount}
-              onChange={e => setBetAmount(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Wheel + Plunger side-by-side (40px gap below bet) */}
-        <div className="flex items-start justify-start space-x-1 mt-[40px]">
-          {/* Wheel container */}
-          <div
-            className="relative mr-1"
-            style={{
-              width: "80vw",
-              height: "80vw",
-              maxWidth: 360,
-              maxHeight: 360,
-              overflow: "visible",
-            }}
-          >
-            <div
-              ref={containerRef}
-              style={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
-              }}
-            />
-            {renderPointer()}
+            <span className="slackey-regular text-[22px] text-yellow-300">
+              {formatNumber(totalBalance)} Mianus
+            </span>
           </div>
 
-          {/* Plunger */}
-          <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
-        </div>
-
-        {/* Floating text */}
-        {floatingText && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
-              {floatingText}
-            </div>
-          </div>
-        )}
-
-        {/* Result toast */}
-        {showResult && (
-          <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
-            <div
-              className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef] rounded-lg shadow-lg text-sm ${
-                resultMessage.includes("lost") ? "text-red-400" : "text-green-300"
-              }`}
-            >
-              {resultMessage.includes("lost")
-                ? <IoCloseCircle size={24}/>
-                : <IoCheckmarkCircle size={24}/>}
-              <span className="font-medium slackey-regular">
-                {resultMessage}
+          {/* Bet input */}
+          <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
+                💰
               </span>
+              <input
+                type="number"
+                placeholder="Enter bet amount"
+                className="
+                  w-full pl-5 pr-4 py-2 rounded-xl
+                  bg-gradient-to-br from-gray-800 to-gray-900
+                  text-yellow-300 font-bold text-lg
+                  placeholder-yellow-600 border-2 border-yellow-500
+                  focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400
+                  shadow-[0_0_10px_rgba(255,215,0,0.7)]
+                  transition-transform transform hover:scale-105
+                "
+                value={betAmount}
+                onChange={e => setBetAmount(e.target.value)}
+              />
             </div>
           </div>
-        )}
 
-        {/* Congrats GIF */}
-        {showCongratsGif && (
-          <div className="absolute top-1/4 inset-x-0 flex justify-center pointer-events-none select-none">
-            <img src={congratspic} alt="congrats" className="w-40" />
+          {/* Wheel + Plunger side-by-side */}
+          <div className="flex items-start justify-start space-x-1 mt-[40px]">
+            {/* Wheel container */}
+            <div
+              className="relative mr-1"
+              style={{
+                width: "80vw",
+                height: "80vw",
+                maxWidth: 360,
+                maxHeight: 360,
+                overflow: "visible",
+              }}
+            >
+              <div
+                ref={containerRef}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                  overflow: "hidden",
+                }}
+              />
+              {renderPointer()}
+            </div>
+
+            {/* Plunger */}
+            <Plunger onPull={handleSpinWithPower} disabled={!canSpin} />
           </div>
-        )}
+
+          {/* Floating text */}
+          {floatingText && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/60 text-white px-3 py-1 rounded-md animate-bounce">
+                {floatingText}
+              </div>
+            </div>
+          )}
+
+          {/* Result toast */}
+          {showResult && (
+            <div className="fixed inset-x-0 bottom-6 flex justify-center px-4 z-50">
+              <div
+                className={`flex items-center space-x-2 px-4 py-2 bg-[#121620ef]
+                  rounded-lg shadow-lg text-sm ${
+                  resultMessage.includes("lost")
+                    ? "text-red-400"
+                    : "text-green-300"
+                }`}
+              >
+                {resultMessage.includes("lost")
+                  ? <IoCloseCircle size={24}/>
+                  : <IoCheckmarkCircle size={24}/>}
+                <span className="font-medium slackey-regular">
+                  {resultMessage}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Congrats GIF */}
+          {showCongratsGif && (
+            <div className="absolute top-1/4 inset-x-0 flex justify-center pointer-events-none select-none">
+              <img src={congratspic} alt="congrats" className="w-40" />
+            </div>
+          )}
+        </div>
       </div>
     </Animate>
   );

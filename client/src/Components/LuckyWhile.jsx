@@ -287,7 +287,9 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
                   2×
                 </button>
               </div>
-              {/* error message */}
+              
+            </div>
+            {/* error message */}
 {isTooLow && (
   <p className="mt-1 text-sm text-red-400">Minimum bet is 10,000</p>
 )}
@@ -296,7 +298,6 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
     You only have {formatNumber(totalBalance)} Mianus
   </p>
 )}
-            </div>
           </div>
 
           {/* Wheel + Plunger */}

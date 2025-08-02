@@ -86,7 +86,6 @@ function createWheelItems() {
 }
 
 export default function LuckyWheel() {
-  const [power, setPower] = useState(0);
   const { balance, refBonus, setBalance, id, loading, initialized } = useUser();
   const userIsReady = Boolean(id && initialized && !loading);
   const totalBalance = balance + refBonus;
@@ -106,11 +105,11 @@ export default function LuckyWheel() {
 
   // keep current balance in a ref for callbacks
   const balanceRef = useRef(balance);
-  useEffect(() => { balanceRef.current = balance }, [balance]);
+  useEffect(() => { balanceRef.current = balance; }, [balance]);
 
   const betRef = useRef(0);
 
-  // init wheel
+  // initialize wheel
   useEffect(() => {
     if (!containerRef.current) return;
     wheelRef.current = new Wheel(containerRef.current, {
@@ -174,7 +173,7 @@ export default function LuckyWheel() {
     setTimeout(() => setShowResult(false), 5000);
   }
 
-  // fire spin
+  // fire spin from plunger
   function handleSpinWithPower(pwr) {
     if (!userIsReady || isSpinning) return;
     if (numericBet < 10000 || numericBet > totalBalance) return;
@@ -210,7 +209,7 @@ export default function LuckyWheel() {
     />
   );
 
-  // telegram back
+  // telegram back button
   useEffect(() => {
     window.Telegram.WebApp.BackButton.show();
     const onBack = () => window.history.back();
@@ -220,13 +219,13 @@ export default function LuckyWheel() {
 
   return (
     <Animate>
-      {/* full‐viewport, pinned BG */}
+      {/* full-viewport, pinned BG */}
       <div
         className="fixed inset-0 bg-fixed bg-top bg-cover overflow-y-auto"
         style={{
           backgroundImage: `url(${grassBg})`,
           width: "100vw",
-          height: "100vh",
+          
         }}
       >
         {/* Balance */}
@@ -273,9 +272,9 @@ export default function LuckyWheel() {
           </div>
         </div>
 
-        {/* Wheel + Plunger (20px gap from bet) */}
-        <div className="flex items-start justify-start space-x-10 mt-[40px]">
-          {/* Wheel */}
+        {/* Wheel + Plunger side-by-side (40px gap below bet) */}
+        <div className="flex items-start justify-start space-x-2 mt-[40px]">
+          {/* Wheel container */}
           <div
             className="relative mr-1"
             style={{

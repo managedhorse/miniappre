@@ -235,7 +235,7 @@ export default function LuckyWheel() {
         </div>
 
         {/* Bet */}
-        <div className="w-11/12 max-w-sm mb-4">
+        <div className="w-4/5 max-w-sm mb-4 mr-4">
           <input
             type="number"
             placeholder="Enter amount"
@@ -246,10 +246,10 @@ export default function LuckyWheel() {
         </div>
 
         {/* Wheel + Plunger side-by-side */}
-        <div className="flex items-start justify-start space-x-2">
+        <div className="flex items-start justify-start space-x-1 mt-6">
           {/* Wheel container */}
           <div
-            className="relative mr-2"
+            className="relative mr-1"
             style={{
               width: "80vw",
               height: "80vw",

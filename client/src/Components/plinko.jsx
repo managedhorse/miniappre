@@ -262,7 +262,7 @@ function PlinkoIframePage() {
       <button 
   style={{
     position: "absolute",
-    top: "10px",
+    top: "42px",
     left: "10px",
     zIndex: 10,
     backgroundColor: "#4CAF50",
@@ -307,7 +307,7 @@ function PlinkoIframePage() {
     setModalOpen(true); // Now open the modal
   }}
 >
-  Transfer Balance
+  Transfer Mianus
 </button>
 
       <iframe

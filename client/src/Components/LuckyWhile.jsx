@@ -236,7 +236,7 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
           </div>
 
           {/* Difficulty tabs */}
-<div className="mb-4 flex items-center">
+<div className="mb-2 flex items-center">
   <span className="slackey-regular text-white mr-2">Difficulty:</span>
   <div className="inline-flex bg-gray-800 rounded-xl border-2 border-yellow-500 overflow-hidden">
     {[
@@ -264,7 +264,7 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
 
 
           {/* Bet input + controls (unchanged) */}
-          <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
+          <div className="w-4/5 max-w-sm mb-2 mr-5 ml-5">
             <div className="relative flex items-center">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
                 💰

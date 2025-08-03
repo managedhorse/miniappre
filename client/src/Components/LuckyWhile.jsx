@@ -10,6 +10,8 @@ import pullerImage from "../images/puller.webp";
 import grassBg from "../images/grassbg.webp";
 import congratspic from "../images/celebrate.gif";
 import Animate from "../Components/Animate";
+// ← new import:
+import { makeWheelItems } from "../Components/WheelConfig";
 
 /** Helper to format 1234 → "1,234" */
 function formatNumber(num) {
@@ -53,42 +55,26 @@ function Plunger({ onPull, disabled }) {
   );
 }
 
-/** Weighted slices with new 50× jackpot */
-const baseSlices = [
-  ...Array(63).fill({ label: "Lose", multiplier: 0, color: "#F8AAFF" }),
-  ...Array(24).fill({ label: "1.2×", multiplier: 1.2, color: "#4ADE80" }),
-  ...Array(4).fill({ label: "1.5×", multiplier: 1.5, color: "#FACC15" }),
-  ...Array(6).fill({ label: "3×", multiplier: 3, color: "#F472B6" }),
-  ...Array(1).fill({ label: "50×", multiplier: 50, color: "#A78BFA" }),
-];
-
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function createWheelItems() {
-  return shuffleArray(baseSlices).map((slice) => ({
-    label: slice.label,
-    backgroundColor: slice.color,
-    color: slice.multiplier === 0 ? "#FFFFFF" : "#000000",
-    value: { multiplier: slice.multiplier },
-  }));
-}
 
 export default function LuckyWheel() {
   const { balance, refBonus, setBalance, id, loading, initialized } = useUser();
   const userIsReady = Boolean(id && initialized && !loading);
   const totalBalance = balance + refBonus;
 
+  // Bet state (unchanged)…
   const [betAmount, setBetAmount] = useState("");
   const numericBet = parseInt(betAmount, 10) || 0;
 
-  const [items] = useState(createWheelItems);
+  // ** NEW: difficulty selector **
+  const [difficulty, setDifficulty] = useState("hard"); // default
+  // ** NEW: build items from your config **
+  const [items, setItems] = useState(() => makeWheelItems(difficulty));
+
+  // update items whenever difficulty changes
+  useEffect(() => {
+    setItems(makeWheelItems(difficulty));
+  }, [difficulty]);
+
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
 
@@ -116,7 +102,7 @@ export default function LuckyWheel() {
     setBetAmount(String(Math.floor(current / 2)));
   };
 
-  // initialize wheel
+  // initialize wheel with `items`
   useEffect(() => {
     if (!containerRef.current) return;
     wheelRef.current = new Wheel(containerRef.current, {
@@ -226,20 +212,20 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
 
   return (
     <Animate>
-      {/* outer wrapper */}
+      {/* full-screen wrapper */}
       <div className="relative w-full h-screen">
-        {/* pinned grass background */}
+        {/* grass background */}
         <div
-   className="fixed inset-0 bg-top bg-no-repeat"
-   style={{
-     backgroundImage: `url(${grassBg})`,
-     backgroundSize: '130% auto'
-   }}
- />
+          className="fixed inset-0 bg-top bg-no-repeat"
+          style={{
+            backgroundImage: `url(${grassBg})`,
+            backgroundSize: "130% auto",
+          }}
+        />
 
-        {/* scrollable game UI */}
+        {/* scrollable UI */}
         <div className="absolute inset-0 overflow-y-auto flex flex-col items-center pt-6 pb-6">
-          {/* Balance */}
+          {/* Balance display */}
           <div className="mb-4 text-center">
             <span className="slackey-regular text-[22px] text-white">
               Balance:{" "}
@@ -249,7 +235,21 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
             </span>
           </div>
 
-          {/* Bet input */}
+          {/* ** NEW: Difficulty picker ** */}
+          <div className="mb-4">
+            <label className="text-white mr-2">Difficulty:</label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="rounded-md px-2 py-1 bg-gray-800 text-white"
+            >
+              <option value="easy">Easy (3× top)</option>
+              <option value="medium">Medium (10× top)</option>
+              <option value="hard">Hard (50× top)</option>
+            </select>
+          </div>
+
+          {/* Bet input + controls (unchanged) */}
           <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">
             <div className="relative flex items-center">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">

@@ -332,218 +332,183 @@ function PlinkoIframePage() {
       zIndex: 100
     }}
   >
-    {/* Modal Container */}
-    <div 
-      style={{ 
-        backgroundColor: "#ffe4e6", // Softer pink
-        color: "#444",
-        padding: "20px", 
-        borderRadius: "12px", 
-        minWidth: "320px", 
-        maxWidth: "400px",
-        width: "90%",
+    {/* Gradient border wrapper */}
+    <div
+      style={{
+        backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+        padding: "2px",             // border thickness
+        borderRadius: "12px",
         boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-        transform: "scale(0.95)", 
-        animation: "fadeInScale 0.3s forwards",
-        position: "relative"
       }}
     >
-      <h2 style={{ 
-        marginBottom: "12px",
-        fontSize: "1.4rem",
-        fontWeight: "bold",
-        textAlign: "center",
-        fontFamily: "Arial, sans-serif"
-      }}>
-        Transfer Balance
-      </h2>
-      
-      {/* Balances */}
-      <div 
-        style={{ 
-          marginBottom: "16px", 
-          display: "flex", 
-          flexDirection: "column", 
-          gap: "6px",
-          fontFamily: "Arial, sans-serif"
+      {/* Inner white panel */}
+      <div
+        style={{
+          backgroundColor: "#fff",
+          color: "#333",
+          padding: "20px",
+          borderRadius: "10px",
+          minWidth: "320px",
+          maxWidth: "400px",
+          width: "90%",
+          fontFamily: "'Slackey', cursive",
+          textTransform: "uppercase"
         }}
       >
-        <p 
-          style={{ 
-            margin: 0, 
-            fontSize: "1rem", 
-            display: "flex", 
-            justifyContent: "space-between"
-          }}
-        >
-          <strong>Main Balance:</strong> 
-          <span style={{ color: "#8B0000" }}>
-            {typeof balance === "number" ? balance.toFixed(2) : balance}
-          </span>
-        </p>
-        <p 
-          style={{ 
-            margin: 0, 
-            fontSize: "1rem", 
-            display: "flex", 
-            justifyContent: "space-between"
-          }}
-        >
-          <strong>Plinko Balance:</strong> 
-          <span style={{ color: "#8B0000" }}>
-            {modalPlinkoBalance !== null
-              ? Number(modalPlinkoBalance).toFixed(2)
-              : "Loading..."}
-          </span>
-        </p>
-      </div>
+        <h2 style={{
+          margin: "0 0 12px",
+          fontSize: "1.4rem",
+          textAlign: "center",
+          color: "#ff9a9e"
+        }}>
+          Transfer Balance
+        </h2>
 
-      <hr style={{ margin: "12px 0", borderColor: "#aaa" }} />
-
-      {/* Transfer Direction - Custom Segmented Toggles */}
-      <div 
-        style={{ 
-          marginBottom: "16px", 
-          fontFamily: "Arial, sans-serif"
-        }}
-      >
-        <div 
-          style={{
+        {/* Balances (clickable “MAX”) */}
+        <div style={{
+          marginBottom: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px"
+        }}>
+          <div style={{
             display: "flex",
-            backgroundColor: "#fff",
+            justifyContent: "space-between",
+            cursor: "pointer"
+          }}
+            onClick={() => setTransferAmount(String(balance))}
+          >
+            <strong>Main Balance:</strong>
+            <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+              {typeof balance === "number" ? balance.toFixed(2) : balance}
+            </span>
+          </div>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            cursor: "pointer"
+          }}
+            onClick={() => setTransferAmount(String(modalPlinkoBalance))}
+          >
+            <strong>Plinko Balance:</strong>
+            <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+              {modalPlinkoBalance !== null
+                ? Number(modalPlinkoBalance).toFixed(2)
+                : "Loading..."}
+            </span>
+          </div>
+        </div>
+
+        <hr style={{ margin: "12px 0", borderColor: "#ddd" }} />
+
+        {/* Direction toggles */}
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{
+            display: "flex",
+            backgroundColor: "#fafafa",
             borderRadius: "8px",
             overflow: "hidden",
-            border: "1px solid #ccc"
-          }}
-        >
-          {/* TO PLINKO Toggle */}
-          <label 
-            style={{ 
-              flex: 1, 
-              textAlign: "center", 
-              padding: "10px 0", 
-              cursor: "pointer", 
-              transition: "background-color 0.2s",
-              backgroundColor: transferDirection === "toPlinko" ? "#fa8072" : "transparent",
-              color: transferDirection === "toPlinko" ? "#fff" : "#444",
-              fontWeight: transferDirection === "toPlinko" ? "bold" : "normal"
-            }}
-            onClick={() => setTransferDirection("toPlinko")}
-          >
-            To Plinko
-          </label>
+            border: "1px solid #ddd"
+          }}>
+            {["toPlinko","toMain"].map(dir => {
+              const active = transferDirection === dir;
+              const label = dir === "toPlinko" ? "TO PLINKO" : "TO MAIN";
+              return (
+                <div
+                  key={dir}
+                  onClick={() => setTransferDirection(dir)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    backgroundColor: active ? "#ff9a9e" : "transparent",
+                    color: active ? "#fff" : "#333",
+                    fontWeight: active ? "bold" : "normal",
+                    transition: "background-color 0.2s"
+                  }}
+                >
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          {/* TO MAIN Toggle */}
-          <label 
-            style={{ 
-              flex: 1, 
-              textAlign: "center", 
-              padding: "10px 0", 
-              cursor: "pointer", 
-              transition: "background-color 0.2s",
-              backgroundColor: transferDirection === "toMain" ? "#fa8072" : "transparent",
-              color: transferDirection === "toMain" ? "#fff" : "#444",
-              fontWeight: transferDirection === "toMain" ? "bold" : "normal"
+        {/* Amount input */}
+        <div style={{ marginBottom: "16px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontWeight: "bold",
+              color: "#333"
             }}
-            onClick={() => setTransferDirection("toMain")}
           >
-            To Main
+            AMOUNT
           </label>
+          <input
+            type="number"
+            placeholder="Enter amount"
+            value={transferAmount}
+            onChange={e => setTransferAmount(e.target.value)}
+            max={transferDirection === "toMain" && modalPlinkoBalance !== null
+              ? modalPlinkoBalance
+              : undefined}
+            style={{
+              width: "100%",
+              padding: "12px",
+              boxSizing: "border-box",
+              fontSize: "1rem",
+              borderRadius: "8px",
+              border: "1px solid #ddd",
+              outline: "none"
+            }}
+          />
+        </div>
+
+        {/* Action buttons */}
+        <div style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "8px"
+        }}>
+          <button
+            onClick={() => setModalOpen(false)}
+            style={{
+              backgroundColor: "#ccc",
+              color: "#333",
+              padding: "10px 16px",
+              borderRadius: "6px",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontFamily: "'Slackey', cursive"
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleTransfer}
+            disabled={isTransferring}
+            style={{
+              backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+              border: "2px solid #fff",
+              borderRadius: "6px",
+              color: "#fff",
+              padding: "10px 16px",
+              cursor: isTransferring ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              fontFamily: "'Slackey', cursive",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+              transition: "background 0.2s"
+            }}
+          >
+            {isTransferring ? "Processing..." : "Confirm"}
+          </button>
         </div>
       </div>
-
-      {/* Transfer Amount */}
-      <div style={{ marginBottom: "16px", fontFamily: "Arial, sans-serif" }}>
-        <label 
-          style={{ 
-            display: "block", 
-            marginBottom: "8px", 
-            fontWeight: "bold",
-            fontSize: "0.95rem"
-          }}
-        >
-          Amount
-        </label>
-        <input 
-          type="number" 
-          placeholder="Enter amount"
-          value={transferAmount}
-          onChange={(e) => setTransferAmount(e.target.value)}
-          style={{ 
-            width: "100%", 
-            padding: "12px", 
-            boxSizing: "border-box", 
-            fontSize: "1rem",
-            borderRadius: "8px",
-            border: "1px solid #ddd",
-            outline: "none"
-          }}
-          max={
-            transferDirection === "toMain" && modalPlinkoBalance !== null 
-              ? modalPlinkoBalance 
-              : undefined
-          }
-        />
-      </div>
-
-      {/* Action Buttons */}
-      <div 
-        style={{ 
-          display: "flex", 
-          justifyContent: "flex-end", 
-          gap: "8px",
-          fontFamily: "Arial, sans-serif"
-        }}
-      >
-        <button 
-          onClick={() => setModalOpen(false)} 
-          style={{
-            backgroundColor: "#f44336",
-            color: "#fff",
-            border: "none",
-            padding: "10px 16px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "14px",
-            transition: "background-color 0.2s"
-          }}
-        >
-          Cancel
-        </button>
-        <button 
-          onClick={handleTransfer}
-          disabled={isTransferring}
-          style={{
-            backgroundColor: isTransferring ? "#9E9E9E" : "#4CAF50",
-            color: "#fff",
-            border: "none",
-            padding: "10px 16px",
-            borderRadius: "6px",
-            cursor: isTransferring ? "not-allowed" : "pointer",
-            fontSize: "14px",
-            transition: "background-color 0.2s"
-          }}
-        >
-          {isTransferring ? "Processing..." : "Confirm"}
-        </button>
-      </div>
     </div>
-
-    {/* Keyframes for fadeInScale animation */}
-    <style>
-      {`
-        @keyframes fadeInScale {
-          0% {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}
-    </style>
   </div>
 )}
 

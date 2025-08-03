@@ -2,19 +2,27 @@
 
 /** Defines slice distributions for each difficulty */
 export const wheelConfigs = {
+  // **Easy**: 3× top prize
+  // total slices = 28
   easy: [
-    { label: "Lose", multiplier: 0,  color: "#F8AAFF", count: 10 },
-    { label: "1.2×", multiplier: 1.2, color: "#4ADE80", count:  6 },
-    { label: "1.5×", multiplier: 1.5, color: "#FACC15", count:  2 },
-    { label: "3×",   multiplier: 3,   color: "#F472B6", count:  2 },
+    { label: "Lose", multiplier: 0,   color: "#F8AAFF", count: 13 },
+    { label: "1.2×", multiplier: 1.2, color: "#4ADE80", count:  9 },
+    { label: "1.5×", multiplier: 1.5, color: "#FACC15", count:  3 },
+    { label: "3×",   multiplier: 3,   color: "#F472B6", count:  3 },
   ],
+
+  // **Medium**: 10× top prize
+  // total slices = 65
   medium: [
-    { label: "Lose",  multiplier: 0,   color: "#F8AAFF", count: 32 },
+    { label: "Lose",  multiplier: 0,   color: "#F8AAFF", count: 37 },
     { label: "1.2×",  multiplier: 1.2, color: "#4ADE80", count: 16 },
     { label: "1.5×",  multiplier: 1.5, color: "#FACC15", count:  4 },
     { label: "3×",    multiplier: 3,   color: "#F472B6", count:  6 },
     { label: "10×",   multiplier: 10,  color: "#A78BFA", count:  2 },
   ],
+
+  // **Hard**: 50× top prize (unchanged)
+  // total slices = 98
   hard: [
     { label: "Lose",  multiplier: 0,  color: "#F8AAFF", count: 63 },
     { label: "1.2×",  multiplier: 1.2, color: "#4ADE80", count: 24 },
@@ -47,7 +55,7 @@ export function makeWheelItems(difficulty) {
       slices.push({ label, multiplier, color });
     }
   });
-  // shuffle
+  // shuffle and map into spin-wheel format
   return shuffleArray(slices).map(s => ({
     label: s.label,
     backgroundColor: s.color,

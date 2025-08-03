@@ -261,18 +261,21 @@ function PlinkoIframePage() {
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
       <button 
   style={{
-    position: "absolute",
-    top: "50px",
-    left: "10px",
-    zIndex: 10,
-    backgroundColor: "#4CAF50",
-    color: "#fff",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px"
-  }}
+          position: "absolute",
+          top: "50px",
+          left: "10px",
+          zIndex: 10,
+          backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+          border: "2px solid #fff",
+          borderRadius: "8px",
+          boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+          color: "#fff",
+          padding: "8px 16px",
+          cursor: "pointer",
+          fontSize: "14px",
+          fontFamily: "'Slackey', cursive",
+          textTransform: "uppercase",
+        }}
   onClick={async () => {
     if (!id) {
       alert("User ID not available.");

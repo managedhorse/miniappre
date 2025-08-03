@@ -235,31 +235,33 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
             </span>
           </div>
 
-          <div className="mb-4 flex space-x-2">
-           {["easy", "medium", "hard"].map((level) => {
-             const label = level[0].toUpperCase() + level.slice(1);
-             return (
-               <button
-                 key={level}
-                 type="button"
-                 onClick={() => setDifficulty(level)}
-                 className={`
-                   px-4 py-2 rounded-xl
-                   bg-gradient-to-br from-gray-800 to-gray-900
-                   text-yellow-300 font-bold text-lg
-                   border-2
-                   ${difficulty === level
-                      ? "border-yellow-400 focus:ring-yellow-400"
-                      : "border-yellow-500 focus:ring-yellow-400"}
-                   focus:outline-none focus:ring-2
-                   shadow transition-transform transform hover:scale-105
-                 `}
-               >
-                 {label}
-               </button>
-             );
-           })}
-         </div>
+          {/* Difficulty tabs */}
+<div className="mb-4 flex items-center">
+  <span className="slackey-regular text-white mr-2">Difficulty:</span>
+  <div className="inline-flex bg-gray-800 rounded-xl border-2 border-yellow-500 overflow-hidden">
+    {[
+      { key: "easy",   label: "3×" },
+      { key: "medium", label: "10×" },
+      { key: "hard",   label: "50×" },
+    ].map(({ key, label }) => (
+      <button
+        key={key}
+        type="button"
+        onClick={() => setDifficulty(key)}
+        className={`
+          px-3 py-1 text-sm font-bold
+          ${difficulty === key
+            ? "bg-yellow-400 text-gray-900"
+            : "text-yellow-300 hover:bg-gray-700"}
+          focus:outline-none
+        `}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+</div>
+
 
           {/* Bet input + controls (unchanged) */}
           <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">

@@ -235,19 +235,31 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
             </span>
           </div>
 
-          {/* ** NEW: Difficulty picker ** */}
-          <div className="mb-4">
-            <label className="text-white mr-2">Difficulty:</label>
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className="rounded-md px-2 py-1 bg-gray-800 text-white"
-            >
-              <option value="easy">Easy (3× top)</option>
-              <option value="medium">Medium (10× top)</option>
-              <option value="hard">Hard (50× top)</option>
-            </select>
-          </div>
+          <div className="mb-4 flex space-x-2">
+           {["easy", "medium", "hard"].map((level) => {
+             const label = level[0].toUpperCase() + level.slice(1);
+             return (
+               <button
+                 key={level}
+                 type="button"
+                 onClick={() => setDifficulty(level)}
+                 className={`
+                   px-4 py-2 rounded-xl
+                   bg-gradient-to-br from-gray-800 to-gray-900
+                   text-yellow-300 font-bold text-lg
+                   border-2
+                   ${difficulty === level
+                      ? "border-yellow-400 focus:ring-yellow-400"
+                      : "border-yellow-500 focus:ring-yellow-400"}
+                   focus:outline-none focus:ring-2
+                   shadow transition-transform transform hover:scale-105
+                 `}
+               >
+                 {label}
+               </button>
+             );
+           })}
+         </div>
 
           {/* Bet input + controls (unchanged) */}
           <div className="w-4/5 max-w-sm mb-4 mr-5 ml-5">

@@ -262,7 +262,7 @@ function PlinkoIframePage() {
       <button 
   style={{
     position: "absolute",
-    top: "42px",
+    top: "50px",
     left: "10px",
     zIndex: 10,
     backgroundColor: "#4CAF50",

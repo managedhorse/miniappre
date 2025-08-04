@@ -93,93 +93,104 @@ const DailyReward = () => {
   }, []);
 
   return (
-    <Animate>
-      <div className="flex items-center justify-center w-full pt-2 pb-3">
-        <h2
-          className="slackey-regular text-[24px] font-bold text-center"
-          style={{
-            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)", // Mobile-friendly text shadow
-            color: "#FFD700", // Gold color for a nice effect
-          }}
-        >
-          Check Mianus
-        </h2>
-      </div>
-      <div className="w-full pb-[40px] relative pt-5">
-        <p className="slackey-regular text-[16px] text-center pb-3">
-          Check Mianus Daily Rewards
-        </p>
-        <div className="grid items-start w-full grid-cols-5 gap-2 px-5 mt-3">
-          {listDailyRewards.map((reward, index) => {
-            const isClaimable = dailyReward === index && checkClaimable();
-            const isClaimed = dailyReward > index;
+  <Animate>
+    <div className="flex items-center justify-center w-full pt-2 pb-3">
+      <h2
+        className="slackey-regular text-[24px] font-bold text-center"
+        style={{
+          textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)",
+          color: "#FFD700",
+        }}
+      >
+        Check Mianus
+      </h2>
+    </div>
+    <div className="w-full pb-[40px] relative pt-5">
+      <p className="slackey-regular text-[16px] text-center pb-3">
+        Check Mianus Daily Rewards
+      </p>
+      <div className="grid items-start w-full grid-cols-5 gap-4 px-5 mt-4">
+        {listDailyRewards.map((reward, index) => {
+          const isClaimable = dailyReward === index && checkClaimable();
+          const isClaimed = dailyReward > index;
 
-            return (
-              <div
-                key={reward.title}
-                className={`relative flex flex-col items-center justify-center rounded-lg p-3 transition-all ${
-                  isClaimable
-                    ? "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 animate-pulse"
-                    : isClaimed
-                    ? "bg-gray-400 opacity-50"
-                    : "bg-gray-200 opacity-60"
+          return (
+            <div
+              key={reward.title}
+              className={`
+                relative flex flex-col items-center justify-center p-4 rounded-2xl
+                transition-transform duration-200 ease-out
+                ${isClaimable
+                  ? "bg-gradient-to-r from-green-400 to-blue-500 text-white ring-2 ring-green-300 hover:scale-105 animate-pulse"
+                  : isClaimed
+                  ? "bg-gray-700 text-gray-400 opacity-50"
+                  : "bg-gray-800 text-gray-400"}
+              `}
+            >
+              <span className="slackey-regular text-xs font-bold mb-2">
+                {reward.title}
+              </span>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md mb-2">
+                <img src={coinsmall} alt="coin" className="w-5 h-5" />
+              </div>
+              <span
+                className={`slackey-regular text-sm font-semibold ${
+                  isClaimed
+                    ? "text-gray-500"
+                    : isClaimable
+                    ? "text-white"
+                    : "text-gray-400"
                 }`}
               >
-                <span className="slackey-regular text-[12px] font-bold">
-                  {reward.title}
-                </span>
-                <div className="flex justify-center items-center w-[28px] h-[28px] rounded-full bg-white shadow-md">
-                  <img src={coinsmall} alt="coin" className="w-[20px]" />
-                </div>
-                <span
-                  className={`slackey-regular text-[10px] font-medium ${
-                    isClaimed || !isClaimable ? "text-gray-600" : "text-white"
-                  }`}
-                >
-                  {rewardFormatter(reward.bonusAward)}
-                </span>
-                {isClaimable && (
-                  <div className="absolute inset-0 border-[2px] border-yellow-300 rounded-lg"></div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="w-full text-center mt-6">
-          <button
-            disabled={!checkClaimable()}
-            onClick={handleClaim}
-            className={`slackey-regular text-[14px] px-5 py-3 rounded-full font-semibold transition-all ${
-              checkClaimable()
-                ? "bg-gradient-to-r from-green-400 to-blue-500 hover:from-blue-500 hover:to-green-400 text-white shadow-lg"
-                : "bg-gray-400 text-gray-800"
-            }`}
-          >
-            {checkClaimable() ? "Claim Now" : "Claimed"}
-          </button>
-        </div>
+                {rewardFormatter(reward.bonusAward)}
+              </span>
+              {isClaimable && (
+                <div className="absolute inset-0 rounded-2xl border-2 border-green-300" />
+              )}
+            </div>
+          );
+        })}
       </div>
-      <BouncingCoins />
-      <div className="w-full absolute top-[-35px] left-0 right-0 flex justify-center z-20 pointer-events-none select-none">
-        {congrats && (
-          <img src={congratspic} alt="congrats" className="w-[80%]" />
-        )}
+      <div className="w-full text-center mt-6">
+        <button
+          disabled={!checkClaimable()}
+          onClick={handleClaim}
+          className={`
+            slackey-regular text-lg px-6 py-3 rounded-full font-semibold
+            transition-transform duration-200
+            ${checkClaimable()
+              ? "bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-300"
+              : "bg-gray-600 text-gray-400 cursor-not-allowed opacity-50"
+            }
+          `}
+        >
+          {checkClaimable() ? "Claim Now" : "Already Claimed"}
+        </button>
       </div>
-      <div
-        className={`${
-          congrats ? "visible bottom-6" : "invisible bottom-[-10px]"
-        } z-[60] ease-in duration-300 w-full fixed left-0 right-0 px-4`}
-      >
-        <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px]">
-          <IoCheckmarkCircle size={24} />
-          <span className="slackey-regular text-[14px] font-medium">
-            Congratulations! You won{" "}
-            {listDailyRewards[dailyReward - 1]?.bonusAward} Mianus!
-          </span>
-        </div>
+    </div>
+    <BouncingCoins />
+    <div className="w-full absolute top-[-35px] left-0 right-0 flex justify-center z-20 pointer-events-none select-none">
+      {congrats && (
+        <img src={congratspic} alt="congrats" className="w-[80%]" />
+      )}
+    </div>
+    <div
+      className={`
+        ${congrats ? "visible bottom-6" : "invisible bottom-[-10px]"}
+        z-[60] ease-in duration-300 w-full fixed left-0 right-0 px-4
+      `}
+    >
+      <div className="w-full text-[#54d192] flex items-center space-x-2 px-4 bg-[#121620ef] h-[50px] rounded-[8px]">
+        <IoCheckmarkCircle size={24} />
+        <span className="slackey-regular text-[14px] font-medium">
+          Congratulations! You won{" "}
+          {listDailyRewards[dailyReward - 1]?.bonusAward} Mianus!
+        </span>
       </div>
-    </Animate>
-  );
+    </div>
+  </Animate>
+);
+
 };
 
 export default DailyReward;

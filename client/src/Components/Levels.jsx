@@ -80,7 +80,7 @@ const userLevels = [
                   {currentLevel.name}
                 </h1>
                 <p className="text-[#9a96a6] text-[14px] slackey-regular font-medium pt-1 pb-10 px-4">
-                  Your Mianus Balance Determines your level:
+                  Only your taps Determine your level:
                 </p>
               </div>
       

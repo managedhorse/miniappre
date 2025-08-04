@@ -58,7 +58,7 @@ const CoinExplainer = () => (
 
     {/* Visit Site button */}
     <a
-      href="https://betmian.us"
+      href="https://betmian.us/?utm_campaign=tapmianus"
       target="_blank"
       rel="noopener noreferrer"
       className="
@@ -79,7 +79,7 @@ const CoinExplainer = () => (
         e.currentTarget.style.transform = "none";
       }}
     >
-      Visit Site
+      Visit Bet Mianus Homepage
     </a>
 
     {/* Closing */}

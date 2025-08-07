@@ -20,10 +20,7 @@ import Splash from '../Components/Splash.jsx';
 import plinko from "../images/plinko.webp";
 import bindIcon from "../images/bindwallet.webp";
 
-useEffect(() => {
-  const img = new Image();
-  img.src = bindIcon;
-}, []);
+
 
 // Define keyframes for slide up
 const slideUp = keyframes`
@@ -113,6 +110,11 @@ const WobbleImage = styled.img`
 `;
 
 const Plutos = () => {
+
+  useEffect(() => {
+  const img = new Image();
+  img.src = bindIcon;
+}, []);
 
   // Right after function definition
   useEffect(() => {

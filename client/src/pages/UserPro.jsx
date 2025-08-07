@@ -187,8 +187,14 @@ export default function Profile() {
             {!canBind() && (
   <p className="mt-2 text-xs text-gray-700">
     Next update:{" "}
-    {new Date(new Date(timeBind).getTime() + 24 * 60 * 60 * 1000)
-      .toLocaleString()}
+    {(() => {
+      // if timeBind is a Firestore Timestamp, use .toDate(); otherwise assume it's already a Date/string
+      const bindDate = timeBind?.toDate ? timeBind.toDate() : new Date(timeBind);
+      const next = new Date(bindDate.getTime() + 24 * 60 * 60 * 1000);
+      return isNaN(next.getTime())
+        ? "—"
+        : next.toLocaleString();
+    })()}
   </p>
 )}
             <div className="flex justify-end space-x-2">

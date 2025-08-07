@@ -637,8 +637,8 @@ const Plutos = () => {
       animate-fade-in-up
     "
   >
-   {/* Big, centered tap icon */}
-   <img src={bindIcon} alt="Bind Wallet" className="w-12 h-12" />
+   
+   
    {/* Banner-style image at ~70% width */}
    <img
      src={bindIcon}
@@ -648,7 +648,7 @@ const Plutos = () => {
 
   {/* Instruction text */}
   <p className="text-center text-gray-900 text-sm leading-snug">
-    Visit the Airdrop page and bind your wallet to receive your tokens!
+    Visit the Airdrop page and bind your BSC wallet to get your tokens!
   </p>
 
   {/* Dismiss button */}

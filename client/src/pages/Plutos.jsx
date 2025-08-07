@@ -20,6 +20,11 @@ import Splash from '../Components/Splash.jsx';
 import plinko from "../images/plinko.webp";
 import bindIcon from "../images/bindwallet.webp";
 
+useEffect(() => {
+  const img = new Image();
+  img.src = bindIcon;
+}, []);
+
 // Define keyframes for slide up
 const slideUp = keyframes`
   0% {

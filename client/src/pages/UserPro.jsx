@@ -186,7 +186,7 @@ export default function Profile() {
             )}
             {!canBind() && (
   <p className="mt-2 text-xs text-gray-700">
-    Next update:{" "}
+    Locked until:{" "}
     {(() => {
       // if timeBind is a Firestore Timestamp, use .toDate(); otherwise assume it's already a Date/string
       const bindDate = timeBind?.toDate ? timeBind.toDate() : new Date(timeBind);
@@ -213,7 +213,7 @@ export default function Profile() {
                     : "bg-gray-400 cursor-not-allowed opacity-50"
                 }`}
               >
-                {bindAddress ? (canBind() ? "Re-bind" : "Locked") : "Bind"}
+                {bindAddress ? (canBind() ? "Re-bind" : "Address Bound") : "Bind"}
               </button>
             </div>
           </div>

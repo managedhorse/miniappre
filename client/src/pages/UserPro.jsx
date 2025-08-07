@@ -187,9 +187,9 @@ export default function Profile() {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition"
+                className="px-4 py-2 rounded-lg bg-gray-200 text-white hover:bg-gray-300 transition"
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={handleBind}

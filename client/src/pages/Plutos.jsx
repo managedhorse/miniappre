@@ -628,7 +628,7 @@ const Plutos = () => {
 {showPrompt && (
   <div
     className="
-      fixed bottom-6 left-1/2 transform -translate-x-1/2
+      fixed bottom-20 inset-x-0 mx-auto
       w-full max-w-md
       bg-white rounded-xl shadow-lg
       flex flex-col items-center space-y-3

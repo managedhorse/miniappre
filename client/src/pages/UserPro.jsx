@@ -114,8 +114,9 @@ export default function Profile() {
             </div>
             <button
               onClick={() => setModalOpen(true)}
-              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg font-semibold text-white hover:scale-105 transition"
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg font-semibold text-white hover:scale-105 transition"
             >
+              <img src={BNBwallet} alt="BSC" className="w-5 h-5 mr-2" />
               Bind Wallet
             </button>
           </div>

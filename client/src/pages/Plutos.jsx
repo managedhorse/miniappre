@@ -624,7 +624,7 @@ const Plutos = () => {
               <div className="bubble"></div>
             </div>
 
-           // ── Gentle Airdrop Prompt ──
+           
  {showPrompt && (
    <div
      className="

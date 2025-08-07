@@ -172,7 +172,12 @@ export default function Profile() {
                 value={inputAddr}
                 onChange={(e) => setInputAddr(e.target.value)}
                 placeholder="0x1234...ABCD"
-                className="flex-1 rounded-lg px-3 py-2 border border-gray-300 focus:ring-2 focus:ring-pink-400 outline-none"
+                className="
+                flex-1 rounded-lg px-3 py-2
+                bg-white text-gray-900 placeholder-gray-400
+                border border-gray-300
+                focus:ring-2 focus:ring-pink-400 outline-none
+              "
               />
             </div>
             {error && (

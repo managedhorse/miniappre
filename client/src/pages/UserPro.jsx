@@ -4,11 +4,9 @@ import { Outlet } from "react-router-dom";
 import coinsmall from "../images/coinsmall.webp";
 import { TonConnectButton } from "@tonconnect/ui-react";
 import { useUser } from "../context/userContext";
-import tswap from "../images/tswap.png";
-import botr from "../images/bott.webp";
-import { IoClose } from "react-icons/io5";
-import BetMianus from "../Components/BetMianus.jsx";
 import CoinExplainer from "../Components/CoinExplainer.jsx";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase.jsx";
 
 
 // Helper function to format the user's share percentage
@@ -24,7 +22,18 @@ function formatUserShare(share) {
 
 const Profile = () => {
   // Destructure user-related data from the context
-  const { totalCount, dividedCount, users, dividedUsers, username, balance, refBonus } = useUser();
+  const {
+   totalCount, dividedCount, users, dividedUsers,
+   username, balance, refBonus,
+   bindAddress, timeBind, setBindAddress, setTimeBind,
+   id
+ } = useUser();
+  const [draftAddress, setDraftAddress] = useState(bindAddress);
+
+  const canBind = () => {
+  if (!timeBind) return true;
+  return (Date.now() - new Date(timeBind).getTime()) >= 24*60*60*1000;
+};
 
   // State for modal visibility (if needed in future)
   const [modalConvertVisibleEnc, setModalConvert] = useState(false);
@@ -71,6 +80,29 @@ const maxMarketCap = 5000000; // $5M
 // The user's share in USD range
 const minUserUsd = userAirdropFraction * minMarketCap;
 const maxUserUsd = userAirdropFraction * maxMarketCap;
+
+async function handleBind() {
+  if (!canBind()) {
+    alert("You can only re-bind your address once every 24 hours.");
+    return;
+  }
+  try {
+    // update Firestore
+    const ref = doc(db, "telegramUsers", id);
+    const now = new Date();
+    await updateDoc(ref, {
+      bindAddress: draftAddress,
+      timeBind:    now
+    });
+    // update local context
+    setBindAddress(draftAddress);
+    setTimeBind(now);
+    alert("Address bound!");
+  } catch (e) {
+    console.error(e);
+    alert("Failed to bind — please try again.");
+  }
+}
 
 function formatUsdRange(minValue, maxValue) {
   const formatUsd = (val) => {
@@ -147,6 +179,48 @@ function formatUsdRange(minValue, maxValue) {
   </div>
 </div>
 
+{/* ─── New: Bind BSC address ─────────────────────────────────── */}
+    <div className="px-4 mt-6">
+      <label className="block text-sm font-medium text-gray-200 mb-1">
+        BSC Address
+      </label>
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          value={draftAddress}
+          onChange={e => setDraftAddress(e.target.value)}
+          className="
+            flex-1 rounded-lg px-3 py-2
+            bg-white/10 backdrop-blur-sm ring-1 ring-gray-600
+            text-white placeholder-gray-400
+            focus:ring-2 focus:ring-pink-400
+          "
+          placeholder="0x…"
+        />
+        <button
+          onClick={handleBind}
+          disabled={!canBind()}
+          className={`
+            px-4 py-2 rounded-lg font-semibold
+            ${canBind()
+              ? "bg-gradient-to-r from-pink-500 to-purple-600 hover:scale-105"
+              : "bg-gray-600 opacity-50 cursor-not-allowed"
+            }
+            text-white
+            transition-transform
+          `}
+        >
+          {bindAddress ? (canBind() ? "Re-bind" : "Locked") : "Bind"}
+        </button>
+      </div>
+      {!canBind() && (
+        <p className="mt-1 text-xs text-gray-400">
+          Next update:{" "}
+          {new Date(new Date(timeBind).getTime() + 24*60*60*1000)
+            .toLocaleString()}
+        </p>
+      )}
+    </div>
 
           {/* Non-scrolling Content Area */}
           <div className="flex-1 overflow-hidden mt-2 pb-20 px-4">

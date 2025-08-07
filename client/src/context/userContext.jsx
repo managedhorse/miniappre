@@ -47,6 +47,8 @@ export const UserProvider = ({ children }) => {
   const [timeSpin, setTimeSpin] = useState(new Date());
   const [timeDailyReward, setTimeDailyReward] = useState(null);
   const [dailyReward, setDailyReward] = useState(0);
+  const [bindAddress, setBindAddress] = useState("");
+  const [timeBind, setTimeBind]       = useState(null);
   const [username, setUsername] = useState("");
   // eslint-disable-next-line
   const [idme, setIdme] = useState("");
@@ -296,6 +298,8 @@ useEffect(() => {
         if (userDoc.exists()) {
           console.log('User already exists in Firestore');
           const userData = userDoc.data();
+          setBindAddress(userData.bindAddress || "");
+          setTimeBind     (userData.timeBind     || null);
   
           // Update the photo_url if it has changed
           if (userData.photo_url !== photo_url) {
@@ -402,6 +406,8 @@ useEffect(() => {
           referrals: [],
           botLevel: 0,
           plinkoBalance: 0,
+          bindAddress: "",
+          timeBind:     new Date(0),  
         };
 
         await setDoc(userRef, userData);
@@ -953,6 +959,10 @@ useEffect(() => {
       rankUser,
       plinkoBalance,      
       setPlinkoBalance,
+      bindAddress,
+      timeBind,
+      setBindAddress,
+      setTimeBind,
       }}>
       {children}
     </UserContext.Provider>

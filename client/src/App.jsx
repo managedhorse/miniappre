@@ -11,7 +11,7 @@ import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 const tele = window.Telegram?.WebApp;
 
 // Toggle this flag to allow desktop browsers
-const allowDesktop = true; // set to false to enforce Telegram-only mode
+const allowDesktop = false; // set to false to enforce Telegram-only mode
 
 const App = () => {
 

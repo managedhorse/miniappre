@@ -624,39 +624,51 @@ const Plutos = () => {
               <div className="bubble"></div>
             </div>
 
-           
- {showPrompt && (
-   <div
-     className="
-       fixed bottom-6 left-1/2 transform -translate-x-1/2
-       bg-white px-4 py-2 rounded-xl
-       shadow-md flex items-center space-x-3 z-50
-       max-w-sm w-[90%]
-     "
-   >
-     {/* your tap-icon button illustration */}
-     <img src={bindIcon} alt="Bind Wallet" className="w-8 h-8" />
+   {/* ── Gentle Airdrop Prompt ── */}
+{showPrompt && (
+  <div
+    className="
+      fixed bottom-6 left-1/2 transform -translate-x-1/2
+      w-full max-w-md
+      bg-white rounded-xl shadow-lg
+      flex flex-col items-center space-y-3
+      p-4
+      z-50
+      animate-fade-in-up
+    "
+  >
+   {/* Big, centered tap icon */}
+   <img src={bindIcon} alt="Bind Wallet" className="w-12 h-12" />
+   {/* Banner-style image at ~70% width */}
+   <img
+     src={bindIcon}
+     alt="Bind Wallet Illustration"
+     className="w-[70%] object-contain mx-auto"
+   />
 
-     {/* updated copy */}
-     <div className="flex-1 text-sm text-gray-900">
-       Visit the Airdrop page and bind your wallet to receive your tokens!
-     </div>
+  {/* Instruction text */}
+  <p className="text-center text-gray-900 text-sm leading-snug">
+    Visit the Airdrop page and bind your wallet to receive your tokens!
+  </p>
 
-     {/* dismiss */}
-     <button
-       onClick={() => {
-         localStorage.setItem("seenAirdropPrompt", "1");
-         setShowPrompt(false);
-       }}
-       className="
-         px-3 py-1 bg-pink-500 text-white rounded-lg
-         text-sm font-semibold hover:bg-pink-600 transition
-       "
-     >
-       OK
-     </button>
-   </div>
- )}
+  {/* Dismiss button */}
+  <button
+    onClick={() => {
+      localStorage.setItem("seenAirdropPrompt", "1");
+      setShowPrompt(false);
+    }}
+    className="
+      mt-1 px-4 py-2
+      bg-gradient-to-r from-pink-500 to-purple-600
+      text-white font-semibold rounded-lg
+      hover:from-pink-600 hover:to-purple-700
+      transition
+    "
+  >
+    OK
+  </button>
+</div>
+)}
           </div>
         </Animate>
       )}

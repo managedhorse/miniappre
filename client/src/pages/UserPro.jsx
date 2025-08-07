@@ -184,6 +184,13 @@ export default function Profile() {
             {error && (
               <p className="text-sm text-red-500 mb-4">{error}</p>
             )}
+            {!canBind() && (
+  <p className="mt-2 text-xs text-gray-700">
+    Next update:{" "}
+    {new Date(new Date(timeBind).getTime() + 24 * 60 * 60 * 1000)
+      .toLocaleString()}
+  </p>
+)}
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setModalOpen(false)}

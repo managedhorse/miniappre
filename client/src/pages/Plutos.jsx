@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique IDs
 import { useNavigate } from 'react-router-dom';
 import Splash from '../Components/Splash.jsx'; 
 import plinko from "../images/plinko.webp";
+import bindIcon from "../images/bindwallet.webp";
 
 // Define keyframes for slide up
 const slideUp = keyframes`
@@ -142,6 +143,8 @@ const Plutos = () => {
   const containerRef = useRef(null); // Reference to the container for positioning
 
   const navigate = useNavigate();
+  const [tapCount, setTapCount] = useState(0);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   // Debugging: Log splashes and clicks state changes
   useEffect(() => {
@@ -188,6 +191,7 @@ const Plutos = () => {
     setTimeout(() => {
       setIsMouthOpen(false);
     }, 100); // Duration matches the animation length
+    setTapCount(c => c + 1);
   };
 
   // Function to remove a specific splash by ID
@@ -406,6 +410,12 @@ const Plutos = () => {
       }
     }
   };
+  useEffect(() => {
+    if (tapCount >= 20 && !localStorage.getItem('seenAirdropPrompt')) {
+      // only show if user hasn't seen it yet
+      setShowPrompt(true);
+    }
+  }, [tapCount]);
 
   const formatNumber = (num) => {
     if (num < 100000) {
@@ -613,6 +623,40 @@ const Plutos = () => {
               <div className="bubble"></div>
               <div className="bubble"></div>
             </div>
+
+           // ── Gentle Airdrop Prompt ──
+ {showPrompt && (
+   <div
+     className="
+       fixed bottom-6 left-1/2 transform -translate-x-1/2
+       bg-white px-4 py-2 rounded-xl
+       shadow-md flex items-center space-x-3 z-50
+       max-w-sm w-[90%]
+     "
+   >
+     {/* your tap-icon button illustration */}
+     <img src={bindIcon} alt="Bind Wallet" className="w-8 h-8" />
+
+     {/* updated copy */}
+     <div className="flex-1 text-sm text-gray-900">
+       Visit the Airdrop page and bind your wallet to receive your tokens!
+     </div>
+
+     {/* dismiss */}
+     <button
+       onClick={() => {
+         localStorage.setItem("seenAirdropPrompt", "1");
+         setShowPrompt(false);
+       }}
+       className="
+         px-3 py-1 bg-pink-500 text-white rounded-lg
+         text-sm font-semibold hover:bg-pink-600 transition
+       "
+     >
+       OK
+     </button>
+   </div>
+ )}
           </div>
         </Animate>
       )}

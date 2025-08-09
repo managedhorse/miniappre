@@ -1,12 +1,11 @@
 // plinko.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useUser } from "../context/userContext";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  // Destructure plinkoBalance from useUser if provided by context
-  const { balance, plinkoBalance, id, loading, initialized, setBalance } = useUser();
+  const { balance, id, loading, initialized, setBalance } = useUser();
 
   const userIsReady = Boolean(id && initialized && !loading);
   const iframeRef = useRef(null);
@@ -16,106 +15,124 @@ function PlinkoIframePage() {
   const [transferDirection, setTransferDirection] = useState("toPlinko");
   const [isTransferring, setIsTransferring] = useState(false);
   const [modalPlinkoBalance, setModalPlinkoBalance] = useState(null);
+  const [frameReady, setFrameReady] = useState(false);
 
-  // Function to request the child's current Plinko balance
-  function requestChildPlinkoBalance() {
+  // --- helper: ask child app for its balance (with timeout + cleanup) ---
+  const requestChildPlinkoBalance = useCallback(() => {
     return new Promise((resolve, reject) => {
+      const ORIGIN = "https://plinko-game-main-two.vercel.app";
       const requestId = Date.now().toString();
+
       function handleResponse(event) {
         if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
-        const { type, requestId: respRequestId, plinkoBalance, message } = event.data || {};
-        if (respRequestId !== requestId) return;
-        if (type === 'TRANSFER_BALANCE_RESPONSE') {
-          window.removeEventListener("message", handleResponse);
+        const { type, requestId: rid, plinkoBalance, message } = event.data || {};
+        if (rid !== requestId) return;
+
+        window.removeEventListener("message", handleResponse);
+        clearTimeout(timer);
+
+        if (type === "TRANSFER_BALANCE_RESPONSE") {
           resolve(plinkoBalance);
-        } else if (type === 'TRANSFER_BALANCE_ERROR') {
-          window.removeEventListener("message", handleResponse);
-          reject(new Error(message));
+        } else if (type === "TRANSFER_BALANCE_ERROR") {
+          reject(new Error(message || "Child reported transfer error."));
         }
       }
+
       window.addEventListener("message", handleResponse);
+
       const iframe = iframeRef.current;
-      if (iframe) {
-        iframe.contentWindow?.postMessage(
-          { type: 'TRANSFER_BALANCE_REQUEST', requestId },
-          "https://plinko-game-main-two.vercel.app"
-        );
-      } else {
-        reject(new Error("Iframe not available"));
+      if (!iframe) {
+        window.removeEventListener("message", handleResponse);
+        return reject(new Error("Iframe not available"));
       }
-      setTimeout(() => {
+
+      iframe.contentWindow?.postMessage(
+        { type: "TRANSFER_BALANCE_REQUEST", requestId },
+        ORIGIN
+      );
+
+      const timer = setTimeout(() => {
         window.removeEventListener("message", handleResponse);
         reject(new Error("Timeout waiting for response"));
       }, 5000);
     });
-  }
+  }, []);
 
+  // --- child asks for our USERID; reply back ---
   useEffect(() => {
     if (!userIsReady) return;
-  
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-  
+
     function handleMessage(event) {
-      // Only process messages from the expected child origin
       if (!event.origin.includes("plinko-game-main-two.vercel.app")) return;
-  
       const { type } = event.data || {};
-  
-      // Respond to REQUEST_USERID messages
-      if (type === 'REQUEST_USERID') {
-        if (id) {
-          console.log(`Responding to REQUEST_USERID with id: ${id}`);
-          // Respond directly to the source of the message using event.source
-          event.source?.postMessage({ type: 'USERID', userId: id }, event.origin);
-        } else {
-          console.error("User ID not available to send.");
-        }
+      if (type === "REQUEST_USERID" && id) {
+        event.source?.postMessage({ type: "USERID", userId: id }, event.origin);
       }
-  
-      // Handle additional message types as needed
     }
-  
+
     window.addEventListener("message", handleMessage);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
+    return () => window.removeEventListener("message", handleMessage);
   }, [userIsReady, id]);
 
-  // New useEffect to fetch plinkoBalance from iframe on load and sync with Firestore
+  // --- sync child's plinkoBalance into Firestore once ready ---
   useEffect(() => {
-    if (!userIsReady) return;
+    if (!userIsReady || !frameReady) return;
 
-    async function fetchAndSyncPlinkoBalance() {
+    (async () => {
       try {
         const childPlinkoBalance = await requestChildPlinkoBalance();
-        console.log('Fetched plinkoBalance from child:', childPlinkoBalance);
-
-        // Update Firestore with the fetched plinkoBalance
         const userRef = doc(db, "telegramUsers", id.toString());
         await updateDoc(userRef, { plinkoBalance: childPlinkoBalance });
-        console.log('Firestore updated with plinkoBalance:', childPlinkoBalance);
+        localStorage.setItem("plinkoBalance", String(childPlinkoBalance));
 
-        // Optionally, update local storage
-        localStorage.setItem('plinkoBalance', childPlinkoBalance.toString());
-
-        // Update context or state if necessary
         if (setBalance) {
-          // Fetch the main balance if needed
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            setBalance(userData.balance || 0);
+          const snap = await getDoc(userRef);
+          if (snap.exists()) {
+            const d = snap.data();
+            setBalance(d.balance || 0);
           }
         }
-      } catch (error) {
-        console.error('Error fetching and syncing plinko balance:', error);
+      } catch (err) {
+        console.error("Error fetching/syncing plinko balance:", err);
       }
-    }
+    })();
+  }, [userIsReady, frameReady, id, setBalance, requestChildPlinkoBalance]);
 
-    fetchAndSyncPlinkoBalance();
-  }, [userIsReady, id, setBalance]);
+  // --- fetch latest plinkoBalance when the modal opens ---
+  useEffect(() => {
+    if (!modalOpen || !id) return;
 
+    (async () => {
+      try {
+        const userRef = doc(db, "telegramUsers", id.toString());
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setModalPlinkoBalance(userData.plinkoBalance ?? 0);
+        }
+      } catch (error) {
+        console.error("Error fetching latest plinkoBalance:", error);
+      }
+    })();
+  }, [modalOpen, id]);
+
+  // --- Telegram back button (safe-guarded) ---
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    tg?.BackButton?.show?.();
+
+    const handleBackButtonClick = () => {
+      window.history.back();
+    };
+
+    tg?.BackButton?.onClick?.(handleBackButtonClick);
+    return () => {
+      tg?.BackButton?.offClick?.(handleBackButtonClick);
+      tg?.BackButton?.hide?.();
+    };
+  }, []);
+
+  // --- transfer handler ---
   async function handleTransfer() {
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -126,20 +143,19 @@ function PlinkoIframePage() {
       alert("User ID not available.");
       return;
     }
-  
+
     setIsTransferring(true);
-  
+
     let childPlinkoBalance;
     try {
       childPlinkoBalance = await requestChildPlinkoBalance();
-      console.log('Received plinkoBalance from child:', childPlinkoBalance);
-    } catch(err) {
-      console.error('Error getting balance from child:', err);
-      alert('Failed to retrieve game balance from Plinko app.');
+    } catch (err) {
+      console.error("Error getting balance from child:", err);
+      alert("Failed to retrieve game balance from Plinko app.");
       setIsTransferring(false);
       return;
     }
-  
+
     const userRef = doc(db, "telegramUsers", id.toString());
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -147,10 +163,11 @@ function PlinkoIframePage() {
       setIsTransferring(false);
       return;
     }
+
     const data = userSnap.data();
     let currentBalance = data.balance || 0;
-    let currentPlinkoBalance = childPlinkoBalance;
-  
+    let currentPlinkoBalance = childPlinkoBalance || 0;
+
     if (transferDirection === "toPlinko") {
       if (currentBalance < amount) {
         alert("Not enough balance to transfer.");
@@ -168,47 +185,40 @@ function PlinkoIframePage() {
       currentBalance += amount;
       currentPlinkoBalance -= amount;
     }
-  
+
     try {
       await updateDoc(userRef, {
         balance: currentBalance,
-        plinkoBalance: currentPlinkoBalance
+        plinkoBalance: currentPlinkoBalance,
       });
-  
-      // If withdrawing to main app, send a message to the child iframe to deduct the withdrawn amount
-      if (transferDirection === "toMain") {
-        if (iframeRef.current) {
+
+      const ORIGIN = "https://plinko-game-main-two.vercel.app";
+      if (iframeRef.current) {
+        if (transferDirection === "toMain") {
           iframeRef.current.contentWindow?.postMessage(
-            { type: 'DEDUCT_BALANCE', amount: amount },
-            "https://plinko-game-main-two.vercel.app" // Child's origin
+            { type: "DEDUCT_BALANCE", amount },
+            ORIGIN
+          );
+        } else {
+          iframeRef.current.contentWindow?.postMessage(
+            { type: "ADD_BALANCE", amount },
+            ORIGIN
           );
         }
       }
-      // NEW: If transferring to Plinko, send an ADD_BALANCE message to child
-  if (transferDirection === "toPlinko") {
-    if (iframeRef.current) {
-      iframeRef.current.contentWindow?.postMessage(
-        { type: 'ADD_BALANCE', amount: amount },
-        "https://plinko-game-main-two.vercel.app"
-      );
-    }
-  }
-  
+
       setModalOpen(false);
       setTransferAmount("");
-      console.log("Transfer successful. New balances:", { balance: currentBalance, plinkoBalance: currentPlinkoBalance });
-      if (setBalance) {
-        setBalance(currentBalance);
-      }
-      // Optionally update the context or trigger a re-fetch for plinkoBalance here
+      if (setBalance) setBalance(currentBalance);
     } catch (error) {
       console.error("Error updating balances:", error);
       alert("Error processing transfer.");
+    } finally {
+      setIsTransferring(false);
     }
-    setIsTransferring(false);
   }
-  
 
+  // --- early return AFTER hooks are declared ---
   if (!userIsReady) {
     return (
       <div style={{ padding: "1rem" }}>
@@ -216,56 +226,17 @@ function PlinkoIframePage() {
       </div>
     );
   }
-  useEffect(() => {
-    if (modalOpen && id) {
-      async function updateModalBalance() {
-        try {
-          const userRef = doc(db, "telegramUsers", id.toString());
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            const latestBalance = userData.plinkoBalance || 0;
-            setModalPlinkoBalance(latestBalance);
-          } else {
-            console.error("User not found in Firestore.");
-          }
-        } catch (error) {
-          console.error("Error fetching latest plinkoBalance:", error);
-        }
-      }
-      updateModalBalance();
-    }
-  }, [modalOpen, id]);
-
-  useEffect(() => {
-   
-      // Show the back button when the component mounts
-      window.Telegram.WebApp.BackButton.show();
-  
-      // Attach a click event listener to handle the back navigation
-      const handleBackButtonClick = () => {
-        window.history.back();
-      };
-  
-      window.Telegram.WebApp.BackButton.onClick(handleBackButtonClick);
-  
-      // Clean up the event listener and hide the back button when the component unmounts
-      return () => {
-        window.Telegram.WebApp.BackButton.offClick(handleBackButtonClick);
-        window.Telegram.WebApp.BackButton.hide();
-      };
-  
-    }, []);
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-      <button 
-  style={{
+      <button
+        style={{
           position: "absolute",
           top: "50px",
           left: "10px",
           zIndex: 10,
-          backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+          backgroundImage:
+            "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
           border: "2px solid #fff",
           borderRadius: "8px",
           boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
@@ -276,242 +247,261 @@ function PlinkoIframePage() {
           fontFamily: "'Slackey', cursive",
           textTransform: "uppercase",
         }}
-  onClick={async () => {
-    if (!id) {
-      alert("User ID not available.");
-      return;
-    }
+        onClick={async () => {
+          if (!id) {
+            alert("User ID not available.");
+            return;
+          }
 
-    setIsTransferring(true); // Optionally show a loading state
-    let childPlinkoBalance;
-    try {
-      // Request the current Plinko balance from the child app
-      childPlinkoBalance = await requestChildPlinkoBalance();
-      console.log('Fetched plinkoBalance on modal open:', childPlinkoBalance);
-    } catch (err) {
-      console.error('Error fetching balance on modal open:', err);
-      alert('Failed to retrieve game balance from Plinko app.');
-      setIsTransferring(false);
-      return;
-    }
+          setIsTransferring(true);
+          let childPlinkoBalance;
+          try {
+            childPlinkoBalance = await requestChildPlinkoBalance();
+          } catch (err) {
+            console.error("Error fetching balance on modal open:", err);
+            alert("Failed to retrieve game balance from Plinko app.");
+            setIsTransferring(false);
+            return;
+          }
 
-    if (childPlinkoBalance !== undefined) {
-      try {
-        // Update Firestore with the latest plinkoBalance
-        const userRef = doc(db, "telegramUsers", id.toString());
-        await updateDoc(userRef, { plinkoBalance: childPlinkoBalance });
-        console.log('Updated plinkoBalance in Firestore on modal open:', childPlinkoBalance);
-      } catch (error) {
-        console.error("Error updating balance on modal open:", error);
-      }
-    }
+          if (childPlinkoBalance !== undefined) {
+            try {
+              const userRef = doc(db, "telegramUsers", id.toString());
+              await updateDoc(userRef, { plinkoBalance: childPlinkoBalance });
+            } catch (error) {
+              console.error("Error updating balance on modal open:", error);
+            }
+          }
 
-    setIsTransferring(false);
-    setModalOpen(true); // Now open the modal
-  }}
->
-  Transfer Mianus
-</button>
+          setIsTransferring(false);
+          setModalOpen(true);
+        }}
+      >
+        Transfer Mianus
+      </button>
 
       <iframe
         ref={iframeRef}
         src="https://plinko-game-main-two.vercel.app"
         style={{ width: "100%", height: "100%", border: "none" }}
         title="Plinko Game"
+        onLoad={() => setFrameReady(true)}
       />
 
-{modalOpen && (
-  <div 
-    style={{
-      position: "fixed",
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 100
-    }}
-  >
-    {/* Gradient border wrapper */}
-    <div
-      style={{
-        backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
-        padding: "2px",             // border thickness
-        borderRadius: "12px",
-        boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-      }}
-    >
-      {/* Inner white panel */}
-      <div
-        style={{
-          backgroundColor: "#fff",
-          color: "#333",
-          padding: "20px",
-          borderRadius: "10px",
-          minWidth: "320px",
-          maxWidth: "400px",
-          width: "90%",
-          fontFamily: "'Slackey', cursive",
-          textTransform: "uppercase"
-        }}
-      >
-        <h2 style={{
-          margin: "0 0 12px",
-          fontSize: "1.4rem",
-          textAlign: "center",
-          color: "#ff9a9e"
-        }}>
-          Transfer Balance
-        </h2>
-
-        {/* Balances (clickable “MAX”) */}
-        <div style={{
-          marginBottom: "16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px"
-        }}>
-          <div style={{
+      {modalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
             display: "flex",
-            justifyContent: "space-between",
-            cursor: "pointer"
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
           }}
-            onClick={() => setTransferAmount(String(balance))}
+        >
+          {/* Gradient border wrapper */}
+          <div
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+              padding: "2px",
+              borderRadius: "12px",
+              boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+            }}
           >
-            <strong>Main Balance:</strong>
-            <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
-              {typeof balance === "number" ? balance.toFixed(2) : balance}
-            </span>
-          </div>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            cursor: "pointer"
-          }}
-            onClick={() => setTransferAmount(String(modalPlinkoBalance))}
-          >
-            <strong>Plinko Balance:</strong>
-            <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
-              {modalPlinkoBalance !== null
-                ? Number(modalPlinkoBalance).toFixed(2)
-                : "Loading..."}
-            </span>
-          </div>
-        </div>
+            {/* Inner white panel */}
+            <div
+              style={{
+                backgroundColor: "#fff",
+                color: "#333",
+                padding: "20px",
+                borderRadius: "10px",
+                minWidth: "320px",
+                maxWidth: "400px",
+                width: "90%",
+                fontFamily: "'Slackey', cursive",
+                textTransform: "uppercase",
+              }}
+            >
+              <h2
+                style={{
+                  margin: "0 0 12px",
+                  fontSize: "1.4rem",
+                  textAlign: "center",
+                  color: "#ff9a9e",
+                }}
+              >
+                Transfer Balance
+              </h2>
 
-        <hr style={{ margin: "12px 0", borderColor: "#ddd" }} />
-
-        {/* Direction toggles */}
-        <div style={{ marginBottom: "16px" }}>
-          <div style={{
-            display: "flex",
-            backgroundColor: "#fafafa",
-            borderRadius: "8px",
-            overflow: "hidden",
-            border: "1px solid #ddd"
-          }}>
-            {["toPlinko","toMain"].map(dir => {
-              const active = transferDirection === dir;
-              const label = dir === "toPlinko" ? "TO PLINKO" : "TO MAIN";
-              return (
+              {/* Balances (clickable “MAX”) */}
+              <div
+                style={{
+                  marginBottom: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
                 <div
-                  key={dir}
-                  onClick={() => setTransferDirection(dir)}
                   style={{
-                    flex: 1,
-                    padding: "10px 0",
-                    textAlign: "center",
+                    display: "flex",
+                    justifyContent: "space-between",
                     cursor: "pointer",
-                    backgroundColor: active ? "#ff9a9e" : "transparent",
-                    color: active ? "#fff" : "#333",
-                    fontWeight: active ? "bold" : "normal",
-                    transition: "background-color 0.2s"
+                  }}
+                  onClick={() => setTransferAmount(String(balance))}
+                >
+                  <strong>Main Balance:</strong>
+                  <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+                    {typeof balance === "number" ? balance.toFixed(2) : balance}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    setTransferAmount(
+                      String(
+                        modalPlinkoBalance !== null ? modalPlinkoBalance : 0
+                      )
+                    )
+                  }
+                >
+                  <strong>Plinko Balance:</strong>
+                  <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+                    {modalPlinkoBalance !== null
+                      ? Number(modalPlinkoBalance).toFixed(2)
+                      : "Loading..."}
+                  </span>
+                </div>
+              </div>
+
+              <hr style={{ margin: "12px 0", borderColor: "#ddd" }} />
+
+              {/* Direction toggles */}
+              <div style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    backgroundColor: "#fafafa",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    border: "1px solid #ddd",
                   }}
                 >
-                  {label}
+                  {["toPlinko", "toMain"].map((dir) => {
+                    const active = transferDirection === dir;
+                    const label = dir === "toPlinko" ? "TO PLINKO" : "TO MAIN";
+                    return (
+                      <div
+                        key={dir}
+                        onClick={() => setTransferDirection(dir)}
+                        style={{
+                          flex: 1,
+                          padding: "10px 0",
+                          textAlign: "center",
+                          cursor: "pointer",
+                          backgroundColor: active ? "#ff9a9e" : "transparent",
+                          color: active ? "#fff" : "#333",
+                          fontWeight: active ? "bold" : "normal",
+                          transition: "background-color 0.2s",
+                        }}
+                      >
+                        {label}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Amount input */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "bold",
+                    color: "#333",
+                  }}
+                >
+                  AMOUNT
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  max={
+                    transferDirection === "toMain" && modalPlinkoBalance !== null
+                      ? modalPlinkoBalance
+                      : undefined
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    boxSizing: "border-box",
+                    fontSize: "1rem",
+                    borderRadius: "8px",
+                    border: "1px solid #ddd",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "8px",
+                }}
+              >
+                <button
+                  onClick={() => setModalOpen(false)}
+                  style={{
+                    backgroundColor: "#ccc",
+                    color: "#333",
+                    padding: "10px 16px",
+                    borderRadius: "6px",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontFamily: "'Slackey', cursive",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTransfer}
+                  disabled={isTransferring}
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
+                    border: "2px solid #fff",
+                    borderRadius: "6px",
+                    color: "#fff",
+                    padding: "10px 16px",
+                    cursor: isTransferring ? "not-allowed" : "pointer",
+                    fontSize: "14px",
+                    fontFamily: "'Slackey', cursive",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  {isTransferring ? "Processing..." : "Confirm"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Amount input */}
-        <div style={{ marginBottom: "16px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-              color: "#333"
-            }}
-          >
-            AMOUNT
-          </label>
-          <input
-            type="number"
-            placeholder="Enter amount"
-            value={transferAmount}
-            onChange={e => setTransferAmount(e.target.value)}
-            max={transferDirection === "toMain" && modalPlinkoBalance !== null
-              ? modalPlinkoBalance
-              : undefined}
-            style={{
-              width: "100%",
-              padding: "12px",
-              boxSizing: "border-box",
-              fontSize: "1rem",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              outline: "none"
-            }}
-          />
-        </div>
-
-        {/* Action buttons */}
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "8px"
-        }}>
-          <button
-            onClick={() => setModalOpen(false)}
-            style={{
-              backgroundColor: "#ccc",
-              color: "#333",
-              padding: "10px 16px",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontFamily: "'Slackey', cursive"
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleTransfer}
-            disabled={isTransferring}
-            style={{
-              backgroundImage: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 50%, #ff9a9e 100%)",
-              border: "2px solid #fff",
-              borderRadius: "6px",
-              color: "#fff",
-              padding: "10px 16px",
-              cursor: isTransferring ? "not-allowed" : "pointer",
-              fontSize: "14px",
-              fontFamily: "'Slackey', cursive",
-              boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-              transition: "background 0.2s"
-            }}
-          >
-            {isTransferring ? "Processing..." : "Confirm"}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
+      )}
     </div>
   );
 }

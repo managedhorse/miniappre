@@ -7,86 +7,72 @@ import Footer from "./Components/Footer";
 import { UserProvider } from "./context/userContext";
 import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 
-// Access the Telegram WebApp object
-const tele = window.Telegram?.WebApp;
-
 // Toggle this flag to allow desktop browsers
 const allowDesktop = false; // set to false to enforce Telegram-only mode
 
 const App = () => {
-
-
   useEffect(() => {
     console.log("App component mounted. Current URL is:", window.location.href);
 
-    // Check Telegram init data
     if (window.Telegram?.WebApp) {
       console.log("Telegram WebApp initData:", window.Telegram.WebApp.initData);
-      console.log("Telegram WebApp initDataUnsafe:", window.Telegram.WebApp.initDataUnsafe);
+      console.log(
+        "Telegram WebApp initDataUnsafe:",
+        window.Telegram.WebApp.initDataUnsafe
+      );
       console.log("Telegram WebApp platform:", window.Telegram.WebApp.platform);
     } else {
-      console.log("Telegram.WebApp is NOT available");
+      console.log("Telegram.WebApp is NOT available (yet)");
     }
   }, []);
-  // State to determine if the app is running inside Telegram on supported platforms
-  const [isTelegram, setIsTelegram] = useState(null); // null = not yet determined
 
-  // Effect to detect Telegram WebApp environment and platform
+  // null = not yet determined
+  const [isTelegram, setIsTelegram] = useState(null);
+
+  // Detect Telegram env with a short retry window (handles hard reloads)
   useEffect(() => {
-    if (allowDesktop) {
-      // If desktop is allowed, bypass platform restrictions
-      setIsTelegram(true);
-      if (tele) {
-        tele.ready();
-        tele.expand();
-        tele.setHeaderColor("#191b33");
+    let tries = 0;
+    let timer;
 
-        if (typeof tele.disableVerticalSwipes === "function") {
-          tele.disableVerticalSwipes();
-          console.log("Vertical swipes disabled.");
-        } else {
-          console.warn("disableVerticalSwipes method is not available.");
-        }
+    const boot = () => {
+      const tele = window.Telegram?.WebApp;
 
-        if (tele.HapticFeedback) {
-          tele.HapticFeedback.impactOccurred("medium");
+      if (!tele) {
+        if (tries++ < 30) {
+          // retry for ~3s total (30 * 100ms)
+          timer = setTimeout(boot, 100);
+          return;
         }
-      } else {
-        console.warn("Telegram.WebApp is not available.");
+        // Give up after retries
+        setIsTelegram(allowDesktop ? true : false);
+        console.warn("Telegram.WebApp not found after retries.");
+        return;
       }
-    } else if (tele) {
+
       const platform = tele.platform; // "android", "ios", "web", etc.
+      const platformOk =
+        allowDesktop || platform === "android" || platform === "ios";
 
-      // Allow only if platform is 'android' or 'ios'
-      if (platform === "android" || platform === "ios") {
-        setIsTelegram(true);
+      setIsTelegram(platformOk);
 
-        // Initialize Telegram WebApp
-        tele.ready();
-        tele.expand();
-        tele.setHeaderColor("#191b33");
-
-        if (typeof tele.disableVerticalSwipes === "function") {
-          tele.disableVerticalSwipes();
-          console.log("Vertical swipes disabled.");
-        } else {
-          console.warn("disableVerticalSwipes method is not available.");
-        }
-
-        if (tele.HapticFeedback) {
-          tele.HapticFeedback.impactOccurred("medium");
-        }
-      } else {
-        setIsTelegram(false);
+      if (!platformOk) {
         console.warn(`Unsupported platform: ${platform}`);
+        return;
       }
-    } else {
-      setIsTelegram(false);
-      console.warn("Telegram.WebApp is not available.");
-    }
-  }, [tele]);
 
-  // Effect to prevent right-click and certain key combinations
+      // Safe Telegram calls (optional chaining to avoid surprises)
+      tele.ready?.();
+      tele.expand?.();
+      tele.setHeaderColor?.("#191b33");
+      tele.disableVerticalSwipes?.();
+      tele.HapticFeedback?.impactOccurred?.("medium");
+    };
+
+    boot();
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Prevent right-click and certain key combos
   useEffect(() => {
     const handleContextMenu = (event) => event.preventDefault();
     const handleKeyDown = (event) => {
@@ -112,7 +98,9 @@ const App = () => {
       <div>
         <h1 className="text-2xl font-bold mb-4">Access Restricted</h1>
         <p>
-          This application is exclusively available within the Telegram mobile app. Please open it through the Telegram app on your mobile device to continue.
+          This application is exclusively available within the Telegram mobile
+          app. Please open it through the Telegram app on your mobile device to
+          continue.
         </p>
         <a
           href="https://betmian.us/?utm_campaign=desktopredirect"

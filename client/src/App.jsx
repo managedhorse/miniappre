@@ -96,7 +96,7 @@ const App = () => {
 
   const openExternal = (e) => {
     e.preventDefault();
-    const url = "https://betmian.us/?utm_campaign=desktopredirect";
+    const url = "https://t.me/tapmianus";
 
     if (window.Telegram?.WebApp?.openLink) {
       // Opens in the user’s default browser (outside the mini app)

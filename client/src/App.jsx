@@ -93,6 +93,20 @@ const App = () => {
     };
   }, []);
 
+
+  const openExternal = (e) => {
+    e.preventDefault();
+    const url = "https://betmian.us/?utm_campaign=desktopredirect";
+
+    if (window.Telegram?.WebApp?.openLink) {
+      // Opens in the user’s default browser (outside the mini app)
+      window.Telegram.WebApp.openLink(url, { try_instant_view: false });
+    } else {
+      // Fallback for non-Telegram/desktop dev
+      window.open(url, "_blank", "noopener");
+    }
+  };
+
   const renderTelegramOnlyMessage = () => (
     <div className="flex items-center justify-center min-h-screen bg-black text-white px-4 text-center">
       <div>
@@ -102,12 +116,12 @@ const App = () => {
           app. Please open it through the Telegram app on your mobile device to
           continue.
         </p>
-        <a
-          href="https://betmian.us/?utm_campaign=desktopredirect"
+        <button
+          onClick={openExternal}
           className="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
         >
           More Info
-        </a>
+        </button>
       </div>
     </div>
   );

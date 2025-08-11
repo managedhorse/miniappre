@@ -7,6 +7,7 @@ import Spinner from "../Components/Spinner.jsx";
 import coinsmall from "../images/coinsmall.webp";
 import { useUser } from "../context/userContext.jsx";
 import ReferralRewards from "../Components/Rewards.jsx";
+import { retrieveLaunchParams } from '@telegram-apps/sdk';
 
 const REDEEM_URL = "https://function-ruby.vercel.app/api/redeemPromo";
 
@@ -142,13 +143,22 @@ const Ref = () => {
       return;
     }
 
-    const initData = window.Telegram?.WebApp?.initData || "";
+    // Get Telegram init data (raw) and send via Authorization header
+    const { initDataRaw } = retrieveLaunchParams();
+    if (!initDataRaw) {
+      setRedeemErr("Telegram init data not available. Please open in Telegram.");
+      return;
+    }
+
     setRedeeming(true);
     try {
       const resp = await fetch(REDEEM_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, initData }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `tma ${initDataRaw}`,
+        },
+        body: JSON.stringify({ code: code.toUpperCase() }),
       });
       const data = await resp.json();
 

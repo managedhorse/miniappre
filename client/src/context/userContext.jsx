@@ -50,6 +50,7 @@ export const UserProvider = ({ children }) => {
   const [bindAddress, setBindAddress] = useState("");
   const [timeBind, setTimeBind]       = useState(null);
   const [username, setUsername] = useState("");
+  const [promo, setPromo] = useState(null);
   // eslint-disable-next-line
   const [idme, setIdme] = useState("");
   const [totalCount, setTotalCount] = useState(0);
@@ -345,6 +346,7 @@ useEffect(() => {
           setId(userData.userId);
           SetRefBonus(userData.refBonus || 0);
           setPlinkoBalance(userData.plinkoBalance || 0);
+          setPromo(userData.promo || null);
   
           const lastReferralsUpdate = localStorage.getItem("lastReferralsUpdate");
         const now = Date.now();
@@ -408,6 +410,7 @@ useEffect(() => {
           plinkoBalance: 0,
           bindAddress: "",
           timeBind:     new Date(0),  
+          promo: null,
         };
 
         await setDoc(userRef, userData);
@@ -963,6 +966,8 @@ useEffect(() => {
       timeBind,
       setBindAddress,
       setTimeBind,
+      promo,
+      setPromo,
       }}>
       {children}
     </UserContext.Provider>

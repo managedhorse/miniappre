@@ -7,7 +7,8 @@ module.exports = async (req, res) => {
   console.log("Request method:", req.method);
 
   res.setHeader('Access-Control-Allow-Origin', 'https://miniappre.vercel.app');
-  // etc...
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     console.log("Handling OPTIONS preflight");
@@ -45,7 +46,7 @@ module.exports = async (req, res) => {
           id: 'unique-id-' + Date.now(),
           title: 'Join Tap Mianus!',
           input_message_content: {
-            message_text: `Join Tap Mianus using my invite link: https://t.me/tap_mianus_bot?start=r${user_id}`,
+            message_text: `I'm inviting you to Tap Mianus! Here's the link: https://t.me/TapMianusBot?start=r${user_id}`,
           },
           description: 'Tap Mianus is awesome!',
           thumb_url: 'https://miniappre.vercel.app/coinsmall.webp', // Ensure this URL is valid

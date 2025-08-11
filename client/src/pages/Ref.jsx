@@ -8,7 +8,7 @@ import coinsmall from "../images/coinsmall.webp";
 import { useUser } from "../context/userContext.jsx";
 import ReferralRewards from "../Components/Rewards.jsx";
 
-const REDEEM_URL = "https://miniappre.vercel.app/api/redeemPromo"; 
+const REDEEM_URL = "https://function-ruby.vercel.app/api/redeemPromo";
 
 const Ref = () => {
   const {

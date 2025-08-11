@@ -1,16 +1,24 @@
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { v4 as uuidv4 } from "uuid";
 
-const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIALS;
-if (!serviceAccountJson) {
-  throw new Error("Missing FIREBASE_ADMIN_CREDENTIALS env var");
+// 1) Use separate env vars
+const projectId = process.env.FIREBASE_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+if (!projectId || !clientEmail || !privateKey) {
+  throw new Error("Missing one of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY");
 }
 
+// If you have literal "\n" in the private key, unescape them:
+privateKey = privateKey.replace(/\\n/g, "\n");
+
+// Initialize Firestore if not already done
 let db;
 if (!db) {
-  const serviceAccount = JSON.parse(serviceAccountJson);
   initializeApp({
-    credential: cert(serviceAccount),
+    credential: cert({ projectId, clientEmail, privateKey }),
   });
   db = getFirestore();
 }
@@ -37,20 +45,31 @@ export default async function handler(req, res) {
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
       const docId = docSnap.id;
+
+      // RANK FIELDS
       const balance = data.balance || 0;
       const refBonus = data.refBonus || 0;
       const oldRank = data.rank ?? null;
-      const score = balance + refBonus;
+      const score = balance + refBonus; // For sorting & "mianus_balance"
 
-      const userId = data.userId || docId;
+      // BOT LEVEL FIELDS
+      // We'll store the doc's *current* botLevel in "currentBotLevel"
+      // and the user doc might have an oldBotLevel for comparison.
+      const currentBotLevel = data.botLevel ?? 0;
+      const oldBotLevel = data.oldBotLevel ?? 0;
+
+      // BASIC FIELDS
       const username = data.username || "Unknown";
+      const photoUrl = data.photo_url || "";
 
       allUsers.push({
         docId,
-        userId,
         username,
+        photoUrl,
         oldRank,
         score,
+        currentBotLevel,
+        oldBotLevel,
       });
     });
 
@@ -61,90 +80,127 @@ export default async function handler(req, res) {
     const top100 = allUsers.slice(0, 100);
 
     // We'll build "oldOrdered" from these top100, sorted by oldRank ascending
-    // so that oldOrdered[0] is old rank #1 among this subset.
     const oldOrdered = [...top100].sort((a, b) => {
       const rA = a.oldRank == null ? Infinity : a.oldRank;
       const rB = b.oldRank == null ? Infinity : b.oldRank;
       return rA - rB;
     });
 
-    // 4) newOrdered is the top 100 sorted by score (already sorted)
-    //    i.e. top100
+    // newOrdered is the same top100, which is sorted by descending "score"
     const newOrdered = top100;
 
     const batch = db.batch();
-    const events = [];
+    let eventsCreated = 0;
 
-    // 5) Assign new rank for these top 100
+    // 5) Assign new rank for these top 100, detect bot buys, etc.
     for (let i = 0; i < newOrdered.length; i++) {
       const userObj = newOrdered[i];
-      const newRank = i + 1; // rank among top 100
+      const newRank = i + 1;
       const oldRank = userObj.oldRank;
       const docRef = db.collection("telegramUsers").doc(userObj.docId);
 
-      // if rank unchanged or user had no oldRank, do minimal or skip event
-      if (oldRank == null || oldRank === newRank) {
+      // A) DETECT BOT PURCHASES (TapBotBuy)
+      // If userObj.currentBotLevel > userObj.oldBotLevel => log event
+      if (userObj.currentBotLevel > userObj.oldBotLevel) {
+        const docId = `TapBotBuy_${uuidv4()}`;
+        await db.collection("Events").doc(docId).set({
+          type: "TapBotBuy",
+          username: userObj.username,
+          photo_url: userObj.photoUrl,
+          botLevel: userObj.currentBotLevel,
+          mianus_balance: userObj.score, // balance + refBonus
+          timestamp: Date.now(),
+        });
+        eventsCreated++;
+
+        // We update "oldBotLevel" in the doc to the new level
+        batch.update(docRef, { oldBotLevel: userObj.currentBotLevel });
+      } else {
+        // If no increment, keep oldBotLevel as is (or set it if it doesn't exist)
+        if (userObj.oldBotLevel == null) {
+          batch.update(docRef, { oldBotLevel: userObj.currentBotLevel });
+        }
+      }
+
+      // B) RANK LOGIC
+      if (oldRank == null) {
+        // This is a new user => NewPlayerJoined
+        const docId = `NewPlayerJoined_${uuidv4()}`;
+        await db.collection("Events").doc(docId).set({
+          type: "NewPlayerJoined",
+          username: userObj.username,
+          photo_url: userObj.photoUrl,
+          mianus_balance: userObj.score,
+          newRank,
+          timestamp: Date.now(),
+        });
+        eventsCreated++;
+
+        // Set rank in doc
         batch.update(docRef, { rank: newRank });
         continue;
       }
 
-      // *Multiple* overtaken approach but in *one* event doc:
-      if (newRank < oldRank) {
-        // user improved
-        // e.g. oldRank=10, newRank=7 => they jumped over ranks 9, 8, 7
-        const overtakenUsers = [];
+      // If rank unchanged => no event
+      if (oldRank === newRank) {
+        batch.update(docRef, { rank: newRank });
+        continue;
+      }
 
+      // If rank improved => oldRank > newRank
+      if (newRank < oldRank) {
+        let overtakenUsernames = [];
         for (let r = newRank; r < oldRank; r++) {
           const idx = r - 1; // zero-based
           if (idx >= 0 && idx < oldOrdered.length) {
             const overtaken = oldOrdered[idx];
-            overtakenUsers.push({
-              userId: overtaken.userId,
-              username: overtaken.username,
-            });
+            overtakenUsernames.push(overtaken.username);
           }
         }
 
-        events.push({
-          type: "RankChange",
-          userId: userObj.userId,
-          username: userObj.username,
-          oldRank,
-          newRank,
-          // single event doc with array of all overtaken
-          overtaken: overtakenUsers,
-          timestamp: Date.now(),
-        });
-      } else {
-        // if user lost rank, we skip event or do something else
-        // e.g. they were rank=7, now rank=10 => no "overtook" event needed
+        // Remove self if it appears
+        overtakenUsernames = overtakenUsernames.filter(
+          (u) => u !== userObj.username
+        );
+
+        // if there's at least 1 user overtaken, log rank event
+        if (overtakenUsernames.length > 0) {
+          const docId = `RankChange_${uuidv4()}`;
+          await db.collection("Events").doc(docId).set({
+            type: "RankChange",
+            overtaker: userObj.username,
+            photo_url: userObj.photoUrl,
+            mianus_balance: userObj.score,
+            oldRank,
+            newRank,
+            overtaken: overtakenUsernames,
+            timestamp: Date.now(),
+          });
+          eventsCreated++;
+        }
       }
 
-      // Update the doc's new rank
+      // If rank decreased => no event
       batch.update(docRef, { rank: newRank });
     }
 
     // 6) commit batch
     await batch.commit();
 
-    // 7) add events to "Events"
-    const eventWrites = events.map((ev) => db.collection("Events").add(ev));
-    await Promise.all(eventWrites);
-
     console.log(
-      `Top100 rank calc complete. Updated ${events.length} user(s) with multi-overtake arrays.`
+      `Top100 rank calc complete. Created ${eventsCreated} event doc(s).`
     );
 
     return res.status(200).json({
       success: true,
-      updatedCount: events.length,
+      updatedCount: eventsCreated,
       message:
-        "Recalculated rank for top 100 users (balance + refBonus), multiple overtaken stored in single event doc.",
+        "Top 100 rank + TapBotBuy logic complete. Created NewPlayerJoined, RankChange, or TapBotBuy events with custom doc IDs.",
     });
   } catch (err) {
-    console.error("Error recalculating ranks:", err);
+    console.error("Error recalculating ranks + tapbot purchases:", err);
     return res
       .status(500)
-      .json({ error: "Server error recalculating ranks." });
+      .json({ error: "Server error recalculating ranks + tapbot." });
   }
 }

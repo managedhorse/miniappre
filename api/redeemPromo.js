@@ -1,14 +1,25 @@
 import crypto from 'crypto';
 import admin from 'firebase-admin';
 
-// --- Firebase Admin init (env var holds full service account JSON) ---
 if (!admin.apps.length) {
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!serviceAccountJson) {
-    throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_JSON env var');
+  // Prefer individual env vars; fall back to full JSON if present
+  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
+  const creds = json
+    ? JSON.parse(json)
+    : {
+        project_id: process.env.FIREBASE_PROJECT_ID,
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        // Vercel stores newlines as \n — convert them back:
+        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      };
+
+  if (!creds?.client_email || !creds?.private_key || !creds?.project_id) {
+    throw new Error('Missing Firebase Admin env vars');
   }
+
   admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(serviceAccountJson)),
+    credential: admin.credential.cert(creds),
   });
 }
 const db = admin.firestore();
@@ -77,7 +88,8 @@ export default async function handler(req, res) {
 
   try {
     const { code, initData } = req.body || {};
-    const TELEGRAM_BOT_TOKEN = process.env.VITE_TELE_TOKEN;
+    const TELEGRAM_BOT_TOKEN =
+  process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELE_TOKEN;
     if (!code || !initData) {
       return res.status(400).json({ ok: false, error: 'MISSING_CODE_OR_INITDATA' });
     }

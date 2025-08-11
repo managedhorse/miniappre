@@ -124,75 +124,82 @@ const Ref = () => {
 
   const handleMenu = (index) => setActiveIndex(index);
 
-  // Redeem promo handler
   const handleRedeem = async () => {
-    setRedeemMsg("");
-    setRedeemErr("");
+  setRedeemMsg("");
+  setRedeemErr("");
 
-    if (!id) {
-      setRedeemErr("User not ready yet.");
-      return;
-    }
-    if (promo?.code) {
-      setRedeemErr("Promo already redeemed.");
-      return;
-    }
-    const code = (promoInput || "").trim();
-    if (!code) {
-      setRedeemErr("Please enter a promo code.");
-      return;
-    }
+  if (!id) {
+    setRedeemErr("User not ready yet.");
+    return;
+  }
+  if (promo?.code) {
+    setRedeemErr("Promo already redeemed.");
+    return;
+  }
 
-    // Get Telegram init data (raw) and send via Authorization header
-    const { initDataRaw } = retrieveLaunchParams();
-    if (!initDataRaw) {
-      setRedeemErr("Telegram init data not available. Please open in Telegram.");
-      return;
-    }
+  const code = (promoInput || "").trim().toUpperCase();
+  if (!code) {
+    setRedeemErr("Please enter a promo code.");
+    return;
+  }
 
-    setRedeeming(true);
+  // Prefer SDK initDataRaw, fallback to window.Telegram
+  let initDataRaw = "";
+  try {
+    const { initDataRaw: sdkRaw } = retrieveLaunchParams();
+    initDataRaw = sdkRaw || "";
+  } catch {}
+  if (!initDataRaw && window?.Telegram?.WebApp?.initData) {
+    initDataRaw = window.Telegram.WebApp.initData;
+  }
+  if (!initDataRaw) {
+    setRedeemErr("Telegram init data not available. Please open in Telegram.");
+    return;
+  }
+
+  setRedeeming(true);
+  try {
+    const resp = await fetch(REDEEM_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `tma ${initDataRaw}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    let data = {};
     try {
-      const resp = await fetch(REDEEM_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `tma ${initDataRaw}`,
-        },
-        body: JSON.stringify({ code: code.toUpperCase() }),
-      });
-      const data = await resp.json();
+      data = await resp.json();
+    } catch {}
 
-      if (!resp.ok || !data.ok) {
-        const err = data?.error || "Failed to redeem code.";
-        // Map a few known backend errors to nicer copy:
-        const nice =
-          {
-            INVALID_CODE: "Invalid code.",
-            INACTIVE_CODE: "This code is not active.",
-            EXPIRED_CODE: "This code has expired.",
-            CODE_DEPLETED: "This code has reached its limit.",
-            ALREADY_REDEEMED: "You have already redeemed a code.",
-          }[err] || err;
-
-        setRedeemErr(nice);
-        return;
-      }
-
-      // success: update context so UI immediately reflects
-      if (data.promo) setPromo(data.promo); // {code, amount, type}
-      if (typeof data.balance === "number") setBalance(data.balance);
-
-      setRedeemMsg(
-        `Success! +${formatNumber(data?.promo?.amount || 0)} added to balance.`
-      );
-      setPromoInput("");
-    } catch (e) {
-      console.error(e);
-      setRedeemErr("Server error. Please try again.");
-    } finally {
-      setRedeeming(false);
+    if (!resp.ok || !data.ok) {
+      const err = data?.error || `HTTP_${resp.status}`;
+      const nice = {
+        INVALID_CODE: "Invalid code.",
+        INACTIVE_CODE: "This code is not active.",
+        EXPIRED_CODE: "This code has expired.",
+        CODE_DEPLETED: "This code has reached its limit.",
+        ALREADY_REDEEMED: "You have already redeemed a code.",
+        INVALID_SIGNATURE: "Auth failed. Close and reopen the mini app.",
+        INITDATA_TOO_OLD: "Session expired. Reopen the mini app.",
+      }[err] || "Failed to redeem code.";
+      setRedeemErr(nice);
+      return;
     }
-  };
+
+    if (data.promo) setPromo(data.promo);            // { code, amount, type }
+    if (typeof data.balance === "number") setBalance(data.balance);
+
+    setRedeemMsg(`Success! +${formatNumber(data?.promo?.amount || 0)} added to balance.`);
+    setPromoInput("");
+  } catch (e) {
+    console.error("Redeem error:", e);
+    setRedeemErr("Server error. Please try again.");
+  } finally {
+    setRedeeming(false);
+  }
+};
 
   return (
     <>

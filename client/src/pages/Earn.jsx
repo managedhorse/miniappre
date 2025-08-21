@@ -304,7 +304,7 @@ const listTasks = [
                   className="w-[25px] relative"
                   alt="bronze"
                 />
-                <h2 className="text-[#fffff]slackey-regular text-[20px] font-medium">
+                <h2 className="text-[#fffff] slackey-regular text-[20px] font-medium">
                   {level.name}
                 </h2>
                 <MdOutlineKeyboardArrowRight className="w-[20px] h-[20px] text-[#fffff] mt-[2px]" />

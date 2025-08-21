@@ -85,21 +85,7 @@ export const UserProvider = ({ children }) => {
   const tapBalanceRef = useRef(tapBalance);
   const unsavedEarningsRef = useRef(unsavedEarnings);
 
-  // New effect to read stored unsaved earnings on mount
-useEffect(() => {
-   // only apply leftover earnings after we've fetched the real user ID & balance
-   if (!id) return;
-
-   const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-   const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-
-   if (unsaved > 0) {
-     setBalance(prev => prev + unsaved);
-     setTapBalance(prev => prev + unsaved);
-     setUnsavedEarnings(0);
-     localStorage.setItem(unsavedEarningsKey, "0");
-   }
- }, [id]);
+  
   
   const refillEnergy = () => {
     if (isRefilling) return;
@@ -155,13 +141,15 @@ useEffect(() => {
   
     const updateInterval = setInterval(async () => {
       const currentUnsaved = unsavedEarningsRef.current;
+      const MAX_BATCH = 200_000; // example cap per 2 min
+      const toWrite = Math.max(0, Math.min(currentUnsaved, MAX_BATCH));
       // Only update if there are earnings to save
-      if (currentUnsaved > 0) {
+      if (toWrite > 0) {
         try {
           const userRef = doc(db, 'telegramUsers', id.toString());
           // Use the refs to access the latest balance and tapBalance
-          const updatedBalance = balanceRef.current + currentUnsaved;
-          const updatedTapBalance = tapBalanceRef.current + currentUnsaved;
+          const updatedBalance = balanceRef.current + toWrite;
+          const updatedTapBalance = tapBalanceRef.current + toWrite;
           await updateDoc(userRef, {
             balance: updatedBalance,
             tapBalance: updatedTapBalance,
@@ -195,47 +183,62 @@ useEffect(() => {
   }, [balance, tapBalance]);
 
   useEffect(() => {
-    if (id && botLevel > 0) {
-      // Calculate missed earnings
-      const lastUpdate = localStorage.getItem(lastEarningsUpdateKey);
-      if (lastUpdate) {
-        const lastTime = parseInt(lastUpdate, 10);
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - lastTime) / 1000);
-        const botData = tapBotLevels.find(l => l.level === botLevel);
-        if (botData) {
-          const missedEarnings = elapsedSeconds * botData.tapsPerSecond;
-          setUnsavedEarnings(missedEarnings);
-          localStorage.setItem(unsavedEarningsKey, missedEarnings.toString());
-        }
-      }
-  
-      // Now apply unsaved earnings if any
-      const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-      const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-      if (unsaved > 0) {
-        const newBalance = balance + unsaved;
-        const newTapBalance = tapBalance + unsaved;
-  
-        setBalance(newBalance);
-        setTapBalance(newTapBalance);
-        setUnsavedEarnings(0);
-        localStorage.setItem(unsavedEarningsKey, "0");
-  
-        const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
-        if (telegramUser) {
-          const { id: userId } = telegramUser;
-          const userRef = doc(db, 'telegramUsers', userId.toString());
-          updateDoc(userRef, {
-            balance: newBalance,
-            tapBalance: newTapBalance,
-          }).catch((error) => {
-            console.error("Error updating Firestore with passive earnings:", error);
-          });
-        }
-      }
+  if (!id || botLevel <= 0) return;
+
+  const now = Date.now();
+  const lastRaw = localStorage.getItem(lastEarningsUpdateKey);
+  const last = Number.isFinite(+lastRaw) ? parseInt(lastRaw, 10) : 0;
+
+  // If last timestamp is missing/invalid, initialize it and bail
+  if (!last || last > now) {
+    localStorage.setItem(lastEarningsUpdateKey, String(now));
+    return;
+  }
+
+  // Clamp to avoid huge leaps (e.g., max 24h of passive credit per open)
+  const MAX_WINDOW_SEC = 24 * 60 * 60;
+  const elapsedSeconds = Math.min(
+    MAX_WINDOW_SEC,
+    Math.max(0, Math.floor((now - last) / 1000))
+  );
+
+  if (elapsedSeconds < 1) return;
+
+  const botData = tapBotLevels.find(l => l.level === botLevel);
+  const tps = botData?.tapsPerSecond ?? 0;
+  const missed = elapsedSeconds * tps;
+  if (missed <= 0) {
+    localStorage.setItem(lastEarningsUpdateKey, String(now));
+    return;
+  }
+
+  const apply = async () => {
+    try {
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      const newBalance = balanceRef.current + missed;
+      const newTapBalance = tapBalanceRef.current + missed;
+
+      await updateDoc(userRef, {
+        balance: newBalance,
+        tapBalance: newTapBalance,
+      });
+
+      // Update local state
+      setBalance(newBalance);
+      setTapBalance(newTapBalance);
+
+      // Clear unsaved and, **crucially**, move the cursor forward now
+      setUnsavedEarnings(0);
+      localStorage.setItem(unsavedEarningsKey, "0");
+      localStorage.setItem(lastEarningsUpdateKey, String(now));
+    } catch (e) {
+      console.error("Error applying missed earnings:", e);
     }
-  }, [id, botLevel]);
+  };
+
+  apply();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [id, botLevel]);
   
 
   useEffect(() => {
@@ -307,24 +310,6 @@ useEffect(() => {
             await updateDoc(userRef, { photo_url });
           }
   
-          // Read unsaved earnings and stored balances from localStorage
-          const storedEarnings = parseFloat(localStorage.getItem(unsavedEarningsKey)) || 0;
-          const storedBalance = parseFloat(localStorage.getItem('lastBalance')) || 0;
-          const storedTapBalance = parseFloat(localStorage.getItem('lastTapBalance')) || 0;
-  
-          // Incorporate unsaved earnings into Firestore data
-          userData.balance = (userData.balance || 0) + storedEarnings;
-          userData.tapBalance = (userData.tapBalance || 0) + storedEarnings;
-  
-          // Use the larger of Firestore and locally stored balances
-          userData.balance = Math.max(userData.balance, storedBalance);
-          userData.tapBalance = Math.max(userData.tapBalance, storedTapBalance);
-  
-          // Update Firestore and local state
-          await updateDoc(userRef, {
-            balance: userData.balance,
-            tapBalance: userData.tapBalance
-          });
   
           setBalance(userData.balance);
           setTapBalance(userData.tapBalance);
@@ -361,23 +346,6 @@ useEffect(() => {
           setLoading(false);
           fetchData(userData.userId); // Fetch data for the existing user
   
-          // After applying unsaved earnings, reset them
-          setUnsavedEarnings(0);
-          localStorage.setItem(unsavedEarningsKey, "0");
-  
-          
-          // Read the newly calculated unsaved earnings
-          const newStoredEarnings = localStorage.getItem(unsavedEarningsKey);
-          const newUnsaved = newStoredEarnings ? parseFloat(newStoredEarnings) : 0;
-  
-          if (newUnsaved > 0) {
-            // Update balance and tapBalance with missed earnings
-            setBalance(prev => prev + newUnsaved);
-            setTapBalance(prev => prev + newUnsaved);
-            // Reset unsaved earnings after applying them
-            setUnsavedEarnings(0);
-            localStorage.setItem(unsavedEarningsKey, "0");
-          }
   
           console.log("Battery is:", userData.battery.energy);
           return;

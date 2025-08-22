@@ -279,11 +279,13 @@ useEffect(() => {
   
 
   const sendUserData = async () => {
-    const queryParams = new URLSearchParams(window.location.search);
-    let referrerId = queryParams.get("start");
-    if (referrerId) {
-      referrerId = referrerId.replace(/\D/g, "");
-    }
+    const qs = new URLSearchParams(window.location.search || '');
+    const hashQs = new URLSearchParams((window.location.hash.split('?')[1]) || '');
+    let referrerId = qs.get('start') || hashQs.get('start') ||
+      (window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? '');
+
+    // sanitize: keep only digits, because your links look like "r123..."
+    referrerId = (referrerId || '').replace(/\D/g, '');
   
     if (telegramUser) {
       const { id: userId, username, first_name: firstName, last_name: lastName, photo_url } = telegramUser;

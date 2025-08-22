@@ -254,7 +254,7 @@ const Ref = () => {
                     </div>
                   )}
                   <div className="text-[#fffff] font-small ">
-                    https://t.me/TapMianusBot?start=r{id}
+                    https://t.me/TapMianusBot/app?startapp=r{id}
                   </div>
                 </div>
               </div>

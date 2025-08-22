@@ -4,7 +4,6 @@ import "./App.css";
 import "./fire.scss";
 import { AnimatePresence } from "framer-motion";
 import Footer from "./Components/Footer";
-import { UserProvider } from "./context/userContext";
 import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
 
 // Toggle this flag to allow desktop browsers
@@ -150,11 +149,10 @@ const App = () => {
                 uiPreferences={{ theme: THEME.DARK }}
                 enableAndroidBackHandler={false}
               >
-                <UserProvider>
+                
                   <AnimatePresence mode="wait">
                     <Outlet />
                   </AnimatePresence>
-                </UserProvider>
               </TonConnectUIProvider>
             </div>
             <div

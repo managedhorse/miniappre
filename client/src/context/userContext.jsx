@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
+import { getStartParam } from '../lib/tma';
 
 if (import.meta.NODE_ENV === 'production') {
   disableReactDevTools();
@@ -279,10 +280,10 @@ useEffect(() => {
   
 
   const sendUserData = async () => {
-    const qs = new URLSearchParams(window.location.search || '');
-    const hashQs = new URLSearchParams((window.location.hash.split('?')[1]) || '');
-    let referrerId = qs.get('start') || hashQs.get('start') ||
-      (window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? '');
+    // Robustly pick up "r123..." from /app?startapp=..., /start=r..., or injected ?start=...
+    let referrerId = getStartParam();
+    // keep only digits (turn "r123" -> "123")
+    referrerId = (referrerId || '').replace(/\D/g, '');
 
     // sanitize: keep only digits, because your links look like "r123..."
     referrerId = (referrerId || '').replace(/\D/g, '');

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
-import { getStartParam } from '../lib/tma';
+import { getStartParamSafe, waitForTelegram } from '../lib/tma';
 
 if (import.meta.NODE_ENV === 'production') {
   disableReactDevTools();
@@ -34,7 +34,7 @@ export const UserProvider = ({ children }) => {
   const [claimedMilestones, setClaimedMilestones] = useState([]);
   const [claimedReferralRewards, setClaimedReferralRewards] = useState([]);
   const [referrals, setReferrals] = useState([]); // State to hold referrals
-  const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+  
   const [refiller, setRefiller] = useState(0);
   const [ count, setCount ] = useState(0);
   const [tapGuru, setTapGuru] = useState(false);
@@ -280,19 +280,22 @@ useEffect(() => {
   
 
   const sendUserData = async () => {
-    // Robustly pick up "r123..." from /app?startapp=..., /start=r..., or injected ?start=...
-    let referrerId = getStartParam();
-    // keep only digits (turn "r123" -> "123")
-    referrerId = (referrerId || '').replace(/\D/g, '');
+    // Wait until Telegram WebApp is present to access initData/start_param on deep link launches
+     await waitForTelegram(3000);
 
-    // sanitize: keep only digits, because your links look like "r123..."
-    referrerId = (referrerId || '').replace(/\D/g, '');
+     // Read start param from SDK / Telegram / URL / hash
+     let referrerId = getStartParamSafe();
+     referrerId = (referrerId || '').replace(/\D/g, '');
+     const telegramUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
   
     if (telegramUser) {
       const { id: userId, username, first_name: firstName, last_name: lastName, photo_url } = telegramUser;
   
       // Use first name and ID as username if no Telegram username exists
       const finalUsername = username || `${firstName}_${userId}`;
+      if (referrerId && referrerId === String(userId)) {
+         referrerId = null;
+       }
   
       try {
         const userRef = doc(db, 'telegramUsers', userId.toString());
@@ -418,6 +421,8 @@ useEffect(() => {
       } catch (error) {
         console.error('Error saving user in Firestore:', error);
       }
+      } else {
+       console.warn('[sendUserData] Telegram user not ready yet — skipping create for now');
     }
   };
 

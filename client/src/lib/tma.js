@@ -1,29 +1,44 @@
 // src/lib/tma.js
-let sdk;
-export function getStartParam() {
-  // 1) Prefer @telegram-apps/sdk
+import { retrieveLaunchParams } from '@telegram-apps/sdk';
+
+export function getStartParamSafe() {
+  // 1) SDK (works both for deep link & web_app)
   try {
-    if (!sdk) sdk = require('@telegram-apps/sdk');
-    const { startParam } = sdk.retrieveLaunchParams();
-    if (startParam) return String(startParam);
+    const { startParam } = retrieveLaunchParams();
+    if (startParam) return startParam;
   } catch {}
 
-  // 2) Telegram object
-  const t = typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp;
-  const sp = t?.initDataUnsafe?.start_param;
-  if (sp) return String(sp);
+  // 2) Telegram injected params (deep link -> start_param lives here)
+  const tStart = window?.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  if (tStart) return tStart;
 
-  // 3) URL fallbacks (when you opened via /start and bot injected ?start=)
+  // 3) URL params (your bot’s web_app button adds ?start=…)
   const qs = new URLSearchParams(window.location.search || '');
-  const hashQs = new URLSearchParams((window.location.hash.split('?')[1]) || '');
-  return qs.get('start') || hashQs.get('start') || '';
+  const s = qs.get('start');
+  if (s) return s;
+
+  // 4) Hash router (/#/?start=…)
+  const hash = window.location.hash || '';
+  const hqs = new URLSearchParams(hash.split('?')[1] || '');
+  return hqs.get('start') || '';
 }
 
-export function getInitDataRaw() {
+export function getInitDataRawSafe() {
   try {
-    if (!sdk) sdk = require('@telegram-apps/sdk');
-    const { initDataRaw } = sdk.retrieveLaunchParams();
+    const { initDataRaw } = retrieveLaunchParams();
     if (initDataRaw) return initDataRaw;
   } catch {}
-  return (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) || '';
+  return window?.Telegram?.WebApp?.initData || '';
+}
+
+export async function waitForTelegram(maxMs = 3000) {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    const t = window?.Telegram?.WebApp;
+    if (t && (t.initData || t.initDataUnsafe)) return t;
+    // small delay
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return window?.Telegram?.WebApp || null;
 }

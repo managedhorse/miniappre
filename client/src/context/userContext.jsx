@@ -3,7 +3,37 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, getDocs, collection, query, limit, orderBy, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { db } from '../firebase'; // Adjust the path as needed
 import { disableReactDevTools } from '@fvilers/disable-react-devtools';
-import { getStartParamSafe, waitForTelegram } from '../lib/tma';
+/* ---------- referral helpers (paste here) ---------- */
+function getStartParamSafe() {
+  // 1) Telegram deep link param
+  const tStart = window?.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  if (tStart) return tStart;
+
+  // 2) Query before hash
+  const qs = new URLSearchParams(window.location.search || '');
+  const s = qs.get('start');
+  if (s) return s;
+
+  // 3) Query after hash (#/?start=...)
+  const hash = window.location.hash || '';
+  const hqs = new URLSearchParams(hash.split('?')[1] || '');
+  const hs = hqs.get('start');
+  if (hs) return hs;
+
+  return '';
+}
+
+async function waitForTelegram(maxMs = 3000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < maxMs) {
+    const t = window?.Telegram?.WebApp;
+    if (t && (t.initData || t.initDataUnsafe)) return t;
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return window?.Telegram?.WebApp || null;
+}
+/* ---------- end referral helpers ---------- */
 
 if (import.meta.NODE_ENV === 'production') {
   disableReactDevTools();
@@ -112,6 +142,33 @@ export const UserProvider = ({ children }) => {
     }, refillDuration / refillSteps); // Increase energy at each step
   };
 
+  // 1) start/continue energy refilling when below cap
+useEffect(() => {
+  if (energy < refiller && !isRefilling) {
+    refillEnergy();
+  }
+}, [energy, isRefilling]);
+
+// 2) clean up the refill interval on unmount
+useEffect(() => {
+  return () => {
+    clearInterval(refillIntervalRef.current);
+  };
+}, []);
+
+// 3) the 1-second countdown timer
+useEffect(() => {
+  let timerId;
+  if (isTimerRunning && time > 0) {
+    timerId = setInterval(() => {
+      setTime(prevTime => prevTime - 1);
+    }, 1000);
+  } else if (time === 0) {
+    setTapGuru(false);
+    setMainTap(true);
+  }
+  return () => clearInterval(timerId);
+}, [isTimerRunning, time]);
 
 useEffect(() => { balanceRef.current = balance; }, [balance]);
 useEffect(() => { tapBalanceRef.current = tapBalance; }, [tapBalance]);
@@ -242,35 +299,6 @@ useEffect(() => {
 }, [id, botLevel]);
   
 
-  useEffect(() => {
-    if (energy < refiller && !isRefilling) {
-      refillEnergy();
-      // console.log('REFILLER IS', refiller)
-    }
-      // eslint-disable-next-line
-  }, [energy, isRefilling]);
-  
-  useEffect(() => {
-    return () => {
-      clearInterval(refillIntervalRef.current);
-    };
-  }, []);
-  
-
-  
-  useEffect(() => {
-    let timerId;
-    if (isTimerRunning && time > 0) {
-      timerId = setInterval(() => {
-        setTime(prevTime => prevTime - 1);
-      }, 1000);
-    } else if (time === 0) {
-      setTapGuru(false);
-      setMainTap(true);
-    }
-    return () => clearInterval(timerId);
-  }, [isTimerRunning, time]);
-
   const startTimer = useCallback(() => {
     setTime(22);
     setTapGuru(true);
@@ -280,151 +308,165 @@ useEffect(() => {
   
 
   const sendUserData = async () => {
-    // Wait until Telegram WebApp is present to access initData/start_param on deep link launches
-     await waitForTelegram(3000);
+  // Ensure Telegram initData is available (deep link case)
+  await waitForTelegram(3000);
 
-     // Read start param from SDK / Telegram / URL / hash
-     let referrerId = getStartParamSafe();
-     referrerId = (referrerId || '').replace(/\D/g, '');
-     const telegramUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
-  
-    if (telegramUser) {
-      const { id: userId, username, first_name: firstName, last_name: lastName, photo_url } = telegramUser;
-  
-      // Use first name and ID as username if no Telegram username exists
-      const finalUsername = username || `${firstName}_${userId}`;
-      if (referrerId && referrerId === String(userId)) {
-         referrerId = null;
-       }
-  
+  // Read referrer from any channel
+  let referrerId = getStartParamSafe();
+  referrerId = (referrerId || '').replace(/\D/g, '');
+
+  const telegramUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!telegramUser) {
+    console.warn('[sendUserData] Telegram user not ready yet — skipping');
+    return;
+  }
+
+  const { id: userId, username, first_name: firstName, last_name: lastName, photo_url } = telegramUser;
+
+  // Don’t allow self-referral
+  if (referrerId && referrerId === String(userId)) referrerId = '';
+
+  const finalUsername = username || `${firstName}_${userId}`;
+  const userRef = doc(db, 'telegramUsers', userId.toString());
+  const snap = await getDoc(userRef);
+
+  if (snap.exists()) {
+    const existing = snap.data();
+
+    // keep avatar current (optional)
+    if (photo_url && existing.photo_url !== photo_url) {
+      await updateDoc(userRef, { photo_url });
+    }
+
+    // Late-bind referral if user had no referee yet but we have one now
+    if (!existing.refereeId && referrerId) {
       try {
-        const userRef = doc(db, 'telegramUsers', userId.toString());
-        const userDoc = await getDoc(userRef);
-  
-        // Read unsaved earnings from localStorage
-        const storedEarnings = localStorage.getItem(unsavedEarningsKey);
-        const unsaved = storedEarnings ? parseFloat(storedEarnings) : 0;
-  
-        if (userDoc.exists()) {
-          console.log('User already exists in Firestore');
-          const userData = userDoc.data();
-          setBindAddress(userData.bindAddress || "");
-          setTimeBind     (userData.timeBind     || null);
-  
-          // Update the photo_url if it has changed
-          if (userData.photo_url !== photo_url) {
-            await updateDoc(userRef, { photo_url });
-          }
-  
-  
-          setBalance(userData.balance);
-          setTapBalance(userData.tapBalance);
-          setTapValue(userData.tapValue);
-          setFreeGuru(userData.freeGuru);
-          setFullTank(userData.fullTank);
-          setTimeSta(userData.timeSta);
-          setTimeStaTank(userData.timeStaTank);
-          setTimeSpin(userData.timeSpin);
-          setTimeDailyReward(userData.timeDailyReward);
-          setDailyReward(userData.dailyReward);
-          setClaimedMilestones(userData.claimedMilestones || []);
-          setClaimedReferralRewards(userData.claimedReferralRewards || []);
-          setBattery(userData.battery);
-          setRefiller(userData.battery.energy);
-          setTimeRefill(userData.timeRefill);
-          setLevel(userData.level);
-          setBotLevel(userData.botLevel || 0);
-          setId(userData.userId);
-          SetRefBonus(userData.refBonus || 0);
-          setPlinkoBalance(userData.plinkoBalance || 0);
-          setPromo(userData.promo || null);
-  
-          const lastReferralsUpdate = localStorage.getItem("lastReferralsUpdate");
-        const now = Date.now();
-        const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+        await updateDoc(userRef, { refereeId: referrerId });
 
-        if (!lastReferralsUpdate || now - Number(lastReferralsUpdate) > TWELVE_HOURS) {
-          await updateReferrals(userRef);
-          localStorage.setItem("lastReferralsUpdate", String(now));
+        const referrerRef = doc(db, 'telegramUsers', referrerId);
+        const referrerSnap = await getDoc(referrerRef);
+        if (referrerSnap.exists()) {
+          await updateDoc(referrerRef, {
+            referrals: arrayUnion({
+              userId: userId.toString(),
+              username: finalUsername,
+              balance: 0,
+              level: { id: 1, name: 'Level 1', imgUrl: '/lvl1.webp' },
+            }),
+          });
+          console.log('[ref] late-bound referrer', referrerId);
         }
-  
-          setInitialized(true);
-          setLoading(false);
-          fetchData(userData.userId); // Fetch data for the existing user
-  
-  
-          console.log("Battery is:", userData.battery.energy);
-          return;
-        }
+      } catch (e) {
+        console.error('[ref] late-bind failed:', e);
+      }
+    }
 
-        const userData = {
+    // Hydrate state correctly from `existing`
+    setBalance(existing.balance);
+    setTapBalance(existing.tapBalance);
+    setTapValue(existing.tapValue);
+    setFreeGuru(existing.freeGuru);
+    setFullTank(existing.fullTank);
+    setTimeSta(existing.timeSta);
+    setTimeStaTank(existing.timeStaTank);
+    setTimeSpin(existing.timeSpin);
+    setTimeDailyReward(existing.timeDailyReward);
+    setDailyReward(existing.dailyReward);
+    setClaimedMilestones(existing.claimedMilestones || []);
+    setClaimedReferralRewards(existing.claimedReferralRewards || []);
+    setBattery(existing.battery);
+    setRefiller(existing.battery?.energy ?? 0);
+    setTimeRefill(existing.timeRefill);
+    setLevel(existing.level);
+    setBotLevel(existing.botLevel || 0);
+    setId(existing.userId);
+    SetRefBonus(existing.refBonus || 0);
+    setPlinkoBalance(existing.plinkoBalance || 0);
+    setPromo(existing.promo || null);
+    setBindAddress(existing.bindAddress || "");
+    setTimeBind(existing.timeBind || null);
+
+    // Refresh referrals (throttled)
+    const lastReferralsUpdate = localStorage.getItem("lastReferralsUpdate");
+    const now = Date.now();
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    if (!lastReferralsUpdate || now - Number(lastReferralsUpdate) > TWELVE_HOURS) {
+      try { await updateReferrals(userRef); } catch {}
+      localStorage.setItem("lastReferralsUpdate", String(now));
+    }
+
+    setInitialized(true);
+    setLoading(false);
+    fetchData(existing.userId);
+    console.log("Battery is:", existing.battery?.energy);
+    return;
+  }
+
+  // New user create
+  const userData = {
+    userId: userId.toString(),
+    username: finalUsername,
+    firstName,
+    lastName,
+    photo_url,
+    totalBalance: 0,
+    balance: 0,
+    freeGuru: 3,
+    fullTank: 3,
+    tapBalance: 0,
+    timeSta: null,
+    timeStaTank: null,
+    timeSpin: new Date("2024-01-01"),
+    timeDailyReward : new Date("2024-01-01"),
+    dailyReward: 0,
+    tapValue: {level: 1, value: 1},
+    timeRefill: {level: 1, duration: 10, step: 600},
+    level: { id: 1, name: "Level 1", imgUrl: '/lvl1.webp' },
+    energy: 500,
+    battery: {level: 1, energy: 500},
+    refereeId: referrerId || null,
+    referrals: [],
+    botLevel: 0,
+    plinkoBalance: 0,
+    bindAddress: "",
+    timeBind: new Date(0),
+    promo: null,
+  };
+
+  await setDoc(userRef, userData);
+  console.log('User saved in Firestore');
+
+  // seed local state
+  setEnergy(500);
+  setBattery(userData.battery);
+  setRefiller(userData.battery.energy);
+  setTapValue(userData.tapValue);
+  setTimeRefill(userData.timeRefill);
+  setFreeGuru(userData.freeGuru);
+  setFullTank(userData.fullTank);
+  setId(userId.toString());
+
+  // add this user to the referrer’s referrals
+  if (referrerId) {
+    const referrerRef = doc(db, 'telegramUsers', referrerId);
+    const referrerDoc = await getDoc(referrerRef);
+    if (referrerDoc.exists()) {
+      await updateDoc(referrerRef, {
+        referrals: arrayUnion({
           userId: userId.toString(),
           username: finalUsername,
-          firstName,
-          lastName,
-          photo_url,
-          totalBalance: 0,
           balance: 0,
-          freeGuru: 3,
-          fullTank: 3,
-          tapBalance: 0,
-          timeSta: null,
-          timeStaTank: null,
-          timeSpin: new Date("2024-01-01"),
-          timeDailyReward : new Date("2024-01-01"),
-          dailyReward: 0,
-          tapValue: {level: 1, value: 1},
-          timeRefill: {level: 1, duration: 10, step: 600},
-          level: { id: 1, name: "Level 1", imgUrl: '/lvl1.webp' }, // Set the initial level with id and name
-          energy: 500,
-          battery: {level: 1, energy: 500},
-          refereeId: referrerId || null,
-          referrals: [],
-          botLevel: 0,
-          plinkoBalance: 0,
-          bindAddress: "",
-          timeBind:     new Date(0),  
-          promo: null,
-        };
-
-        await setDoc(userRef, userData);
-        console.log('User saved in Firestore');
-        setEnergy(500);
-        setBattery(userData.battery);
-        setRefiller(userData.battery.energy);
-        setTapValue(userData.tapValue);
-        setTimeRefill(userData.timeRefill);
-        setFreeGuru(userData.freeGuru);
-        setFullTank(userData.fullTank);
-        setId(userId.toString()); // Set the id state for the new user
-
-        if (referrerId) {
-          const referrerRef = doc(db, 'telegramUsers', referrerId);
-          const referrerDoc = await getDoc(referrerRef);
-          if (referrerDoc.exists()) {
-            await updateDoc(referrerRef, {
-              referrals: arrayUnion({
-                userId: userId.toString(),
-                username: finalUsername,
-                balance: 0,
-                level: { id: 1, name: "Level 1", imgUrl: '/lvl1.webp' }, // Include level with id and name
-              })
-            });
-            console.log('Referrer updated in Firestore');
-          }
-        }
-        
-        setInitialized(true);
-        setLoading(false);
-        fetchData(userId.toString()); // Fetch data for the new user
-
-      } catch (error) {
-        console.error('Error saving user in Firestore:', error);
-      }
-      } else {
-       console.warn('[sendUserData] Telegram user not ready yet — skipping create for now');
+          level: { id: 1, name: 'Level 1', imgUrl: '/lvl1.webp' },
+        }),
+      });
+      console.log('[ref] referrer updated', referrerId);
     }
-  };
+  }
+
+  setInitialized(true);
+  setLoading(false);
+  fetchData(userId.toString());
+};
 
 
   const updateReferrals = async (userRef) => {

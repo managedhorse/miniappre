@@ -14,7 +14,6 @@ import { db } from '../firebase.jsx'; // Adjust the path as needed
 import { useUser } from "../context/userContext.jsx";
 import { IoClose } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
-import { spendFromWallet } from '../lib/spendFromWallet';
 
 const tapValues = [
   {
@@ -170,7 +169,7 @@ const chargingUpgradeCosts = [0, 2000, 30000, 100000, 200000];
 
 const Boost = () => {
 
-  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus, SetRefBonus, botLevel, setBotLevel } = useUser();
+  const { balance, id, freeGuru, refiller, setRefiller, setFreeGuru, setTapGuru, fullTank, setFullTank, setMainTap, startTimer, timeRefill, setTimeRefill, tapValue, setTapValue, battery, setEnergy, setBattery, setBalance, refBonus, botLevel, setBotLevel, } = useUser();
   const [openInfo, setOpenInfo] = useState(false);
   const [openInfoTwo, setOpenInfoTwo] = useState(false);
   const [isUpgradeModalVisible, setIsUpgradeModalVisible] = useState(false);
@@ -244,134 +243,95 @@ const Boost = () => {
   };
 
   const handleUpgrade = async () => {
-  setIsUpgrading(true);
-
-  const nextLevel = tapValue.level;
-  const upgradeCost = upgradeCosts[nextLevel];
-
-  if (!id || nextLevel >= tapValues.length) {
-    setIsUpgrading(false);
-    return;
-  }
-
-  try {
-    // 1) Spend atomically
-    const { balance: newBal, refAvailable: newRef } =
-      await spendFromWallet(db, id, upgradeCost);
-
-    // 2) Apply the upgrade only (do NOT touch balance here)
-    const newTapValue = tapValues[nextLevel];
-    await updateDoc(doc(db, 'telegramUsers', id.toString()), {
-      tapValue: newTapValue,
-    });
-
-    // 3) Sync local UI
-    setTapValue(newTapValue);
-    setBalance(newBal);
-    if (typeof SetRefBonus === 'function') SetRefBonus(newRef);
-
-    setIsUpgradeModalVisible(false);
-    setCongrats(true);
-    setTimeout(() => setCongrats(false), 2000);
-  } catch (error) {
-    if (error?.message === 'INSUFFICIENT_FUNDS') {
-      // show toast/snackbar
-    } else {
-      console.error('Tap upgrade failed:', error);
+    setIsUpgrading(true);
+    const nextLevel = tapValue.level;
+    const upgradeCost = upgradeCosts[nextLevel];
+    if (nextLevel < tapValues.length && (balance + refBonus) >= upgradeCost && id) {
+      const newTapValue = tapValues[nextLevel];
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      try {
+        await updateDoc(userRef, {
+          tapValue: newTapValue,
+          balance: balance - upgradeCost
+        });
+        setTapValue(newTapValue);
+        setBalance((prevBalance) => prevBalance - upgradeCost);
+        setIsUpgrading(false);
+        setIsUpgradeModalVisible(false);
+        setCongrats(true)
+        
+        setTimeout(() => {
+            setCongrats(false)
+        }, 2000)
+        console.log('Tap value upgraded successfully');
+      } catch (error) {
+        console.error('Error updating tap value:', error);
+      }
     }
-  } finally {
-    setIsUpgrading(false);
-  }
-};
+  };
 
   const handleEnergyUpgrade = async () => {
-  setIsUpgradingEn(true);
+    setIsUpgradingEn(true);
+    const nextEnergyLevel = battery.level;
+    const energyUpgradeCost = energyUpgradeCosts[nextEnergyLevel];
+    if (nextEnergyLevel< energyValues.length && (balance + refBonus) >= energyUpgradeCost && id) {
+      const newEnergyValue = energyValues[nextEnergyLevel];
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      try {
+        await updateDoc(userRef, {
+          battery: newEnergyValue,
+          balance: balance - energyUpgradeCost,
+          energy: newEnergyValue.energy
+        });
+        setBattery(newEnergyValue);
+        localStorage.setItem('energy', newEnergyValue.energy);
+        setEnergy(newEnergyValue.energy);
+        setRefiller(newEnergyValue.energy);
 
-  const nextEnergyLevel = battery.level;
-  const energyUpgradeCost = energyUpgradeCosts[nextEnergyLevel];
-
-  if (!id || nextEnergyLevel >= energyValues.length) {
-    setIsUpgradingEn(false);
-    return;
-  }
-
-  try {
-    // 1) Spend atomically
-    const { balance: newBal, refAvailable: newRef } =
-      await spendFromWallet(db, id, energyUpgradeCost);
-
-    // 2) Apply the upgrade only
-    const newEnergyValue = energyValues[nextEnergyLevel];
-    await updateDoc(doc(db, 'telegramUsers', id.toString()), {
-      battery: newEnergyValue,
-      energy: newEnergyValue.energy,
-    });
-
-    // 3) Sync local/UI state
-    setBattery(newEnergyValue);
-    localStorage.setItem('energy', newEnergyValue.energy);
-    setEnergy(newEnergyValue.energy);
-    setRefiller(newEnergyValue.energy);
-
-    setBalance(newBal);
-    if (typeof SetRefBonus === 'function') SetRefBonus(newRef);
-
-    setIsUpgradeModalVisibleEn(false);
-    setCongrats(true);
-    setTimeout(() => setCongrats(false), 2000);
-  } catch (error) {
-    if (error?.message === 'INSUFFICIENT_FUNDS') {
-      // show toast/snackbar
-    } else {
-      console.error('Energy upgrade failed:', error);
+        setBalance((prevBalance) => prevBalance - energyUpgradeCost);
+        setIsUpgradingEn(false);
+        setCongrats(true);
+        setIsUpgradeModalVisibleEn(false);
+        setTimeout(() => {
+            setCongrats(false)
+        }, 2000)
+        console.log('Energy value upgraded successfully');
+        console.log('Energy value upgraded successfully +', newEnergyValue.value);
+        console.log('NEW REFILLER VALUES IS:', refiller)
+      } catch (error) {
+        console.error('Error updating energy value:', error);
+      }
     }
-  } finally {
-    setIsUpgradingEn(false);
-  }
-};
+  };
 
   const handlerRechargeUpgrade = async () => {
-  setIsUpgradingEnc(true);
-
-  const nextChargingLevel = timeRefill.level;
-  const chargingUpgradeCost = chargingUpgradeCosts[nextChargingLevel];
-
-  if (!id || nextChargingLevel >= chargingValues.length) {
-    setIsUpgradingEnc(false);
-    return;
-  }
-
-  try {
-    // 1) Spend atomically
-    const { balance: newBal, refAvailable: newRef } =
-      await spendFromWallet(db, id, chargingUpgradeCost);
-
-    // 2) Apply the upgrade only
-    const newChargingValue = chargingValues[nextChargingLevel];
-    await updateDoc(doc(db, 'telegramUsers', id.toString()), {
-      timeRefill: newChargingValue,
-    });
-
-    // 3) Sync local/UI
-    setTimeRefill(newChargingValue);
-    setEnergy(battery.energy); // keep your existing reset behavior
-
-    setBalance(newBal);
-    if (typeof SetRefBonus === 'function') SetRefBonus(newRef);
-
-    setIsUpgradeModalVisibleEnc(false);
-    setCongrats(true);
-    setTimeout(() => setCongrats(false), 2000);
-  } catch (error) {
-    if (error?.message === 'INSUFFICIENT_FUNDS') {
-      // show toast/snackbar
-    } else {
-      console.error('Charge-rate upgrade failed:', error);
+    setIsUpgradingEnc(true);
+    const nextChargingLevel = timeRefill.level;
+    const chargingUpgradeCost = chargingUpgradeCosts[nextChargingLevel];
+    if (nextChargingLevel< chargingValues.length && (balance + refBonus) >= chargingUpgradeCost && id) {
+      const newChargingValue = chargingValues[nextChargingLevel];
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      try {
+        await updateDoc(userRef, {
+          timeRefill: newChargingValue,
+          balance: balance - chargingUpgradeCost,
+        });
+        setTimeRefill(newChargingValue);
+        setBalance((prevBalance) => prevBalance - chargingUpgradeCost);
+        setIsUpgradingEnc(false);
+        setEnergy(battery.energy);
+        setCongrats(true)
+        setIsUpgradeModalVisibleEnc(false);
+        setTimeout(() => {
+            setCongrats(false)
+        }, 2000)
+        console.log('Energy value upgraded successfully');
+        console.log('Energy value upgraded successfully +', newChargingValue.value);
+      } catch (error) {
+        console.error('Error updating energy value:', error);
+      }
     }
-  } finally {
-    setIsUpgradingEnc(false);
-  }
-};
+  };
 
   const nextUpgradeCost = upgradeCosts[tapValue.level];
   const hasSufficientBalance = (balance + refBonus) >= nextUpgradeCost;
@@ -436,43 +396,46 @@ const Boost = () => {
     };
   };
 
-  // Replace your existing handleBotUpgrade with this
-const handleBotUpgrade = async () => {
-  const nextLevelData = tapBotLevels.find(
-    l => l.level === (botLevel || 0) + 1
-  );
-  if (!nextLevelData || !id) return;
-
-  const { cost } = nextLevelData;
-
-  try {
-    // Atomically deduct from balance + referral available
-    const { balance: newBal, refAvailable: newRef } = await spendFromWallet(db, id, cost);
-
-    // Only update the bot level field now (do NOT touch balance here)
-    const newBotLevel = (botLevel || 0) + 1;
-    await updateDoc(doc(db, 'telegramUsers', id.toString()), {
-      botLevel: newBotLevel,
-    });
-
-    // Sync local state
-    setBotLevel(newBotLevel);
-    setBalance(newBal);
-    if (typeof SetRefBonus === 'function') SetRefBonus(newRef);
-
-    // UX
-    setCongrats(true);
-    setTimeout(() => setCongrats(false), 2000);
-    setBot(false);
-  } catch (e) {
-    if (e?.message === 'INSUFFICIENT_FUNDS') {
-      // TODO: show your toast/snackbar
-      console.log('Insufficient Mianus');
+  const handleBotUpgrade = async () => {
+    const nextLevelData = tapBotLevels.find(levelData => levelData.level === (botLevel || 0) + 1);
+    if (!nextLevelData) return; // Already max level?
+  
+    const { cost } = nextLevelData;
+    if ((balance + refBonus) >= cost && id) {
+      const newBotLevel = (botLevel || 0) + 1;
+      const userRef = doc(db, 'telegramUsers', id.toString());
+      try {
+        // Update Firestore
+        await updateDoc(userRef, {
+          botLevel: newBotLevel,
+          balance: balance - cost,
+        });
+  
+        // Retrieve updated data to sync local state
+        const updatedDoc = await getDoc(userRef);
+        if (updatedDoc.exists()) {
+          const data = updatedDoc.data();
+          setBalance(data.balance);
+          setBotLevel(data.botLevel);
+        }
+  
+        // Show success notice, then close modal after a bit
+        setCongrats(true);
+        setTimeout(() => {
+          setCongrats(false);
+        }, 2000);
+  
+        // Close the Bot modal
+        setBot(false);
+  
+        console.log('Bot upgraded to level', newBotLevel);
+      } catch (error) {
+        console.error('Error upgrading bot level:', error);
+      }
     } else {
-      console.error('Bot upgrade failed:', e);
+      console.log('Insufficient funds or no next level available');
     }
-  }
-};
+  };
  
     const calculateTimeRemaining = () => {
     const now = new Date();

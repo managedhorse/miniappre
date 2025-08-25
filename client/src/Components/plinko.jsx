@@ -1,32 +1,22 @@
 // plinko.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useUser } from "../context/userContext.jsx";
-import { spendFromWallet } from "../lib/spendFromWallet";
+import { useUser } from "../context/userContext";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  const { balance, refBonus, SetRefBonus, id, loading, initialized, setBalance } = useUser()
+  const { balance, id, loading, initialized, setBalance } = useUser();
 
   const userIsReady = Boolean(id && initialized && !loading);
   const iframeRef = useRef(null);
-  
+
   const [modalOpen, setModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
   const [isTransferring, setIsTransferring] = useState(false);
   const [modalPlinkoBalance, setModalPlinkoBalance] = useState(null);
   const [frameReady, setFrameReady] = useState(false);
-  const available = (balance || 0) + (refBonus || 0);
 
-  const { refAccrued, refSpent } = useUser() || {};
-  const refAvailable =
-  typeof refAccrued === "number" || typeof refSpent === "number"
-    ? Math.max(0, (refAccrued ?? 0) - (refSpent ?? 0))
-    : Math.max(0, refBonus || 0);
-
-// Wallet you can actually spend/transfer: main + referral available (never negative)
-const walletMax = Math.max(0, (balance || 0) + refAvailable);
   // --- helper: ask child app for its balance (with timeout + cleanup) ---
   const requestChildPlinkoBalance = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -142,109 +132,91 @@ const walletMax = Math.max(0, (balance || 0) + refAvailable);
     };
   }, []);
 
+  // --- transfer handler ---
   async function handleTransfer() {
-  const amount = Math.floor(Number(transferAmount));
-  if (!Number.isFinite(amount) || amount <= 0) {
-    alert("Please enter a valid amount.");
-    return;
-  }
-  if (!id) {
-    alert("User ID not available.");
-    return;
-  }
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+    if (!id) {
+      alert("User ID not available.");
+      return;
+    }
 
-  setIsTransferring(true);
+    setIsTransferring(true);
 
-  // 1) Ask child app for its up-to-date balance
-  let childPlinkoBalance;
-  try {
-    childPlinkoBalance = await requestChildPlinkoBalance();
-  } catch (err) {
-    console.error("Error getting balance from child:", err);
-    alert("Failed to retrieve game balance from Plinko app.");
-    setIsTransferring(false);
-    return;
-  }
+    let childPlinkoBalance;
+    try {
+      childPlinkoBalance = await requestChildPlinkoBalance();
+    } catch (err) {
+      console.error("Error getting balance from child:", err);
+      alert("Failed to retrieve game balance from Plinko app.");
+      setIsTransferring(false);
+      return;
+    }
 
-  const userRef = doc(db, "telegramUsers", id.toString());
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) {
-    alert("User record not found.");
-    setIsTransferring(false);
-    return;
-  }
+    const userRef = doc(db, "telegramUsers", id.toString());
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      alert("User record not found.");
+      setIsTransferring(false);
+      return;
+    }
 
-  const data = userSnap.data() || {};
-  const currentRefAccrued = data.refAccrued ?? data.refBonus ?? 0;
-  const currentRefSpent   = data.refSpent ?? 0;
-  const currentRefAvail   = Math.max(0, currentRefAccrued - currentRefSpent);
-  let currentBalance      = data.balance || 0;
-  let currentPlinko       = Number(childPlinkoBalance) || 0;
+    const data = userSnap.data();
+    let currentBalance = data.balance || 0;
+    let currentPlinkoBalance = childPlinkoBalance || 0;
 
-  try {
     if (transferDirection === "toPlinko") {
-      // 2A) Deduct from wallet atomically (may consume from balance and/or refAvailable)
-      const { balance: newBal, refAvailable: newRefAvail } =
-        await spendFromWallet(db, id.toString(), amount);
-
-      currentPlinko += amount;
-
-      // 3A) Persist new plinko + recompute score
-      await updateDoc(userRef, {
-        balance: newBal,
-        plinkoBalance: currentPlinko,
-        score: newBal + newRefAvail,
-      });
-
-      // update local UI
-      setBalance?.(newBal);
-      SetRefBonus?.(newRefAvail);
-
-      // tell child to add funds
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: "ADD_BALANCE", amount },
-        "https://plinko-game-main-two.vercel.app"
-      );
+      if (currentBalance < amount) {
+        alert("Not enough balance to transfer.");
+        setIsTransferring(false);
+        return;
+      }
+      currentBalance -= amount;
+      currentPlinkoBalance += amount;
     } else {
-      // 2B) Withdraw back to main — only affects balance, not refAvailable
-      if (currentPlinko < amount) {
+      if (currentPlinkoBalance < amount) {
         alert("Not enough Plinko balance to withdraw.");
         setIsTransferring(false);
         return;
       }
-      currentPlinko -= amount;
-      const newBal = currentBalance + amount;
+      currentBalance += amount;
+      currentPlinkoBalance -= amount;
+    }
 
-      // score = balance + refAvailable (refAvailable unchanged on withdraw)
+    try {
       await updateDoc(userRef, {
-        balance: newBal,
-        plinkoBalance: currentPlinko,
-        score: newBal + currentRefAvail,
+        balance: currentBalance,
+        plinkoBalance: currentPlinkoBalance,
       });
 
-      setBalance?.(newBal);
+      const ORIGIN = "https://plinko-game-main-two.vercel.app";
+      if (iframeRef.current) {
+        if (transferDirection === "toMain") {
+          iframeRef.current.contentWindow?.postMessage(
+            { type: "DEDUCT_BALANCE", amount },
+            ORIGIN
+          );
+        } else {
+          iframeRef.current.contentWindow?.postMessage(
+            { type: "ADD_BALANCE", amount },
+            ORIGIN
+          );
+        }
+      }
 
-      // tell child to deduct funds
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: "DEDUCT_BALANCE", amount },
-        "https://plinko-game-main-two.vercel.app"
-      );
-    }
-
-    setModalOpen(false);
-    setTransferAmount("");
-  } catch (error) {
-    if (error?.message === "INSUFFICIENT_FUNDS") {
-      alert("Not enough funds in your wallet (main + referral).");
-    } else {
+      setModalOpen(false);
+      setTransferAmount("");
+      if (setBalance) setBalance(currentBalance);
+    } catch (error) {
       console.error("Error updating balances:", error);
       alert("Error processing transfer.");
+    } finally {
+      setIsTransferring(false);
     }
-  } finally {
-    setIsTransferring(false);
   }
-}
-
 
   // --- early return AFTER hooks are declared ---
   if (!userIsReady) {
@@ -376,22 +348,18 @@ const walletMax = Math.max(0, (balance || 0) + refAvailable);
                 }}
               >
                 <div
-   style={{ display: "flex", justifyContent: "space-between", cursor: "pointer" }}
-   onClick={() => setTransferAmount(String(walletMax))}
- >
-   <strong>Wallet (Main + Referral):</strong>
-   <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
-     {walletMax.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-   </span>
- </div>
- <div style={{ display: "flex", justifyContent: "space-between" }}>
-   <span>Main:</span>
-   <span>{Number(balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
- </div>
- <div style={{ display: "flex", justifyContent: "space-between" }}>
-   <span>Referral available:</span>
-   <span>{refAvailable.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
- </div>
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setTransferAmount(String(balance))}
+                >
+                  <strong>Main Balance:</strong>
+                  <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+                    {typeof balance === "number" ? balance.toFixed(2) : balance}
+                  </span>
+                </div>
                 <div
                   style={{
                     display: "flex",
@@ -471,10 +439,10 @@ const walletMax = Math.max(0, (balance || 0) + refAvailable);
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   max={
-   transferDirection === "toMain"
-     ? (modalPlinkoBalance ?? undefined)
-     : walletMax
- }
+                    transferDirection === "toMain" && modalPlinkoBalance !== null
+                      ? modalPlinkoBalance
+                      : undefined
+                  }
                   style={{
                     width: "100%",
                     padding: "12px",

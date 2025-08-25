@@ -383,7 +383,7 @@ const Plutos = () => {
         refillEnergy();
       }
     }, 1000);
-    clearTimeout(debounceTimerRef.current);
+    learTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(updateFirestore, 1000); // Set the inactivity period to 1 second (adjust as needed)
   };
 

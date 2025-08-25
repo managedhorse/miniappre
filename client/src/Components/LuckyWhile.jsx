@@ -3,7 +3,6 @@ import { Wheel } from "spin-wheel";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useUser } from "../context/userContext";
-import { spendFromWallet } from "../lib/spendFromWallet";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import pointerImage from "../images/pointer.webp";
@@ -58,13 +57,9 @@ function Plunger({ onPull, disabled }) {
 
 
 export default function LuckyWheel() {
-  const { balance, refBonus, setBalance, id, loading, initialized, SetRefBonus } = useUser();
+  const { balance, refBonus, setBalance, id, loading, initialized } = useUser();
   const userIsReady = Boolean(id && initialized && !loading);
-  // Main wallet + referral funds currently available to wager
-  const available = Math.max(
-    0,
-    (Number(balance) || 0) + (Number(refBonus) || 0)
-  );
+  const totalBalance = balance + refBonus;
 
   // Bet state (unchanged)…
   const [betAmount, setBetAmount] = useState("");
@@ -94,14 +89,13 @@ export default function LuckyWheel() {
     balanceRef.current = balance;
   }, [balance]);
   const betRef = useRef(0);
-  const refAfterStakeRef = useRef(refBonus);
 
   // helpers to double or half the current bet
   const handleDouble = () => {
    const current = parseInt(betAmount, 10) || 0;
    // don't allow doubling past your balance
    const doubled = current * 2;
-   setBetAmount(String(Math.min(doubled, available)));
+   setBetAmount(String(Math.min(doubled, totalBalance)));
  };
   const handleHalf = () => {
     const current = parseInt(betAmount, 10) || 0;
@@ -144,56 +138,40 @@ export default function LuckyWheel() {
     const curBal = balanceRef.current;
     const betUsed = betRef.current;
     const { multiplier } = items[idx].value;
+    let newBal;
+
     if (!multiplier) {
-   // Stake was already deducted. Nothing more to do.
-   setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
-   setFloatingText(`-${formatNumber(betUsed)}`);
- } else {
-   // Pay out gross winnings; net profit = bet*(multiplier-1)
-   const winnings = Math.floor(betUsed * multiplier);
-   const finalBal = curBal + winnings;
-   const refAvail = refAfterStakeRef.current ?? 0;
-   try {
-     await updateDoc(doc(db, "telegramUsers", id), {
-       balance: finalBal,
-       score: finalBal + refAvail,
-     });
-     setBalance(finalBal);
-     balanceRef.current = finalBal;
-   } catch (err) {
-     console.error("Update failed:", err);
-   }
-   setResultMessage(`Congratulations! You won ×${multiplier}!`);
-   setFloatingText(`+${formatNumber(winnings)}`);
-   setShowCongratsGif(true);
-   setTimeout(() => setShowCongratsGif(false), 3000);
- }
+      newBal = curBal - betUsed;
+      setResultMessage(`You lost your bet of ${formatNumber(betUsed)} Mianus!`);
+      setFloatingText(`-${formatNumber(betUsed)}`);
+    } else {
+      const winnings = Math.floor(betUsed * multiplier);
+      newBal = curBal + winnings;
+      setResultMessage(`Congratulations! You won ×${multiplier}!`);
+      setFloatingText(`+${formatNumber(winnings)}`);
+      setShowCongratsGif(true);
+      setTimeout(() => setShowCongratsGif(false), 3000);
+    }
+
+    try {
+      await updateDoc(doc(db, "telegramUsers", id), { balance: newBal });
+      setBalance(newBal);
+      balanceRef.current = newBal;
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
 
     setTimeout(() => setFloatingText(""), 2500);
     setShowResult(true);
     setTimeout(() => setShowResult(false), 5000);
   }
 
-  async function handleSpinWithPower(pwr) {
+  function handleSpinWithPower(pwr) {
     if (!userIsReady || isSpinning) return;
-   if (numericBet < 10000 || numericBet > available) return;
+    if (numericBet < 10000 || numericBet > totalBalance) return;
 
     setIsSpinning(true);
     betRef.current = numericBet;
-
-    // 1) Deduct stake atomically from balance + refAvailable
-  try {
-    const { balance: newBal, refAvailable: newRef } =
-      await spendFromWallet(db, id, numericBet);
-    setBalance(newBal);
-    SetRefBonus(newRef);
-    balanceRef.current = newBal;
-    refAfterStakeRef.current = newRef; // see ref below
-  } catch (e) {
-    // e.message === 'INSUFFICIENT_FUNDS' etc.
-    setIsSpinning(false);
-    return;
-  }
 
     const duration = 2000 + (6000 * pwr) / 100;
     const revolutions = 1 + (4 * pwr) / 100;
@@ -201,10 +179,11 @@ export default function LuckyWheel() {
     wheelRef.current.spinToItem(idx, duration, true, revolutions, 1);
   }
 
-  const canSpin = !isSpinning && numericBet >= 10000 && numericBet <= available;
+  const canSpin =
+    !isSpinning && numericBet >= 10000 && numericBet <= totalBalance;
 
 const isTooLow  = numericBet > 0 && numericBet < 10000;
-const isTooHigh = numericBet > available;
+const isTooHigh = numericBet > totalBalance;
 const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
 
   const renderPointer = () => (
@@ -252,7 +231,7 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
               Balance:{" "}
             </span>
             <span className="slackey-regular text-[22px] text-yellow-300">
-              {formatNumber(available)} Mianus
+              {formatNumber(totalBalance)} Mianus
             </span>
           </div>
 
@@ -339,10 +318,10 @@ const isValid   = !isTooLow && !isTooHigh && numericBet > 0;
     <p className="text-sm text-red-400">Minimum bet is 10,000</p>
   )}
   {isTooHigh && (
-   <p className="text-sm text-red-400">
-     You only have {formatNumber(available)} Mianus
-   </p>
- )}
+    <p className="text-sm text-red-400">
+      You only have {formatNumber(totalBalance)} Mianus
+    </p>
+  )}
 </div>
           </div>
 

@@ -1,3 +1,4 @@
+//src/Components/Leaderboard.jsx
 import React, {useEffect} from "react";
 import Animate from "./Animate.jsx";
 import { Outlet } from "react-router-dom";
@@ -5,10 +6,10 @@ import coinsmall from "../images/coinsmall.webp";
 
 import { LiaMedalSolid } from "react-icons/lia";
 // Adjust the path as needed
-import { useUser } from "../context/userContext";
+import { useUser } from "../context/userContext.jsx";
 
 const Leaderboard = () => {
-  const { balance, refBonus, leaderboard, rankUser, username, users } = useUser();
+  const { balance, refBonus, leaderboard, rankUser, username, users, id } = useUser();
 
 
   const formatNumber = (num) => {
@@ -24,6 +25,9 @@ const Leaderboard = () => {
   const formattedUsers = new Intl.NumberFormat()
   .format(users)
   .replace(/,/g, " ");
+
+  const myRow = leaderboard.find(u => u.userId?.toString() === id?.toString());
+  const myScore = typeof myRow?.score === 'number' ? myRow.score : (balance + refBonus);
 
   useEffect(() => {
  
@@ -90,7 +94,7 @@ const Leaderboard = () => {
                         </span>
                         <span className="flex items-center font-medium">
                           <span className="text-[14px]">
-                            {formatNumber(balance + refBonus)}
+                            {formatNumber(myScore)}
                           </span>{" "}
                         </span>
                       </div>
@@ -102,6 +106,9 @@ const Leaderboard = () => {
                     <LiaMedalSolid className="text-[#d0ef36] w-[28px] h-[28px] mt-[2px]" />
                   </div>
                 </div>
+                {rankUser > 0 && (
+      <span className="text-xs text-[#9a96a6]">Your rank: #{rankUser}</span>
+    )}
               </div>
             </div>
             {/* Divider */}
@@ -145,7 +152,11 @@ const Leaderboard = () => {
                           </span>
                           <span className="flex items-center font-medium">
                             <span className="text-[14px]">
-                            {formatNumber(rank.balance + (rank.refBonus || 0))}
+                            {formatNumber(
+   typeof rank.score === 'number'
+     ? rank.score
+     : (rank.balance + (rank.refBonus || 0)) // rollout-safe fallback
+ )}
                             </span>{" "}
                             <span className="bg-[#bdbdbd] w-[1px] h-[13px] mx-2"></span>
                             <span className="text-[#9a96a6] text-[14px]">

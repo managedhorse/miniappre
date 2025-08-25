@@ -1,11 +1,12 @@
 // plinko.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useUser } from "../context/userContext";
+import { useUser } from "../context/userContext.jsx";
+import { spendFromWallet } from "../lib/spendFromWallet";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust the path as necessary
 
 function PlinkoIframePage() {
-  const { balance, id, loading, initialized, setBalance } = useUser();
+  const { balance, refBonus, SetRefBonus, id, loading, initialized, setBalance } = useUser()
 
   const userIsReady = Boolean(id && initialized && !loading);
   const iframeRef = useRef(null);
@@ -16,7 +17,7 @@ function PlinkoIframePage() {
   const [isTransferring, setIsTransferring] = useState(false);
   const [modalPlinkoBalance, setModalPlinkoBalance] = useState(null);
   const [frameReady, setFrameReady] = useState(false);
-
+  const available = (balance || 0) + (refBonus || 0);
   // --- helper: ask child app for its balance (with timeout + cleanup) ---
   const requestChildPlinkoBalance = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -132,91 +133,109 @@ function PlinkoIframePage() {
     };
   }, []);
 
-  // --- transfer handler ---
   async function handleTransfer() {
-    const amount = parseFloat(transferAmount);
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount.");
-      return;
-    }
-    if (!id) {
-      alert("User ID not available.");
-      return;
-    }
+  const amount = Math.floor(Number(transferAmount));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    alert("Please enter a valid amount.");
+    return;
+  }
+  if (!id) {
+    alert("User ID not available.");
+    return;
+  }
 
-    setIsTransferring(true);
+  setIsTransferring(true);
 
-    let childPlinkoBalance;
-    try {
-      childPlinkoBalance = await requestChildPlinkoBalance();
-    } catch (err) {
-      console.error("Error getting balance from child:", err);
-      alert("Failed to retrieve game balance from Plinko app.");
-      setIsTransferring(false);
-      return;
-    }
+  // 1) Ask child app for its up-to-date balance
+  let childPlinkoBalance;
+  try {
+    childPlinkoBalance = await requestChildPlinkoBalance();
+  } catch (err) {
+    console.error("Error getting balance from child:", err);
+    alert("Failed to retrieve game balance from Plinko app.");
+    setIsTransferring(false);
+    return;
+  }
 
-    const userRef = doc(db, "telegramUsers", id.toString());
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      alert("User record not found.");
-      setIsTransferring(false);
-      return;
-    }
+  const userRef = doc(db, "telegramUsers", id.toString());
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    alert("User record not found.");
+    setIsTransferring(false);
+    return;
+  }
 
-    const data = userSnap.data();
-    let currentBalance = data.balance || 0;
-    let currentPlinkoBalance = childPlinkoBalance || 0;
+  const data = userSnap.data() || {};
+  const currentRefAccrued = data.refAccrued ?? data.refBonus ?? 0;
+  const currentRefSpent   = data.refSpent ?? 0;
+  const currentRefAvail   = Math.max(0, currentRefAccrued - currentRefSpent);
+  let currentBalance      = data.balance || 0;
+  let currentPlinko       = Number(childPlinkoBalance) || 0;
 
+  try {
     if (transferDirection === "toPlinko") {
-      if (currentBalance < amount) {
-        alert("Not enough balance to transfer.");
-        setIsTransferring(false);
-        return;
-      }
-      currentBalance -= amount;
-      currentPlinkoBalance += amount;
+      // 2A) Deduct from wallet atomically (may consume from balance and/or refAvailable)
+      const { balance: newBal, refAvailable: newRefAvail } =
+        await spendFromWallet(db, id.toString(), amount);
+
+      currentPlinko += amount;
+
+      // 3A) Persist new plinko + recompute score
+      await updateDoc(userRef, {
+        balance: newBal,
+        plinkoBalance: currentPlinko,
+        score: newBal + newRefAvail,
+      });
+
+      // update local UI
+      setBalance?.(newBal);
+      SetRefBonus?.(newRefAvail);
+
+      // tell child to add funds
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "ADD_BALANCE", amount },
+        "https://plinko-game-main-two.vercel.app"
+      );
     } else {
-      if (currentPlinkoBalance < amount) {
+      // 2B) Withdraw back to main — only affects balance, not refAvailable
+      if (currentPlinko < amount) {
         alert("Not enough Plinko balance to withdraw.");
         setIsTransferring(false);
         return;
       }
-      currentBalance += amount;
-      currentPlinkoBalance -= amount;
-    }
+      currentPlinko -= amount;
+      const newBal = currentBalance + amount;
 
-    try {
+      // score = balance + refAvailable (refAvailable unchanged on withdraw)
       await updateDoc(userRef, {
-        balance: currentBalance,
-        plinkoBalance: currentPlinkoBalance,
+        balance: newBal,
+        plinkoBalance: currentPlinko,
+        score: newBal + currentRefAvail,
       });
 
-      const ORIGIN = "https://plinko-game-main-two.vercel.app";
-      if (iframeRef.current) {
-        if (transferDirection === "toMain") {
-          iframeRef.current.contentWindow?.postMessage(
-            { type: "DEDUCT_BALANCE", amount },
-            ORIGIN
-          );
-        } else {
-          iframeRef.current.contentWindow?.postMessage(
-            { type: "ADD_BALANCE", amount },
-            ORIGIN
-          );
-        }
-      }
+      setBalance?.(newBal);
 
-      setModalOpen(false);
-      setTransferAmount("");
-      if (setBalance) setBalance(currentBalance);
-    } catch (error) {
+      // tell child to deduct funds
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "DEDUCT_BALANCE", amount },
+        "https://plinko-game-main-two.vercel.app"
+      );
+    }
+
+    setModalOpen(false);
+    setTransferAmount("");
+  } catch (error) {
+    if (error?.message === "INSUFFICIENT_FUNDS") {
+      alert("Not enough funds in your wallet (main + referral).");
+    } else {
       console.error("Error updating balances:", error);
       alert("Error processing transfer.");
-    } finally {
-      setIsTransferring(false);
     }
+  } finally {
+    setIsTransferring(false);
   }
+}
+
 
   // --- early return AFTER hooks are declared ---
   if (!userIsReady) {
@@ -353,7 +372,7 @@ function PlinkoIframePage() {
                     justifyContent: "space-between",
                     cursor: "pointer",
                   }}
-                  onClick={() => setTransferAmount(String(balance))}
+                  onClick={() => setTransferAmount(String(available))}
                 >
                   <strong>Main Balance:</strong>
                   <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>

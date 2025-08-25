@@ -211,6 +211,7 @@ useEffect(() => {
           await updateDoc(userRef, {
             balance: updatedBalance,
             tapBalance: updatedTapBalance,
+            score: updatedBalance + (refBonus || 0),
           });
           // Update local state after successful Firestore update
           setBalance(updatedBalance);
@@ -279,6 +280,7 @@ useEffect(() => {
       await updateDoc(userRef, {
         balance: newBalance,
         tapBalance: newTapBalance,
+        score: newBalance + (refBonus || 0),
       });
 
       // Update local state
@@ -361,6 +363,15 @@ useEffect(() => {
       }
     }
 
+    const accrued = existing.refAccrued ?? existing.refBonus ?? 0; // fallback for older docs
+    const spent = existing.refSpent ?? 0;
+    const refAvailable = Math.max(0, accrued - spent);
+
+    SetRefBonus(refAvailable); // keep your current state name
+    // Also set a local helper if you want:
+    const score = (existing.balance || 0) + refAvailable;
+    // (optional) store score in state if helpful
+
     // Hydrate state correctly from `existing`
     setBalance(existing.balance);
     setTapBalance(existing.tapBalance);
@@ -380,7 +391,7 @@ useEffect(() => {
     setLevel(existing.level);
     setBotLevel(existing.botLevel || 0);
     setId(existing.userId);
-    SetRefBonus(existing.refBonus || 0);
+    
     setPlinkoBalance(existing.plinkoBalance || 0);
     setPromo(existing.promo || null);
     setBindAddress(existing.bindAddress || "");
@@ -411,6 +422,7 @@ useEffect(() => {
     photo_url,
     totalBalance: 0,
     balance: 0,
+    score: 0,
     freeGuru: 3,
     fullTank: 3,
     tapBalance: 0,
@@ -495,11 +507,10 @@ useEffect(() => {
           const referralData = referralDoc.data();
           // The fields of interest:
           const theirBalance = referralData.balance || 0;   // The referred user's main balance
-          const theirRefBonus = referralData.refBonus || 0; // The referred user's own ref bonus (if you want to add it)
-  
-          // If you want the referral's "balance" in the referrer's doc
-          // to reflect 10% of (theirBalance + theirRefBonus):
-          const combined = theirBalance + theirRefBonus;
+          const theirAccrued = referralData.refAccrued ?? referralData.refBonus ?? 0;
+          const theirSpent = referralData.refSpent ?? 0;
+          const theirRefAvail = Math.max(0, theirAccrued - theirSpent);
+          const combined = (referralData.balance || 0) + theirRefAvail;
           const tenPercent = combined * 0.1; 
   
           // Return updated referral object
@@ -519,17 +530,20 @@ useEffect(() => {
         referrals: updatedReferrals,
       });
   
-      // Calculate the sum of all referral balances that we just updated
+      // inside updateReferrals()
       const totalEarnings = updatedReferrals.reduce((acc, curr) => acc + (curr.balance || 0), 0);
-      // The referrer’s own “refBonus” is presumably 10% of the sum of these new values:
-      const refBonus = Math.floor(totalEarnings);
-  
-      console.log(`Total earnings: ${totalEarnings}, Referrer bonus: ${refBonus}`);
-  
-      // Update refBonus in Firestore
+      const refAccrued = Math.floor(totalEarnings);
+
+      // read current to get balance & refSpent
+      const freshSnap = await getDoc(userRef);
+      const fresh = freshSnap.data() || {};
+      const refSpent = fresh.refSpent || 0;
+      const balance = fresh.balance || 0;
+
       await updateDoc(userRef, {
-        refBonus,
-        // No more totalBalance if it’s deprecated, so we remove it
+        referrals: updatedReferrals,
+        refAccrued,
+        score: balance + Math.max(0, refAccrued - refSpent),
       });
   
       console.log("Referrals and refBonus updated successfully for:", userRef.id);
@@ -787,36 +801,53 @@ useEffect(() => {
   };
 
   const fetchLeaderboard = async () => {
-    try {
-      const userRef = collection(db, "telegramUsers");
-      const q = query(userRef, orderBy("balance", "desc"), limit(100));
-      const querySnapshot = await getDocs(q);
-  
-      const leaderboardUsers = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const userId = data.userId;
-        const username = data.username;
-        const balance = data.balance;
-        const refBonus = data.refBonus || 0;  // Retrieve each user's refBonus
-        const photo_url = data.photo_url;
-  
-        leaderboardUsers.push({ userId, username, balance, refBonus, photo_url });
+  try {
+    const userRef = collection(db, "telegramUsers");
+    // sort by score
+    const q = query(userRef, orderBy("score", "desc"), limit(100));
+    const querySnapshot = await getDocs(q);
+
+    const leaderboardUsers = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const userId = data.userId;
+      const username = data.username || "";
+      const photo_url = data.photo_url;
+
+      const balance = data.balance || 0;
+
+      // rollout-safe: prefer the new fields, fallback to older refBonus if present
+      const refAccrued = data.refAccrued ?? data.refBonus ?? 0;
+      const refSpent = data.refSpent ?? 0;
+      const refAvailable = Math.max(0, refAccrued - refSpent);
+
+      // if score not yet written everywhere, compute it on the fly
+      const score = typeof data.score === "number" ? data.score : (balance + refAvailable);
+
+      leaderboardUsers.push({
+        userId,
+        username,
+        balance,
+        refBonus: refAvailable, // for UI display
+        score,
+        photo_url,
       });
-  
-      SetLeaderboard(leaderboardUsers);
-  
-      // Optionally, set the rank of the current user
-      const telegramUserid = window.Telegram.WebApp.initDataUnsafe?.user?.id;
-      if (telegramUserid) {
-        const targetUserIndex = leaderboardUsers.findIndex((user) => user.userId.toString() === telegramUserid.toString());
-        setRankUser(targetUserIndex + 1);
-      }
-  
-    } catch (e) {
-      console.error("Error fetching documents: ", e);
+    });
+
+    SetLeaderboard(leaderboardUsers);
+
+    // keep your existing "rank of current user" logic
+    const telegramUserid = window.Telegram.WebApp.initDataUnsafe?.user?.id;
+    if (telegramUserid) {
+      const idx = leaderboardUsers.findIndex(
+        (u) => u.userId?.toString() === telegramUserid.toString()
+      );
+      setRankUser(idx >= 0 ? idx + 1 : 0);
     }
-  };
+  } catch (e) {
+    console.error("Error fetching leaderboard: ", e);
+  }
+};
 
   const fetchAllUsers = async () => {
     try {

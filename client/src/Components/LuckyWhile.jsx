@@ -60,7 +60,11 @@ function Plunger({ onPull, disabled }) {
 export default function LuckyWheel() {
   const { balance, refBonus, setBalance, id, loading, initialized, SetRefBonus } = useUser();
   const userIsReady = Boolean(id && initialized && !loading);
-  const totalBalance = balance + refBonus;
+  // Main wallet + referral funds currently available to wager
+  const available = Math.max(
+    0,
+    (Number(balance) || 0) + (Number(refBonus) || 0)
+  );
 
   // Bet state (unchanged)…
   const [betAmount, setBetAmount] = useState("");

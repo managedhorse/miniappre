@@ -1,42 +1,45 @@
-// src/lib/spendFromWallet.js
-import { doc, runTransaction } from 'firebase/firestore';
+// lib/spendFromWallet.js
+import { runTransaction, doc } from 'firebase/firestore';
 
-export async function spendFromWallet(db, userId, cost) {
-  const userRef = doc(db, 'telegramUsers', userId.toString());
-  return await runTransaction(db, async (tx) => {
+export async function spendFromWallet(db, uid, amount) {
+  const userRef = doc(db, 'telegramUsers', uid.toString());
+
+  return runTransaction(db, async (tx) => {
     const snap = await tx.get(userRef);
-    if (!snap.exists()) throw new Error('User not found');
-    const u = snap.data();
+    if (!snap.exists()) throw new Error('NOT_FOUND');
 
-    const balance = u.balance || 0;
-    const refAccrued = u.refAccrued || 0;
-    const refSpent = u.refSpent || 0;
-    const refAvail = Math.max(0, refAccrued - refSpent);
+    const d = snap.data() || {};
+    const balance = Number(d.balance) || 0;
 
-    if (balance + refAvail < cost) throw new Error('INSUFFICIENT_FUNDS');
+    // Legacy-safe referral accounting
+    const acc   = Number(d.refAccrued ?? d.refBonus ?? 0); // accrued total
+    const spent = Number(d.refSpent) || 0;                 // spent from accrued
+    const refAvail = Math.max(0, acc - spent);
 
-    let costLeft = cost;
-    let newBalance = balance;
-    let newRefSpent = refSpent;
-
-    const useFromBalance = Math.min(newBalance, costLeft);
-    newBalance -= useFromBalance;
-    costLeft -= useFromBalance;
-
-    if (costLeft > 0) {
-      newRefSpent += costLeft;
-      costLeft = 0;
+    if (amount > balance + refAvail) {
+      throw new Error('INSUFFICIENT_FUNDS');
     }
 
-    const newRefAvail = Math.max(0, refAccrued - newRefSpent);
-    const newScore = newBalance + newRefAvail;
+    // take from main first, then referral pool
+    const useFromMain = Math.min(amount, balance);
+    const useFromRef  = amount - useFromMain;
 
-    tx.update(userRef, {
+    const newBalance   = +(balance - useFromMain).toFixed(6);
+    const newRefSpent  = spent + useFromRef;
+    const newRefAvail  = Math.max(0, acc - newRefSpent);
+    const newScore     = newBalance + newRefAvail;
+
+    const updates = {
       balance: newBalance,
       refSpent: newRefSpent,
       score: newScore,
-    });
+    };
+    // Promote legacy field once so future math uses refAccrued/refSpent
+    if (d.refAccrued == null && (d.refBonus != null)) {
+      updates.refAccrued = acc;
+    }
 
-    return { balance: newBalance, refAvailable: newRefAvail, score: newScore };
+    tx.update(userRef, updates);
+    return { balance: newBalance, refAvailable: newRefAvail };
   });
 }

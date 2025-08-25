@@ -10,7 +10,7 @@ function PlinkoIframePage() {
 
   const userIsReady = Boolean(id && initialized && !loading);
   const iframeRef = useRef(null);
-
+  
   const [modalOpen, setModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDirection, setTransferDirection] = useState("toPlinko");
@@ -18,6 +18,15 @@ function PlinkoIframePage() {
   const [modalPlinkoBalance, setModalPlinkoBalance] = useState(null);
   const [frameReady, setFrameReady] = useState(false);
   const available = (balance || 0) + (refBonus || 0);
+
+  const { refAccrued, refSpent } = useUser() || {};
+  const refAvailable =
+  typeof refAccrued === "number" || typeof refSpent === "number"
+    ? Math.max(0, (refAccrued ?? 0) - (refSpent ?? 0))
+    : Math.max(0, refBonus || 0);
+
+// Wallet you can actually spend/transfer: main + referral available (never negative)
+const walletMax = Math.max(0, (balance || 0) + refAvailable);
   // --- helper: ask child app for its balance (with timeout + cleanup) ---
   const requestChildPlinkoBalance = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -367,18 +376,22 @@ function PlinkoIframePage() {
                 }}
               >
                 <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setTransferAmount(String(available))}
-                >
-                  <strong>Main Balance:</strong>
-                  <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
-                    {typeof balance === "number" ? balance.toFixed(2) : balance}
-                  </span>
-                </div>
+   style={{ display: "flex", justifyContent: "space-between", cursor: "pointer" }}
+   onClick={() => setTransferAmount(String(walletMax))}
+ >
+   <strong>Wallet (Main + Referral):</strong>
+   <span style={{ color: "#ff9a9e", textDecoration: "underline" }}>
+     {walletMax.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+   </span>
+ </div>
+ <div style={{ display: "flex", justifyContent: "space-between" }}>
+   <span>Main:</span>
+   <span>{Number(balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+ </div>
+ <div style={{ display: "flex", justifyContent: "space-between" }}>
+   <span>Referral available:</span>
+   <span>{refAvailable.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+ </div>
                 <div
                   style={{
                     display: "flex",
@@ -458,10 +471,10 @@ function PlinkoIframePage() {
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   max={
-                    transferDirection === "toMain" && modalPlinkoBalance !== null
-                      ? modalPlinkoBalance
-                      : undefined
-                  }
+   transferDirection === "toMain"
+     ? (modalPlinkoBalance ?? undefined)
+     : walletMax
+ }
                   style={{
                     width: "100%",
                     padding: "12px",

@@ -1,3 +1,4 @@
+//server.cjs
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
@@ -31,7 +32,7 @@ app.post('/api/getPreparedMessage', async (req, res) => {
           id: 'unique-id-' + Date.now(), // Ensure unique ID
           title: 'Join Tap Mianus!',
           input_message_content: {
-            message_text: `Join Tap Mianus using my invite link: https://t.me/tap_mianus_bot?start=r${user_id}`,
+            message_text: `Join Tap Mianus using my invite link: https://t.me/TapMianusV2Bot/app?startapp=r${user_id}`,
           },
           description: 'Tap Mianus is awesome!',
           thumb_url: 'https://example.com/thumbnail.jpg', // Ensure this URL is valid

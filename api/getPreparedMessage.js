@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
           id: 'unique-id-' + Date.now(),
           title: 'Join Tap Mianus!',
           input_message_content: {
-            message_text: `I'm inviting you to Tap Mianus! Here's the link: https://t.me/TapMianusBot?start=r${user_id}`,
+            message_text: `I'm inviting you to Tap Mianus! Here's the link: https://t.me/TapMianusV2Bot/app?startapp=r${user_id}`,
           },
           description: 'Tap Mianus is awesome!',
           thumb_url: 'https://miniappre.vercel.app/coinsmall.webp', // Ensure this URL is valid

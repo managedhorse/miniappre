@@ -36,7 +36,7 @@ const Ref = () => {
   const [redeemErr, setRedeemErr] = useState("");
 
   const copyToClipboard = () => {
-    const reflink = `https://t.me/TapMianusBot?start=r${id}`;
+    const reflink = `https://t.me/TapMianusV2Bot?start=r${id}`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard
@@ -254,7 +254,7 @@ const Ref = () => {
                     </div>
                   )}
                   <div className="text-[#fffff] font-small ">
-                    https://t.me/TapMianusBot?start=r{id}
+                    https://t.me/TapMianusV2Bot?start=r{id}
                   </div>
                 </div>
               </div>

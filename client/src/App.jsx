@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom"; // ⬅ added useLocation
 import "./App.css";
 import "./fire.scss";
 import { AnimatePresence } from "framer-motion";
 import Footer from "./Components/Footer";
 import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
+import { trackPage } from "./analytics"; // ⬅ import helper
 
 // Toggle this flag to allow desktop browsers
 const allowDesktop = false; // set to false to enforce Telegram-only mode
@@ -15,10 +16,7 @@ const App = () => {
 
     if (window.Telegram?.WebApp) {
       console.log("Telegram WebApp initData:", window.Telegram.WebApp.initData);
-      console.log(
-        "Telegram WebApp initDataUnsafe:",
-        window.Telegram.WebApp.initDataUnsafe
-      );
+      console.log("Telegram WebApp initDataUnsafe:", window.Telegram.WebApp.initDataUnsafe);
       console.log("Telegram WebApp platform:", window.Telegram.WebApp.platform);
     } else {
       console.log("Telegram.WebApp is NOT available (yet)");
@@ -49,8 +47,7 @@ const App = () => {
       }
 
       const platform = tele.platform; // "android", "ios", "web", etc.
-      const platformOk =
-        allowDesktop || platform === "android" || platform === "ios";
+      const platformOk = allowDesktop || platform === "android" || platform === "ios";
 
       setIsTelegram(platformOk);
 
@@ -92,16 +89,20 @@ const App = () => {
     };
   }, []);
 
+  // 🔹 Track a page_view whenever the route (hash) changes
+  const location = useLocation();
+  useEffect(() => {
+    // You can enrich with params if needed
+    trackPage(location.pathname);
+  }, [location.pathname]);
 
   const openExternal = (e) => {
     e.preventDefault();
     const url = "https://betmian.us/?utm_campaign=desktopredirect";
 
     if (window.Telegram?.WebApp?.openLink) {
-      // Opens in the user’s default browser (outside the mini app)
       window.Telegram.WebApp.openLink(url, { try_instant_view: false });
     } else {
-      // Fallback for non-Telegram/desktop dev
       window.open(url, "_blank", "noopener");
     }
   };
@@ -133,7 +134,6 @@ const App = () => {
     );
   }
 
-  // Only show restricted message if Telegram restrictions are enforced and not on Telegram
   if (!isTelegram && !allowDesktop) {
     return renderTelegramOnlyMessage();
   }
@@ -149,10 +149,9 @@ const App = () => {
                 uiPreferences={{ theme: THEME.DARK }}
                 enableAndroidBackHandler={false}
               >
-                
-                  <AnimatePresence mode="wait">
-                    <Outlet />
-                  </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  <Outlet />
+                </AnimatePresence>
               </TonConnectUIProvider>
             </div>
             <div

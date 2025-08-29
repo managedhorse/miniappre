@@ -1,4 +1,5 @@
 // main.jsx
+import { initTelegramAnalytics } from './analytics';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
@@ -19,6 +20,7 @@ import LuckyWhile from "./Components/LuckyWhile.jsx";
 import DailyReward from "./Components/DailyReward.jsx";
 import Plinko from "./Components/plinko.jsx";
 
+initTelegramAnalytics();
 
 
 const router = createHashRouter([
